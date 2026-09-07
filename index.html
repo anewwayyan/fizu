@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>if(localStorage.getItem("theme")==="dark")document.documentElement.setAttribute("data-theme","dark");</script>
+<title>Mennyi most a fizum?</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
+<style>
+	:root {
+		--bg: #f4f5f7;
+		--card-bg: #ffffff;
+		--text: #1a1a1a;
+		--muted: #666;
+		--accent: #2f8f4e;
+	}
+	html[data-theme="dark"] {
+		--bg: #14161a;
+		--card-bg: #1f2227;
+		--text: #f2f2f2;
+		--muted: #9a9a9a;
+		--accent: #4ade80;
+	}
+	* { box-sizing: border-box; }
+	body {
+		margin: 0;
+		min-height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--bg);
+		color: var(--text);
+		font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+		transition: background 0.2s, color 0.2s;
+	}
+	.card {
+		background: var(--card-bg);
+		border-radius: 18px;
+		padding: 2.5em 2em;
+		max-width: 420px;
+		width: 90%;
+		text-align: center;
+		box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+		position: relative;
+	}
+	h1 {
+		margin: 0 0 0.2em 0;
+		font-size: 1.4em;
+	}
+	#fizu-osszeg {
+		font-size: 2.6em;
+		font-weight: bold;
+		color: var(--accent);
+		margin: 0.3em 0 0.15em 0;
+		font-variant-numeric: tabular-nums;
+	}
+	#fizu-status {
+		font-size: 1em;
+		margin: 0.3em 0;
+	}
+	#fizu-info {
+		color: var(--muted);
+		font-size: 0.85em;
+		line-height: 1.6;
+		margin-top: 1em;
+	}
+	.theme-toggle {
+		position: absolute;
+		top: 1em;
+		right: 1em;
+		background: none;
+		border: 1px solid var(--muted);
+		border-radius: 20px;
+		color: var(--text);
+		padding: 0.3em 0.8em;
+		font-size: 0.8em;
+		cursor: pointer;
+	}
+</style>
+</head>
+<body>
+	<div class="card">
+		<button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+		<h1>Mennyi most a fizum? 💸</h1>
+		<p id="fizu-osszeg">0 Ft</p>
+		<p id="fizu-status"></p>
+		<p id="fizu-info"></p>
+	</div>
+
+<script>
+	function toggleTheme() {
+		const root = document.documentElement;
+		const dark = root.getAttribute("data-theme") === "dark";
+		if (dark) {
+			root.removeAttribute("data-theme");
+			localStorage.setItem("theme", "light");
+		} else {
+			root.setAttribute("data-theme", "dark");
+			localStorage.setItem("theme", "dark");
+		}
+	}
+
+	// ===== Mennyi most a fizum? beállítások =====
+	const ORABER = 2750; // Ft / óra
+
+	// Horgony: 2026.09.08. NAPPALOS (07:00-19:00)
+	// 4 napos ciklus: nappalos -> éjszakás -> szabad -> szabad -> ismét nappalos...
+	const HORGONY = new Date(2026, 8, 8); // hónap 0-indexelt: 8 = szeptember
+	HORGONY.setHours(0, 0, 0, 0);
+
+	function muszakTipus(nap) {
+		const napKezdet = new Date(nap.getFullYear(), nap.getMonth(), nap.getDate());
+		const napokKulonbseg = Math.round((napKezdet - HORGONY) / 86400000);
+		const ciklusIndex = ((napokKulonbseg % 4) + 4) % 4;
+		if (ciklusIndex === 0) return "nappal";
+		if (ciklusIndex === 1) return "ejszaka";
+		return "szabad";
+	}
+
+	function muszakIdointervallum(nap) {
+		const tipus = muszakTipus(nap);
+		const ev = nap.getFullYear(), honap = nap.getMonth(), napSzam = nap.getDate();
+		if (tipus === "nappal") {
+			return [new Date(ev, honap, napSzam, 7, 0, 0), new Date(ev, honap, napSzam, 19, 0, 0)];
+		}
+		if (tipus === "ejszaka") {
+			return [new Date(ev, honap, napSzam, 19, 0, 0), new Date(ev, honap, napSzam + 1, 7, 0, 0)];
+		}
+		return null;
+	}
+
+	function fizetesiNap(ev, honap) {
+		const d = new Date(ev, honap, 8);
+		const napNev = d.getDay(); // 0 = vasárnap, 6 = szombat
+		if (napNev === 6) d.setDate(7);
+		if (napNev === 0) d.setDate(6);
+		d.setHours(0, 0, 0, 0);
+		return d;
+	}
+
+	function fizetesiCiklus(most) {
+		const eviHonapFizu = fizetesiNap(most.getFullYear(), most.getMonth());
+		let elozo, kovetkezo;
+		if (most < eviHonapFizu) {
+			kovetkezo = eviHonapFizu;
+			let ph = most.getMonth() - 1, pe = most.getFullYear();
+			if (ph < 0) { ph = 11; pe--; }
+			elozo = fizetesiNap(pe, ph);
+		} else {
+			elozo = eviHonapFizu;
+			let kh = most.getMonth() + 1, ke = most.getFullYear();
+			if (kh > 11) { kh = 0; ke++; }
+			kovetkezo = fizetesiNap(ke, kh);
+		}
+		return { elozo, kovetkezo };
+	}
+
+	function ledolgozottOrak(tol, ig) {
+		let osszOraMs = 0;
+		const kezdoNap = new Date(tol.getFullYear(), tol.getMonth(), tol.getDate() - 1);
+		const utolsoNap = new Date(ig.getFullYear(), ig.getMonth(), ig.getDate());
+		for (let d = new Date(kezdoNap); d <= utolsoNap; d.setDate(d.getDate() + 1)) {
+			const intervallum = muszakIdointervallum(d);
+			if (!intervallum) continue;
+			const [ms, me] = intervallum;
+			const metszetKezdet = ms > tol ? ms : tol;
+			const metszetVeg = me < ig ? me : ig;
+			if (metszetVeg > metszetKezdet) {
+				osszOraMs += (metszetVeg - metszetKezdet);
+			}
+		}
+		return osszOraMs / 3600000;
+	}
+
+	function formatFt(szam) {
+		return Math.round(szam).toLocaleString("hu-HU") + " Ft";
+	}
+
+	function formatDatum(d) {
+		return d.getFullYear() + ". " + String(d.getMonth() + 1).padStart(2, "0") + ". " + String(d.getDate()).padStart(2, "0") + ".";
+	}
+
+	function frissitMennyi most a fizum?() {
+		const most = new Date();
+		const { elozo, kovetkezo } = fizetesiCiklus(most);
+		const orak = ledolgozottOrak(elozo, most);
+		const osszeg = orak * ORABER;
+
+		document.getElementById("fizu-osszeg").textContent = formatFt(osszeg);
+
+		const tipus = muszakTipus(most);
+		let statusSzoveg;
+		if (tipus === "szabad") {
+			statusSzoveg = "😴 Ma szabadnap van, a számláló most nem nő.";
+		} else {
+			const intervallum = muszakIdointervallum(most);
+			const [ms, me] = intervallum;
+			if (most >= ms && most <= me) {
+				statusSzoveg = (tipus === "nappal" ? "🌞 Nappalos műszak" : "🌙 Éjszakás műszak") + " – megy a számláló!";
+			} else {
+				statusSzoveg = "⏸️ Most nincs műszak, a számláló szünetel.";
+			}
+		}
+		document.getElementById("fizu-status").textContent = statusSzoveg;
+
+		const napokAFizuig = Math.ceil((kovetkezo - most) / 86400000);
+		document.getElementById("fizu-info").textContent =
+			"Előző fizetés: " + formatDatum(elozo) +
+			" · Következő fizetés: " + formatDatum(kovetkezo) +
+			" (" + napokAFizuig + " nap múlva) · Órabér: " + formatFt(ORABER) + "/óra";
+	}
+
+	frissitMennyi most a fizum?();
+	setInterval(frissitMennyi most a fizum?, 1000);
+</script>
+</body>
+</html>
