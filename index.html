@@ -252,28 +252,38 @@
 
 	function muszakTipus(nap) {
 
-		const napKezdet = new Date(
-			nap.getFullYear(),
-			nap.getMonth(),
-			nap.getDate()
-		);
+	const napKezdet = new Date(
+		nap.getFullYear(),
+		nap.getMonth(),
+		nap.getDate()
+	);
 
-		const napokKulonbseg =
-			Math.round((napKezdet - HORGONY) / 86400000);
-
-		const ciklusIndex =
-			((napokKulonbseg % 4) + 4) % 4;
-
-		if (ciklusIndex === 0) {
-			return "nappal";
-		}
-
-		if (ciklusIndex === 1) {
-			return "ejszaka";
-		}
-
-		return "szabad";
+	// KIVÉTEL:
+	// 2026. szeptember 20. nappal helyett éjszaka
+	if (
+		napKezdet.getFullYear() === 2026 &&
+		napKezdet.getMonth() === 8 &&
+		napKezdet.getDate() === 20
+	) {
+		return "ejszaka";
 	}
+
+	const napokKulonbseg =
+		Math.round((napKezdet - HORGONY) / 86400000);
+
+	const ciklusIndex =
+		((napokKulonbseg % 4) + 4) % 4;
+
+	if (ciklusIndex === 0) {
+		return "nappal";
+	}
+
+	if (ciklusIndex === 1) {
+		return "ejszaka";
+	}
+
+	return "szabad";
+}
 
 
 	/* =========================
