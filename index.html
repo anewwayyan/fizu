@@ -498,13 +498,11 @@
 		// -----------------------------------------------------
 
 		const kovetkezo = new Date(
-			most.getFullYear(),
-			most.getMonth() + 1,
-			8,
-			0,
-			0,
-			0
-		);
+    most.getFullYear(),
+    most.getMonth() + (most.getDate() >= 8 ? 1 : 0),
+    8,
+    0, 0, 0
+);
 
 
 		// =====================================================
@@ -639,9 +637,7 @@
 			formatDatum(kovetkezo) +
 			" (" +
 			napokAFizuig +
-			" nap múlva) · Órabér: " +
-			formatFt(ORABER) +
-			"/óra";
+			" nap múlva);
 	}
 
 
