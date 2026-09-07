@@ -64,6 +64,11 @@
 		line-height: 1.6;
 		margin-top: 1em;
 	}
+	#fizu-varhato {
+	font-size: 1em;
+	font-weight: 600;
+	margin: 0.8em 0;
+	}
 	.theme-toggle {
 		position: absolute;
 		top: 1em;
@@ -84,6 +89,7 @@
 		<h1>Mennyi most a fizum? 💸</h1>
 		<p id="fizu-osszeg">0 Ft</p>
 		<p id="fizu-status"></p>
+		<p id="fizu-varhato"></p>
 		<p id="fizu-info"></p>
 	</div>
 
@@ -180,15 +186,23 @@
 		return d.getFullYear() + ". " + String(d.getMonth() + 1).padStart(2, "0") + ". " + String(d.getDate()).padStart(2, "0") + ".";
 	}
 
-	function frissitFizumat() {
+function frissitFizumat() {
 	const most = new Date();
 
-	// Mindig az aktuális hónap 1. napjától számolunk
+	// Aktuális hónap első napja
 	const honapKezdete = new Date(
 		most.getFullYear(),
 		most.getMonth(),
 		1,
 		0, 0, 0
+	);
+
+	// Aktuális hónap utolsó napja
+	const honapVege = new Date(
+		most.getFullYear(),
+		most.getMonth() + 1,
+		0,
+		23, 59, 59
 	);
 
 	// Következő fizetés: következő hónap 8.
@@ -199,45 +213,65 @@
 		0, 0, 0
 	);
 
-	const orak = ledolgozottOrak(honapKezdete, most);
-	const osszeg = orak * ORABER;
+	// ===== EDDIG MEGKEResett =====
+	const eddigOrak = ledolgozottOrak(honapKezdete, most);
+	const eddigOsszeg = eddigOrak * ORABER;
 
-	document.getElementById("fizu-osszeg").textContent = formatFt(osszeg);
+	document.getElementById("fizu-osszeg").textContent =
+		formatFt(eddigOsszeg);
 
+	// ===== TELJES HAVI VÁRHATÓ FIZETÉS =====
+	const haviOrak = ledolgozottOrak(honapKezdete, honapVege);
+	const haviOsszeg = haviOrak * ORABER;
+
+	document.getElementById("fizu-varhato").textContent =
+		"💰 Várható fizetés 8-án: " +
+		formatFt(haviOsszeg) +
+		" (" + haviOrak + " óra)";
+
+	// ===== MŰSZAK ÁLLAPOTA =====
 	const tipus = muszakTipus(most);
 	let statusSzoveg;
 
 	if (tipus === "szabad") {
-		statusSzoveg = "😴 Ma szabadnap van, a számláló most nem nő.";
+		statusSzoveg =
+			"😴 Ma szabadnap van, a számláló most nem nő.";
 	} else {
 		const intervallum = muszakIdointervallum(most);
 		const [ms, me] = intervallum;
 
 		if (most >= ms && most <= me) {
 			statusSzoveg =
-				(tipus === "nappal" ? "🌞 Nappalos műszak" : "🌙 Éjszakás műszak") +
+				(tipus === "nappal"
+					? "🌞 Nappalos műszak"
+					: "🌙 Éjszakás műszak") +
 				" – megy a számláló!";
 		} else {
-			statusSzoveg = "⏸️ Most nincs műszak, a számláló szünetel.";
+			statusSzoveg =
+				"⏸️ Most nincs műszak, a számláló szünetel.";
 		}
 	}
 
-	document.getElementById("fizu-status").textContent = statusSzoveg;
+	document.getElementById("fizu-status").textContent =
+		statusSzoveg;
 
+	// ===== INFORMÁCIÓ =====
 	const napokAFizuig = Math.ceil(
 		(kovetkezo - most) / 86400000
 	);
 
 	document.getElementById("fizu-info").textContent =
-		"Időszak: " + formatDatum(honapKezdete) +
-		" – " + formatDatum(new Date(
-			most.getFullYear(),
-			most.getMonth() + 1,
-			0
-		)) +
-		" · Következő fizetés: " + formatDatum(kovetkezo) +
-		" (" + napokAFizuig + " nap múlva) · Órabér: " +
-		formatFt(ORABER) + "/óra";
+		"Időszak: " +
+		formatDatum(honapKezdete) +
+		" – " +
+		formatDatum(honapVege) +
+		" · Következő fizetés: " +
+		formatDatum(kovetkezo) +
+		" (" +
+		napokAFizuig +
+		" nap múlva) · Órabér: " +
+		formatFt(ORABER) +
+		"/óra";
 }
 	frissitFizumat();
 	setInterval(frissitFizumat, 1000);
