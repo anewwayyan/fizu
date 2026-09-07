@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>if(localStorage.getItem("theme")==="dark")document.documentElement.setAttribute("data-theme","dark");</script>
-<title>Mennyi most a fizum?</title>
+<title>Fizumat</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
 <style>
 	:root {
@@ -81,7 +81,7 @@
 <body>
 	<div class="card">
 		<button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-		<h1>Mennyi most a fizum? 💸</h1>
+		<h1>Fizumat 💸</h1>
 		<p id="fizu-osszeg">0 Ft</p>
 		<p id="fizu-status"></p>
 		<p id="fizu-info"></p>
@@ -100,7 +100,7 @@
 		}
 	}
 
-	// ===== Mennyi most a fizum? beállítások =====
+	// ===== Fizumat beállítások =====
 	const ORABER = 2750; // Ft / óra
 
 	// Horgony: 2026.09.08. NAPPALOS (07:00-19:00)
@@ -180,7 +180,7 @@
 		return d.getFullYear() + ". " + String(d.getMonth() + 1).padStart(2, "0") + ". " + String(d.getDate()).padStart(2, "0") + ".";
 	}
 
-	function frissitMennyi most a fizum?() {
+	function frissitFizumat() {
 		const most = new Date();
 		const { elozo, kovetkezo } = fizetesiCiklus(most);
 		const orak = ledolgozottOrak(elozo, most);
@@ -210,8 +210,8 @@
 			" (" + napokAFizuig + " nap múlva) · Órabér: " + formatFt(ORABER) + "/óra";
 	}
 
-	frissitMennyi most a fizum?();
-	setInterval(frissitMennyi most a fizum?, 1000);
+	frissitFizumat();
+	setInterval(frissitFizumat, 1000);
 </script>
 </body>
 </html>
