@@ -181,35 +181,64 @@
 	}
 
 	function frissitFizumat() {
-		const most = new Date();
-		const { elozo, kovetkezo } = fizetesiCiklus(most);
-		const orak = ledolgozottOrak(elozo, most);
-		const osszeg = orak * ORABER;
+	const most = new Date();
 
-		document.getElementById("fizu-osszeg").textContent = formatFt(osszeg);
+	// Mindig az aktuális hónap 1. napjától számolunk
+	const honapKezdete = new Date(
+		most.getFullYear(),
+		most.getMonth(),
+		1,
+		0, 0, 0
+	);
 
-		const tipus = muszakTipus(most);
-		let statusSzoveg;
-		if (tipus === "szabad") {
-			statusSzoveg = "😴 Ma szabadnap van, a számláló most nem nő.";
+	// Következő fizetés: következő hónap 8.
+	const kovetkezo = new Date(
+		most.getFullYear(),
+		most.getMonth() + 1,
+		8,
+		0, 0, 0
+	);
+
+	const orak = ledolgozottOrak(honapKezdete, most);
+	const osszeg = orak * ORABER;
+
+	document.getElementById("fizu-osszeg").textContent = formatFt(osszeg);
+
+	const tipus = muszakTipus(most);
+	let statusSzoveg;
+
+	if (tipus === "szabad") {
+		statusSzoveg = "😴 Ma szabadnap van, a számláló most nem nő.";
+	} else {
+		const intervallum = muszakIdointervallum(most);
+		const [ms, me] = intervallum;
+
+		if (most >= ms && most <= me) {
+			statusSzoveg =
+				(tipus === "nappal" ? "🌞 Nappalos műszak" : "🌙 Éjszakás műszak") +
+				" – megy a számláló!";
 		} else {
-			const intervallum = muszakIdointervallum(most);
-			const [ms, me] = intervallum;
-			if (most >= ms && most <= me) {
-				statusSzoveg = (tipus === "nappal" ? "🌞 Nappalos műszak" : "🌙 Éjszakás műszak") + " – megy a számláló!";
-			} else {
-				statusSzoveg = "⏸️ Most nincs műszak, a számláló szünetel.";
-			}
+			statusSzoveg = "⏸️ Most nincs műszak, a számláló szünetel.";
 		}
-		document.getElementById("fizu-status").textContent = statusSzoveg;
-
-		const napokAFizuig = Math.ceil((kovetkezo - most) / 86400000);
-		document.getElementById("fizu-info").textContent =
-			"Előző fizetés: " + formatDatum(elozo) +
-			" · Következő fizetés: " + formatDatum(kovetkezo) +
-			" (" + napokAFizuig + " nap múlva) · Órabér: " + formatFt(ORABER) + "/óra";
 	}
 
+	document.getElementById("fizu-status").textContent = statusSzoveg;
+
+	const napokAFizuig = Math.ceil(
+		(kovetkezo - most) / 86400000
+	);
+
+	document.getElementById("fizu-info").textContent =
+		"Időszak: " + formatDatum(honapKezdete) +
+		" – " + formatDatum(new Date(
+			most.getFullYear(),
+			most.getMonth() + 1,
+			0
+		)) +
+		" · Következő fizetés: " + formatDatum(kovetkezo) +
+		" (" + napokAFizuig + " nap múlva) · Órabér: " +
+		formatFt(ORABER) + "/óra";
+}
 	frissitFizumat();
 	setInterval(frissitFizumat, 1000);
 </script>
