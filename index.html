@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script>
-	if(localStorage.getItem("theme")==="dark")
-		document.documentElement.setAttribute("data-theme","dark");
+	if (localStorage.getItem("theme") === "dark") {
+		document.documentElement.setAttribute("data-theme", "dark");
+	}
 </script>
 
-<title>Fizumat</title>
+<title>Mennyi most a fizum? 💸</title>
 
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
 
 <style>
-
 	:root {
 		--bg: #f4f5f7;
 		--card-bg: #ffffff;
@@ -89,8 +89,6 @@
 		margin-top: 1em;
 	}
 
-	/* ===== Progress bar ===== */
-
 	.progress-container {
 		width: 100%;
 		height: 12px;
@@ -107,8 +105,6 @@
 		border-radius: 10px;
 		transition: width 0.5s ease;
 	}
-
-	/* ===== Műszaknaptár ===== */
 
 	#muszak-naptar {
 		margin-top: 1.5em;
@@ -175,8 +171,6 @@
 		margin-top: 2px;
 	}
 
-	/* ===== Sötét mód gomb ===== */
-
 	.theme-toggle {
 		position: absolute;
 		top: 1em;
@@ -189,7 +183,6 @@
 		font-size: 0.8em;
 		cursor: pointer;
 	}
-
 </style>
 </head>
 
@@ -217,60 +210,45 @@
 
 </div>
 
-
 <script>
-
-	// =========================================================
-	// SÖTÉT MÓD
-	// =========================================================
 
 	function toggleTheme() {
 
 		const root = document.documentElement;
-
-		const dark =
-			root.getAttribute("data-theme") === "dark";
+		const dark = root.getAttribute("data-theme") === "dark";
 
 		if (dark) {
-
 			root.removeAttribute("data-theme");
-
 			localStorage.setItem("theme", "light");
-
 		} else {
-
 			root.setAttribute("data-theme", "dark");
-
 			localStorage.setItem("theme", "dark");
-
 		}
 	}
 
 
-	// =========================================================
-	// FIZUMAT BEÁLLÍTÁSOK
-	// =========================================================
+	/* =========================
+	   BEÁLLÍTÁSOK
+	   ========================= */
 
-	const ORABER = 2750; // Ft / óra
+	const ORABER = 2750;
 
-
-	// Horgony:
-	// 2026.09.08. = NAPPALOS
-	// 07:00 - 19:00
-	//
-	// 4 napos ciklus:
-	//
-	// nappalos -> éjszakás -> szabad -> szabad
-	// -> ismét nappalos...
+	/*
+	   2026. szeptember 8. = nappalos
+	   Ciklus:
+	   1. nappal
+	   2. éjszaka
+	   3. szabad
+	   4. szabad
+	*/
 
 	const HORGONY = new Date(2026, 8, 8);
-
 	HORGONY.setHours(0, 0, 0, 0);
 
 
-	// =========================================================
-	// MŰSZAK TÍPUSA
-	// =========================================================
+	/* =========================
+	   MŰSZAK TÍPUSA
+	   ========================= */
 
 	function muszakTipus(nap) {
 
@@ -281,26 +259,26 @@
 		);
 
 		const napokKulonbseg =
-			Math.round(
-				(napKezdet - HORGONY) / 86400000
-			);
+			Math.round((napKezdet - HORGONY) / 86400000);
 
 		const ciklusIndex =
 			((napokKulonbseg % 4) + 4) % 4;
 
-		if (ciklusIndex === 0)
+		if (ciklusIndex === 0) {
 			return "nappal";
+		}
 
-		if (ciklusIndex === 1)
+		if (ciklusIndex === 1) {
 			return "ejszaka";
+		}
 
 		return "szabad";
 	}
 
 
-	// =========================================================
-	// MŰSZAK IDŐINTERVALLUMA
-	// =========================================================
+	/* =========================
+	   MŰSZAK IDŐINTERVALLUM
+	   ========================= */
 
 	function muszakIdointervallum(nap) {
 
@@ -310,74 +288,33 @@
 		const honap = nap.getMonth();
 		const napSzam = nap.getDate();
 
-
-		// Nappalos: 07:00 - 19:00
-
 		if (tipus === "nappal") {
 
 			return [
-				new Date(
-					ev,
-					honap,
-					napSzam,
-					7,
-					0,
-					0
-				),
-
-				new Date(
-					ev,
-					honap,
-					napSzam,
-					19,
-					0,
-					0
-				)
+				new Date(ev, honap, napSzam, 7, 0, 0),
+				new Date(ev, honap, napSzam, 19, 0, 0)
 			];
 		}
-
-
-		// Éjszakás: 19:00 - következő nap 07:00
 
 		if (tipus === "ejszaka") {
 
 			return [
-				new Date(
-					ev,
-					honap,
-					napSzam,
-					19,
-					0,
-					0
-				),
-
-				new Date(
-					ev,
-					honap,
-					napSzam + 1,
-					7,
-					0,
-					0
-				)
+				new Date(ev, honap, napSzam, 19, 0, 0),
+				new Date(ev, honap, napSzam + 1, 7, 0, 0)
 			];
 		}
-
 
 		return null;
 	}
 
 
-	// =========================================================
-	// LEDOLGOZOTT ÓRÁK
-	// =========================================================
+	/* =========================
+	   LEDOLGOZOTT ÓRÁK
+	   ========================= */
 
 	function ledolgozottOrak(tol, ig) {
 
 		let osszOraMs = 0;
-
-
-		// Egy nappal korábbról indulunk,
-		// hogy az éjszakás műszakokat is biztosan elkapjuk.
 
 		const kezdoNap = new Date(
 			tol.getFullYear(),
@@ -385,13 +322,11 @@
 			tol.getDate() - 1
 		);
 
-
 		const utolsoNap = new Date(
 			ig.getFullYear(),
 			ig.getMonth(),
 			ig.getDate()
 		);
-
 
 		for (
 			let d = new Date(kezdoNap);
@@ -402,19 +337,17 @@
 			const intervallum =
 				muszakIdointervallum(d);
 
-			if (!intervallum)
+			if (!intervallum) {
 				continue;
-
+			}
 
 			const [ms, me] = intervallum;
-
 
 			const metszetKezdet =
 				ms > tol ? ms : tol;
 
 			const metszetVeg =
 				me < ig ? me : ig;
-
 
 			if (metszetVeg > metszetKezdet) {
 
@@ -423,14 +356,13 @@
 			}
 		}
 
-
 		return osszOraMs / 3600000;
 	}
 
 
-	// =========================================================
-	// FORINT FORMÁZÁS
-	// =========================================================
+	/* =========================
+	   FORMÁZÁS
+	   ========================= */
 
 	function formatFt(szam) {
 
@@ -439,95 +371,87 @@
 	}
 
 
-	// =========================================================
-	// DÁTUM FORMÁZÁS
-	// =========================================================
-
 	function formatDatum(d) {
 
-		return (
-			d.getFullYear() +
-			". " +
-			String(d.getMonth() + 1).padStart(2, "0") +
-			". " +
-			String(d.getDate()).padStart(2, "0") +
-			"."
-		);
+		return d.getFullYear() + ". " +
+			String(d.getMonth() + 1).padStart(2, "0") + ". " +
+			String(d.getDate()).padStart(2, "0") + ".";
 	}
 
 
-	// =========================================================
-	// FIZUMAT FRISSÍTÉSE
-	// =========================================================
+	/* =========================
+	   FIZU FRISSÍTÉSE
+	   ========================= */
 
 	function frissitFizumat() {
 
 		const most = new Date();
 
 
-		// -----------------------------------------------------
-		// Aktuális hónap első napja
-		// -----------------------------------------------------
+		/* Aktuális hónap első napja */
 
 		const honapKezdete = new Date(
 			most.getFullYear(),
 			most.getMonth(),
 			1,
-			0,
-			0,
-			0
+			0, 0, 0
 		);
 
 
-		// -----------------------------------------------------
-		// Aktuális hónap utolsó napja
-		// -----------------------------------------------------
+		/* Aktuális hónap utolsó napja */
 
 		const honapVege = new Date(
 			most.getFullYear(),
 			most.getMonth() + 1,
 			0,
-			23,
-			59,
-			59
+			23, 59, 59
 		);
 
 
-		// -----------------------------------------------------
-		// Következő fizetés
-		// -----------------------------------------------------
+		/* 
+		   Következő fizetés:
+
+		   Ha még nincs 8-a:
+		   aktuális hónap 8.
+
+		   Ha már elmúlt 8-a:
+		   következő hónap 8.
+		*/
+
+		const fizetesHonap =
+			most.getDate() < 8
+				? most.getMonth()
+				: most.getMonth() + 1;
+
+		const fizetesEv =
+			most.getFullYear() +
+			(
+				fizetesHonap > 11
+					? 1
+					: 0
+			);
 
 		const kovetkezo = new Date(
-    most.getFullYear(),
-    most.getMonth() + (most.getDate() >= 8 ? 1 : 0),
-    8,
-    0, 0, 0
-);
+			fizetesEv,
+			fizetesHonap % 12,
+			8,
+			0, 0, 0
+		);
 
 
-		// =====================================================
-		// EDDIG MEGKEResett PÉNZ
-		// =====================================================
+		/* Eddig megkeresett pénz */
 
 		const eddigOrak =
-			ledolgozottOrak(
-				honapKezdete,
-				most
-			);
+			ledolgozottOrak(honapKezdete, most);
 
 		const eddigOsszeg =
 			eddigOrak * ORABER;
 
-
-		document.getElementById(
-			"fizu-osszeg"
-		).textContent =
-			formatFt(eddigOsszeg);
+		document.getElementById("fizu-osszeg")
+			.textContent = formatFt(eddigOsszeg);
 
 
-		// =====================================================
-		// TELJES HAVI VÁRHATÓ FIZETÉS
-		// =====================================================
+		/* Teljes havi várható fizetés */
 
 		const haviOrak =
 			ledolgozottOrak(
@@ -538,20 +462,14 @@
 		const haviOsszeg =
 			haviOrak * ORABER;
 
-
-		document.getElementById(
-			"fizu-varhato"
-		).textContent =
-			"💰 Várható fizetés 8-án: " +
-			formatFt(haviOsszeg) +
-			" (" +
-			haviOrak +
-			" óra)";
+		document.getElementById("fizu-varhato")
+			.textContent =
+				"💰 Várható fizetés 8-án: " +
+				formatFt(haviOsszeg) +
+				" (" + haviOrak + " óra)";
 
 
-		// =====================================================
-		// PROGRESS BAR
-		// =====================================================
+		/* Progress bar */
 
 		const progress =
 			haviOsszeg > 0
@@ -561,19 +479,13 @@
 				)
 				: 0;
 
-
-		document.getElementById(
-			"progress-bar"
-		).style.width =
-			progress + "%";
+		document.getElementById("progress-bar")
+			.style.width = progress + "%";
 
 
-		// =====================================================
-		// MŰSZAK ÁLLAPOTA
-		// =====================================================
+		/* Aktuális műszak állapota */
 
-		const tipus =
-			muszakTipus(most);
+		const tipus = muszakTipus(most);
 
 		let statusSzoveg;
 
@@ -588,9 +500,7 @@
 			const intervallum =
 				muszakIdointervallum(most);
 
-			const [ms, me] =
-				intervallum;
-
+			const [ms, me] = intervallum;
 
 			if (most >= ms && most <= me) {
 
@@ -610,15 +520,11 @@
 		}
 
 
-		document.getElementById(
-			"fizu-status"
-		).textContent =
-			statusSzoveg;
+		document.getElementById("fizu-status")
+			.textContent = statusSzoveg;
 
 
-		// =====================================================
-		// FIZETÉSIG HÁTRALÉVŐ NAPOK
-		// =====================================================
+		/* Napok a következő fizetésig */
 
 		const napokAFizuig =
 			Math.ceil(
@@ -626,50 +532,41 @@
 			);
 
 
-		document.getElementById(
-			"fizu-info"
-		).textContent =
-			"Időszak: " +
-			formatDatum(honapKezdete) +
-			" – " +
-			formatDatum(honapVege) +
-			" · Következő fizetés: " +
-			formatDatum(kovetkezo) +
-			" (" +
-			napokAFizuig +
-			" nap múlva);
+		/* Alsó információs sor */
+
+		document.getElementById("fizu-info")
+			.textContent =
+				"Időszak: " +
+				formatDatum(honapKezdete) +
+				" – " +
+				formatDatum(honapVege) +
+				" · Következő fizetés: " +
+				formatDatum(kovetkezo) +
+				" (" +
+				napokAFizuig +
+				" nap múlva)";
 	}
 
 
-	// =========================================================
-	// MŰSZAKNAPTÁR
-	// =========================================================
+	/* =========================
+	   MŰSZAKNAPTÁR
+	   ========================= */
 
 	function generalMuszakNaptar() {
 
 		const most = new Date();
 
-		const ev =
-			most.getFullYear();
+		const ev = most.getFullYear();
+		const honap = most.getMonth();
 
-		const honap =
-			most.getMonth();
-
-
-		// Hónap neve
 
 		const honapNeve =
-			new Intl.DateTimeFormat(
-				"hu-HU",
-				{
-					month: "long"
-				}
-			).format(
+			new Intl.DateTimeFormat("hu-HU", {
+				month: "long"
+			}).format(
 				new Date(ev, honap, 1)
 			);
 
-
-		// Hónap napjainak száma
 
 		const napokSzama =
 			new Date(
@@ -679,22 +576,15 @@
 			).getDate();
 
 
-		// A hónap első napja
-		//
-		// JavaScript:
-		// vasárnap = 0
-		// hétfő = 1
-		//
-		// Nekünk:
-		// hétfő = 0
-		// vasárnap = 6
-
 		const elsoNap =
 			new Date(
 				ev,
 				honap,
 				1
 			).getDay();
+
+
+		/* Hétfő legyen az első nap */
 
 		const eltolodas =
 			(elsoNap + 6) % 7;
@@ -704,14 +594,11 @@
 
 			<div class="naptar-cim">
 
-				${
-					honapNeve.charAt(0).toUpperCase() +
-					honapNeve.slice(1)
-				}
+				${honapNeve.charAt(0).toUpperCase() +
+				honapNeve.slice(1)}
 				${ev}
 
 			</div>
-
 
 			<div class="naptar-fejlec">
 
@@ -725,15 +612,12 @@
 
 			</div>
 
-
 			<div class="naptar-napok">
 
 		`;
 
 
-		// -----------------------------------------------------
-		// Üres cellák a hónap elején
-		// -----------------------------------------------------
+		/* Üres mezők a hónap elején */
 
 		for (
 			let i = 0;
@@ -746,9 +630,7 @@
 		}
 
 
-		// -----------------------------------------------------
-		// Hónap napjai
-		// -----------------------------------------------------
+		/* Napok */
 
 		for (
 			let nap = 1;
@@ -763,45 +645,32 @@
 					nap
 				);
 
-
 			const tipus =
 				muszakTipus(datum);
 
 
-			let osztaly =
-				"nap ";
-
-			let jel =
-				"";
+			let osztaly = "nap ";
+			let jel = "";
 
 
 			if (tipus === "nappal") {
 
-				osztaly +=
-					"nap-nappal";
-
-				jel =
-					"🌞";
+				osztaly += "nap-nappal";
+				jel = "🌞";
 
 			} else if (tipus === "ejszaka") {
 
-				osztaly +=
-					"nap-ejszaka";
-
-				jel =
-					"🌙";
+				osztaly += "nap-ejszaka";
+				jel = "🌙";
 
 			} else {
 
-				osztaly +=
-					"nap-szabad";
-
-				jel =
-					"😴";
+				osztaly += "nap-szabad";
+				jel = "😴";
 			}
 
 
-			// Mai nap kiemelése
+			/* Mai nap kiemelése */
 
 			const ma =
 				nap === most.getDate() &&
@@ -810,9 +679,7 @@
 
 
 			if (ma) {
-
-				osztaly +=
-					" nap-ma";
+				osztaly += " nap-ma";
 			}
 
 
@@ -834,30 +701,22 @@
 		}
 
 
-		html += `
-
-			</div>
-
-		`;
+		html += `</div>`;
 
 
 		document.getElementById(
 			"muszak-naptar"
-		).innerHTML =
-			html;
+		).innerHTML = html;
 	}
 
 
-	// =========================================================
-	// INDÍTÁS
-	// =========================================================
+	/* =========================
+	   INDÍTÁS
+	   ========================= */
 
 	frissitFizumat();
 
 	generalMuszakNaptar();
-
-
-	// Fizetés másodpercenként frissül
 
 	setInterval(
 		frissitFizumat,
