@@ -157,6 +157,16 @@
 		background: var(--bg);
 	}
 
+	.nap-szabi {
+		background: rgba(230, 126, 34, 0.18);
+	}
+
+	.nap-szabi .nap-jel {
+		font-size: 1.3em;
+		font-weight: 800;
+		color: #e67e22;
+	}
+
 	.nap-ma {
 		outline: 2px solid var(--accent);
 		font-weight: bold;
@@ -266,6 +276,16 @@
 		napKezdet.getDate() === 20
 	) {
 		return "ejszaka";
+	}
+
+	// KIVÉTEL:
+	// 2026. szeptember 12. szabi (kivett szabadnap)
+	if (
+		napKezdet.getFullYear() === 2026 &&
+		napKezdet.getMonth() === 8 &&
+		napKezdet.getDate() === 12
+	) {
+		return "szabi";
 	}
 
 	const napokKulonbseg =
@@ -505,6 +525,11 @@
 			statusSzoveg =
 				"😴 Ma szabadnap van, a számláló most nem nő.";
 
+		} else if (tipus === "szabi") {
+
+			statusSzoveg =
+				"🅂 Szabin vagy, a számláló most nem nő.";
+
 		} else {
 
 			const intervallum =
@@ -672,6 +697,11 @@
 
 				osztaly += "nap-ejszaka";
 				jel = "🌙";
+
+			} else if (tipus === "szabi") {
+
+				osztaly += "nap-szabi";
+				jel = "SZ";
 
 			} else {
 
