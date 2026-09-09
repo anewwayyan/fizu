@@ -69,6 +69,7 @@
 		color: var(--accent);
 		margin: 0.3em 0 0.15em 0;
 		font-variant-numeric: tabular-nums;
+		transition: filter 0.2s ease;
 	}
 
 	#fizu-status {
@@ -80,6 +81,12 @@
 		font-size: 1em;
 		font-weight: 600;
 		margin: 0.8em 0;
+		transition: filter 0.2s ease;
+	}
+
+	.osszeg-elrejtve {
+		filter: blur(9px);
+		user-select: none;
 	}
 
 	#fizu-info {
@@ -181,17 +188,34 @@
 		margin-top: 2px;
 	}
 
-	.theme-toggle {
+	.theme-toggle,
+	.privacy-toggle {
 		position: absolute;
 		top: 1em;
-		right: 1em;
 		background: none;
 		border: 1px solid var(--muted);
 		border-radius: 20px;
 		color: var(--text);
-		padding: 0.3em 0.8em;
+		padding: 0.35em 0.7em;
 		font-size: 0.8em;
 		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.theme-toggle {
+		right: 1em;
+	}
+
+	.privacy-toggle {
+		left: 1em;
+	}
+
+	.privacy-toggle svg {
+		width: 18px;
+		height: 18px;
+		display: block;
 	}
 </style>
 </head>
@@ -199,6 +223,8 @@
 <body>
 
 <div class="card">
+
+	<button class="privacy-toggle" id="privacy-btn" onclick="toggleOsszegLathatosag()" title="Összeg megjelenítése"></button>
 
 	<button class="theme-toggle" onclick="toggleTheme()">🌙</button>
 
@@ -234,6 +260,46 @@
 			root.setAttribute("data-theme", "dark");
 			localStorage.setItem("theme", "dark");
 		}
+	}
+
+
+	/* =========================
+	   ÖSSZEG ELREJTÉSE (adatvédelem)
+	   ========================= */
+
+	const SZEM_IKON =
+		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+
+	const ATHUZOTT_SZEM_IKON =
+		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-3.22 4.53M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+
+	// Alapértelmezetten el van rejtve az összeg
+	let osszegRejtve = true;
+
+	function frissitPrivacyGomb() {
+
+		const btn = document.getElementById("privacy-btn");
+
+		const celok = [
+			document.getElementById("fizu-osszeg"),
+			document.getElementById("fizu-varhato")
+		];
+
+		celok.forEach(function (el) {
+			if (osszegRejtve) {
+				el.classList.add("osszeg-elrejtve");
+			} else {
+				el.classList.remove("osszeg-elrejtve");
+			}
+		});
+
+		btn.innerHTML = osszegRejtve ? ATHUZOTT_SZEM_IKON : SZEM_IKON;
+		btn.title = osszegRejtve ? "Összeg megjelenítése" : "Összeg elrejtése";
+	}
+
+	function toggleOsszegLathatosag() {
+		osszegRejtve = !osszegRejtve;
+		frissitPrivacyGomb();
 	}
 
 
@@ -757,6 +823,8 @@
 	frissitFizumat();
 
 	generalMuszakNaptar();
+
+	frissitPrivacyGomb();
 
 	setInterval(
 		frissitFizumat,
