@@ -425,12 +425,30 @@
 
 
 	/* =========================
-	   LEDOLGOZOTT ÓRÁK
+	   BÉRSZORZÓ MŰSZAKTÍPUSONKÉNT
 	   ========================= */
 
-	function ledolgozottOrak(tol, ig) {
+	// nappal / éjszaka: normál 100%
+	// nappal_tulora: beosztás szerinti pihenőnapon (P) végzett munka
+	//                -> Mt. 143. § alapján +100% pótlék, azaz 200% (dupla fizu)
+	function muszakSzorzo(tipus) {
+
+		if (tipus === "nappal_tulora") {
+			return 2;
+		}
+
+		return 1;
+	}
+
+
+	/* =========================
+	   LEDOLGOZOTT ÓRÁK ÉS PÉNZ
+	   ========================= */
+
+	function idoszakOsszesites(tol, ig) {
 
 		let osszOraMs = 0;
+		let osszPenz = 0;
 
 		const kezdoNap = new Date(
 			tol.getFullYear(),
@@ -450,6 +468,9 @@
 			d.setDate(d.getDate() + 1)
 		) {
 
+			const tipus =
+				muszakTipus(d);
+
 			const intervallum =
 				muszakIdointervallum(d);
 
@@ -467,12 +488,23 @@
 
 			if (metszetVeg > metszetKezdet) {
 
-				osszOraMs +=
+				const oraMs =
 					metszetVeg - metszetKezdet;
+
+				const ora =
+					oraMs / 3600000;
+
+				osszOraMs += oraMs;
+
+				osszPenz +=
+					ora * ORABER * muszakSzorzo(tipus);
 			}
 		}
 
-		return osszOraMs / 3600000;
+		return {
+			orak: osszOraMs / 3600000,
+			penz: osszPenz
+		};
 	}
 
 
@@ -557,11 +589,11 @@
 
 		/* Eddig megkeresett pénz */
 
-		const eddigOrak =
-			ledolgozottOrak(honapKezdete, most);
+		const eddig =
+			idoszakOsszesites(honapKezdete, most);
 
 		const eddigOsszeg =
-			eddigOrak * ORABER;
+			eddig.penz;
 
 		document.getElementById("fizu-osszeg")
 			.textContent = formatFt(eddigOsszeg);
@@ -569,14 +601,17 @@
 
 		/* Teljes havi várható fizetés */
 
-		const haviOrak =
-			ledolgozottOrak(
+		const havi =
+			idoszakOsszesites(
 				honapKezdete,
 				honapVege
 			);
 
+		const haviOrak =
+			havi.orak;
+
 		const haviOsszeg =
-			haviOrak * ORABER;
+			havi.penz;
 
 		document.getElementById("fizu-varhato")
 			.textContent =
@@ -630,7 +665,7 @@
 				if (tipus === "nappal") {
 					muszakNev = "🌞 Nappalos műszak";
 				} else if (tipus === "nappal_tulora") {
-					muszakNev = "🌞⚡ Nappalos műszak (túlóra)";
+					muszakNev = "🌞⚡ Nappalos műszak (P-túlóra, 200%)";
 				} else {
 					muszakNev = "🌙 Éjszakás műszak";
 				}
