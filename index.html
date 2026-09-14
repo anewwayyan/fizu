@@ -174,6 +174,10 @@
 		background: rgba(230, 126, 34, 0.18);
 	}
 
+	.nap-tulora {
+		box-shadow: inset 0 0 0 2px #e67e22;
+	}
+
 	.nap-szabi .nap-jel {
 		font-size: 1.3em;
 		font-weight: 800;
@@ -360,6 +364,16 @@
 		return "szabi";
 	}
 
+	// KIVÉTEL:
+	// 2026. szeptember 27. nappalos, de túlóraként
+	if (
+		napKezdet.getFullYear() === 2026 &&
+		napKezdet.getMonth() === 8 &&
+		napKezdet.getDate() === 27
+	) {
+		return "nappal_tulora";
+	}
+
 	const napokKulonbseg =
 		Math.round((napKezdet - HORGONY) / 86400000);
 
@@ -390,7 +404,7 @@
 		const honap = nap.getMonth();
 		const napSzam = nap.getDate();
 
-		if (tipus === "nappal") {
+		if (tipus === "nappal" || tipus === "nappal_tulora") {
 
 			return [
 				new Date(ev, honap, napSzam, 7, 0, 0),
@@ -611,12 +625,18 @@
 
 			if (most >= ms && most <= me) {
 
+				let muszakNev;
+
+				if (tipus === "nappal") {
+					muszakNev = "🌞 Nappalos műszak";
+				} else if (tipus === "nappal_tulora") {
+					muszakNev = "🌞⚡ Nappalos műszak (túlóra)";
+				} else {
+					muszakNev = "🌙 Éjszakás műszak";
+				}
+
 				statusSzoveg =
-					(
-						tipus === "nappal"
-							? "🌞 Nappalos műszak"
-							: "🌙 Éjszakás műszak"
-					) +
+					muszakNev +
 					" – megy a számláló!";
 
 			} else {
@@ -764,6 +784,11 @@
 
 				osztaly += "nap-nappal";
 				jel = "🌞";
+
+			} else if (tipus === "nappal_tulora") {
+
+				osztaly += "nap-nappal nap-tulora";
+				jel = "🌞⚡";
 
 			} else if (tipus === "ejszaka") {
 
