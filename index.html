@@ -227,6 +227,99 @@
 		height: 18px;
 		display: block;
 	}
+
+	/* =========================
+	   INTERAKTÍV MŰSZAKBEÁLLÍTÁS
+	   ========================= */
+
+	.nap {
+		cursor: pointer;
+		transition: transform 0.12s ease, box-shadow 0.12s ease;
+	}
+
+	.nap:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+	}
+
+	.muszak-modal-hatter {
+		display: none;
+		position: fixed;
+		inset: 0;
+		background: rgba(0,0,0,0.45);
+		z-index: 1000;
+		align-items: center;
+		justify-content: center;
+		padding: 1em;
+	}
+
+	.muszak-modal-hatter.lathato {
+		display: flex;
+	}
+
+	.muszak-modal {
+		width: min(360px, 100%);
+		background: var(--card-bg);
+		color: var(--text);
+		border-radius: 18px;
+		padding: 1.4em;
+		box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+		text-align: left;
+	}
+
+	.muszak-modal h2 {
+		margin: 0 0 0.25em 0;
+		font-size: 1.15em;
+	}
+
+	.muszak-modal-datum {
+		color: var(--muted);
+		font-size: 0.9em;
+		margin-bottom: 1em;
+	}
+
+	.muszak-opciok {
+		display: grid;
+		gap: 0.55em;
+	}
+
+	.muszak-opcio {
+		width: 100%;
+		border: 1px solid rgba(128,128,128,0.35);
+		border-radius: 10px;
+		padding: 0.75em 0.9em;
+		background: var(--bg);
+		color: var(--text);
+		font-size: 0.95em;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.muszak-opcio:hover {
+		border-color: var(--accent);
+	}
+
+	.muszak-opcio.torles {
+		color: #c0392b;
+	}
+
+	.muszak-modal-bezar {
+		margin-top: 0.8em;
+		width: 100%;
+		border: 0;
+		background: transparent;
+		color: var(--muted);
+		padding: 0.6em;
+		cursor: pointer;
+	}
+
+	.naptar-segitseg {
+		text-align: center;
+		color: var(--muted);
+		font-size: 0.75em;
+		margin-top: 0.7em;
+	}
+
 </style>
 </head>
 
@@ -344,34 +437,17 @@
 		nap.getDate()
 	);
 
-	// KIVÉTEL:
-	// 2026. szeptember 20. nappal helyett éjszaka
-	if (
-		napKezdet.getFullYear() === 2026 &&
-		napKezdet.getMonth() === 8 &&
-		napKezdet.getDate() === 20
-	) {
-		return "ejszaka";
-	}
+	// Felhasználói módosítás elsőbbséget élvez.
+	const datumKulcs =
+		napKezdet.getFullYear() + "-" +
+		String(napKezdet.getMonth() + 1).padStart(2, "0") + "-" +
+		String(napKezdet.getDate()).padStart(2, "0");
 
-	// KIVÉTEL:
-	// 2026. szeptember 12. szabi (kivett szabadnap)
-	if (
-		napKezdet.getFullYear() === 2026 &&
-		napKezdet.getMonth() === 8 &&
-		napKezdet.getDate() === 12
-	) {
-		return "szabi";
-	}
+	const modositasok =
+		JSON.parse(localStorage.getItem("muszakModositasok") || "{}");
 
-	// KIVÉTEL:
-	// 2026. szeptember 27. nappalos, de túlóraként
-	if (
-		napKezdet.getFullYear() === 2026 &&
-		napKezdet.getMonth() === 8 &&
-		napKezdet.getDate() === 27
-	) {
-		return "nappal_tulora";
+	if (modositasok[datumKulcs]) {
+		return modositasok[datumKulcs];
 	}
 
 	const napokKulonbseg =
@@ -412,7 +488,10 @@
 			];
 		}
 
-		if (tipus === "ejszaka") {
+		if (
+			tipus === "ejszaka" ||
+			tipus === "ejszaka_tulora"
+		) {
 
 			return [
 				new Date(ev, honap, napSzam, 19, 0, 0),
@@ -433,7 +512,10 @@
 	//                -> Mt. 143. § alapján +100% pótlék, azaz 200% (dupla fizu)
 	function muszakSzorzo(tipus) {
 
-		if (tipus === "nappal_tulora") {
+		if (
+			tipus === "nappal_tulora" ||
+			tipus === "ejszaka_tulora"
+		) {
 			return 2;
 		}
 
@@ -825,10 +907,19 @@
 				osztaly += "nap-nappal nap-tulora";
 				jel = "🌞⚡";
 
-			} else if (tipus === "ejszaka") {
+			} else if (
+				tipus === "ejszaka" ||
+				tipus === "ejszaka_tulora"
+			) {
 
 				osztaly += "nap-ejszaka";
-				jel = "🌙";
+
+				if (tipus === "ejszaka_tulora") {
+					osztaly += " nap-tulora";
+					jel = "🌙⚡";
+				} else {
+					jel = "🌙";
+				}
 
 			} else if (tipus === "szabi") {
 
@@ -857,7 +948,9 @@
 
 			html += `
 
-				<div class="${osztaly}">
+				<div class="${osztaly}"
+					onclick="muszakModalMegnyit(${ev}, ${honap}, ${nap})"
+					title="Kattints a műszak módosításához">
 
 					<div class="nap-jel">
 						${jel}
@@ -882,6 +975,93 @@
 	}
 
 
+
+	/* =========================
+	   INTERAKTÍV MŰSZAKMENÜ
+	   ========================= */
+
+	let kivalasztottDatum = null;
+
+	function datumKulcs(ev, honap, nap) {
+		return ev + "-" +
+			String(honap + 1).padStart(2, "0") + "-" +
+			String(nap).padStart(2, "0");
+	}
+
+	function muszakModalMegnyit(ev, honap, nap) {
+
+		kivalasztottDatum = datumKulcs(ev, honap, nap);
+
+		const datum = new Date(ev, honap, nap);
+
+		document.getElementById("muszak-modal-cim").textContent =
+			"Műszak módosítása";
+
+		document.getElementById("muszak-modal-datum").textContent =
+			formatDatum(datum);
+
+		document.getElementById("muszak-modal-hatter")
+			.classList.add("lathato");
+	}
+
+	function muszakModalBezar() {
+		kivalasztottDatum = null;
+
+		document.getElementById("muszak-modal-hatter")
+			.classList.remove("lathato");
+	}
+
+	function modalHatterKattintas(event) {
+		if (event.target.id === "muszak-modal-hatter") {
+			muszakModalBezar();
+		}
+	}
+
+	function muszakBeallit(tipus) {
+
+		if (!kivalasztottDatum) {
+			return;
+		}
+
+		const modositasok =
+			JSON.parse(localStorage.getItem("muszakModositasok") || "{}");
+
+		modositasok[kivalasztottDatum] = tipus;
+
+		localStorage.setItem(
+			"muszakModositasok",
+			JSON.stringify(modositasok)
+		);
+
+		muszakModalBezar();
+
+		// Azonnal újraszámoljuk a fizetést és a naptárt.
+		frissitFizumat();
+		generalMuszakNaptar();
+	}
+
+	function muszakTorol() {
+
+		if (!kivalasztottDatum) {
+			return;
+		}
+
+		const modositasok =
+			JSON.parse(localStorage.getItem("muszakModositasok") || "{}");
+
+		delete modositasok[kivalasztottDatum];
+
+		localStorage.setItem(
+			"muszakModositasok",
+			JSON.stringify(modositasok)
+		);
+
+		muszakModalBezar();
+
+		frissitFizumat();
+		generalMuszakNaptar();
+	}
+
 	/* =========================
 	   INDÍTÁS
 	   ========================= */
@@ -892,12 +1072,38 @@
 
 	frissitPrivacyGomb();
 
+	document.addEventListener("keydown", function(event) {
+		if (event.key === "Escape") {
+			muszakModalBezar();
+		}
+	});
+
 	setInterval(
 		frissitFizumat,
 		1000
 	);
 
 </script>
+
+
+	<div class="muszak-modal-hatter" id="muszak-modal-hatter" onclick="modalHatterKattintas(event)">
+		<div class="muszak-modal" onclick="event.stopPropagation()">
+			<h2 id="muszak-modal-cim">Műszak módosítása</h2>
+			<div class="muszak-modal-datum" id="muszak-modal-datum"></div>
+
+			<div class="muszak-opciok">
+				<button class="muszak-opcio" onclick="muszakBeallit('nappal')">🌞 Nappalos</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka')">🌙 Éjszakás</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('szabad')">😴 Szabadnap</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('szabi')">🅂 Szabadság</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora')">🌞⚡ Nappal + túlóra (200%)</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora')">🌙⚡ Éjszaka + túlóra (200%)</button>
+				<button class="muszak-opcio torles" onclick="muszakTorol()">↩ Alapbeosztás visszaállítása</button>
+			</div>
+
+			<button class="muszak-modal-bezar" onclick="muszakModalBezar()">Mégsem</button>
+		</div>
+	</div>
 
 </body>
 </html>
