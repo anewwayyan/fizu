@@ -171,9 +171,7 @@
 	}
 
 	.nap-szabi {
-		background: var(--bg);
-		outline: 2px solid #f4c542;
-		font-weight: bold;
+		background: rgba(230, 126, 34, 0.18);
 	}
 
 	.nap-tulora {
@@ -183,7 +181,7 @@
 	.nap-szabi .nap-jel {
 		font-size: 1.3em;
 		font-weight: 800;
-		color: #f4c542;
+		color: #e67e22;
 	}
 
 	.nap-ma {
@@ -445,27 +443,8 @@
 		String(napKezdet.getMonth() + 1).padStart(2, "0") + "-" +
 		String(napKezdet.getDate()).padStart(2, "0");
 
-	const modositasok =
-		JSON.parse(localStorage.getItem("muszakModositasok") || "{}");
-
-	if (modositasok[datumKulcs]) {
-		return modositasok[datumKulcs];
-	}
-
-	// Alapértelmezett fix kivételek.
-	// Ezek csak akkor lépnek életbe, ha a felhasználó nem állított be
-	// erre a napra saját módosítást az interaktív menüben.
-	if (datumKulcs === "2026-09-12") {
-		return "szabi";
-	}
-
-	if (datumKulcs === "2026-09-20") {
-		return "ejszaka";
-	}
-
-	// 2026.09.27. = nappalos túlóra, dupla fizetéssel
-	if (datumKulcs === "2026-09-27") {
-		return "nappal_tulora";
+	if (muszakModositasok[datumKulcs]) {
+		return muszakModositasok[datumKulcs];
 	}
 
 	const napokKulonbseg =
@@ -996,14 +975,52 @@
 
 	/* =========================
 	   INTERAKTÍV MŰSZAKMENÜ
+	   AZURE API SZINKRONNAL
 	   ========================= */
 
 	let kivalasztottDatum = null;
+
+	// A szerverről betöltött módosítások ideiglenes memóriája.
+	let muszakModositasok = {};
 
 	function datumKulcs(ev, honap, nap) {
 		return ev + "-" +
 			String(honap + 1).padStart(2, "0") + "-" +
 			String(nap).padStart(2, "0");
+	}
+
+	async function muszakModositasokBetoltese() {
+
+		try {
+
+			const response = await fetch("/api/muszakok", {
+				method: "GET",
+				headers: {
+					"Accept": "application/json"
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error("HTTP " + response.status);
+			}
+
+			muszakModositasok = await response.json();
+
+			frissitFizumat();
+			generalMuszakNaptar();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült betölteni a műszakmódosításokat:",
+				error
+			);
+
+			muszakModositasok = {};
+
+			frissitFizumat();
+			generalMuszakNaptar();
+		}
 	}
 
 	function muszakModalMegnyit(ev, honap, nap) {
@@ -1035,49 +1052,119 @@
 		}
 	}
 
-	function muszakBeallit(tipus) {
+	async function muszakBeallit(tipus) {
 
 		if (!kivalasztottDatum) {
 			return;
 		}
 
-		const modositasok =
-			JSON.parse(localStorage.getItem("muszakModositasok") || "{}");
+		const datum = kivalasztottDatum;
 
-		modositasok[kivalasztottDatum] = tipus;
+		try {
 
-		localStorage.setItem(
-			"muszakModositasok",
-			JSON.stringify(modositasok)
-		);
+			const response = await fetch("/api/muszakok", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Accept": "application/json"
+				},
+				body: JSON.stringify({
+					datum: datum,
+					tipus: tipus
+				})
+			});
 
-		muszakModalBezar();
+			if (!response.ok) {
 
-		// Azonnal újraszámoljuk a fizetést és a naptárt.
-		frissitFizumat();
-		generalMuszakNaptar();
+				let hibaSzoveg = "HTTP " + response.status;
+
+				try {
+					const hibaAdat = await response.json();
+
+					if (hibaAdat.hiba) {
+						hibaSzoveg = hibaAdat.hiba;
+					}
+				} catch (_) {}
+
+				throw new Error(hibaSzoveg);
+			}
+
+			muszakModositasok[datum] = tipus;
+
+			muszakModalBezar();
+
+			frissitFizumat();
+			generalMuszakNaptar();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült elmenteni a műszakot:",
+				error
+			);
+
+			alert(
+				"Nem sikerült elmenteni a módosítást az Azure-ba.\n\n" +
+				error.message
+			);
+		}
 	}
 
-	function muszakTorol() {
+	async function muszakTorol() {
 
 		if (!kivalasztottDatum) {
 			return;
 		}
 
-		const modositasok =
-			JSON.parse(localStorage.getItem("muszakModositasok") || "{}");
+		const datum = kivalasztottDatum;
 
-		delete modositasok[kivalasztottDatum];
+		try {
 
-		localStorage.setItem(
-			"muszakModositasok",
-			JSON.stringify(modositasok)
-		);
+			const response = await fetch(
+				"/api/muszakok?datum=" +
+					encodeURIComponent(datum),
+				{
+					method: "DELETE",
+					headers: {
+						"Accept": "application/json"
+					}
+				}
+			);
 
-		muszakModalBezar();
+			if (!response.ok) {
 
-		frissitFizumat();
-		generalMuszakNaptar();
+				let hibaSzoveg = "HTTP " + response.status;
+
+				try {
+					const hibaAdat = await response.json();
+
+					if (hibaAdat.hiba) {
+						hibaSzoveg = hibaAdat.hiba;
+					}
+				} catch (_) {}
+
+				throw new Error(hibaSzoveg);
+			}
+
+			delete muszakModositasok[datum];
+
+			muszakModalBezar();
+
+			frissitFizumat();
+			generalMuszakNaptar();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült törölni a műszakmódosítást:",
+				error
+			);
+
+			alert(
+				"Nem sikerült visszaállítani az alapbeosztást.\n\n" +
+				error.message
+			);
+		}
 	}
 
 	/* =========================
@@ -1087,6 +1174,8 @@
 	frissitFizumat();
 
 	generalMuszakNaptar();
+
+	muszakModositasokBetoltese();
 
 	frissitPrivacyGomb();
 
