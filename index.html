@@ -372,6 +372,51 @@
 		}
 	}
 
+
+	.naptar-cim-sor {
+		display: grid;
+		grid-template-columns: 42px 1fr 42px;
+		align-items: center;
+		gap: 6px;
+		margin-bottom: 0.8em;
+	}
+
+	.naptar-cim {
+		text-align: center;
+		font-weight: 600;
+		margin-bottom: 0;
+	}
+
+	.naptar-nav {
+		border: 1px solid rgba(128,128,128,0.35);
+		background: var(--bg);
+		color: var(--text);
+		border-radius: 10px;
+		height: 38px;
+		font-size: 1.25em;
+		line-height: 1;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		touch-action: manipulation;
+	}
+
+	.naptar-nav:hover {
+		border-color: var(--accent);
+	}
+
+	@media (max-width: 520px) {
+		.naptar-cim-sor {
+			grid-template-columns: 46px 1fr 46px;
+		}
+
+		.naptar-nav {
+			height: 42px;
+			font-size: 1.35em;
+		}
+	}
+
 </style>
 </head>
 
@@ -845,12 +890,26 @@
 	   MŰSZAKNAPTÁR
 	   ========================= */
 
+	let naptarHonapEltolas = 0;
+
+	function naptarHonapotValt(irany) {
+		naptarHonapEltolas += irany;
+		generalMuszakNaptar();
+	}
+
 	function generalMuszakNaptar() {
 
 		const most = new Date();
 
-		const ev = most.getFullYear();
-		const honap = most.getMonth();
+		const megjelenitettHonap =
+			new Date(
+				most.getFullYear(),
+				most.getMonth() + naptarHonapEltolas,
+				1
+			);
+
+		const ev = megjelenitettHonap.getFullYear();
+		const honap = megjelenitettHonap.getMonth();
 
 
 		const honapNeve =
@@ -885,11 +944,25 @@
 
 		let html = `
 
-			<div class="naptar-cim">
+			<div class="naptar-cim-sor">
 
-				${honapNeve.charAt(0).toUpperCase() +
-				honapNeve.slice(1)}
-				${ev}
+				<button
+					class="naptar-nav"
+					onclick="naptarHonapotValt(-1)"
+					aria-label="Előző hónap"
+					title="Előző hónap"
+				>‹</button>
+
+				<div class="naptar-cim">
+					${ev}. ${honapNeve}
+				</div>
+
+				<button
+					class="naptar-nav"
+					onclick="naptarHonapotValt(1)"
+					aria-label="Következő hónap"
+					title="Következő hónap"
+				>›</button>
 
 			</div>
 
