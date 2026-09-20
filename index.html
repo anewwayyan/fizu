@@ -145,13 +145,15 @@
 	}
 
 	.nap {
-		min-height: 42px;
-		border-radius: 8px;
+		min-height: 50px;
+		border-radius: 9px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		font-size: 0.75em;
+		font-size: 0.78em;
+		padding: 3px 1px;
+		touch-action: manipulation;
 	}
 
 	.nap-ures {
@@ -191,7 +193,12 @@
 
 	.nap-jel {
 		font-size: 1.1em;
-		line-height: 1.1;
+		line-height: 1;
+		white-space: nowrap;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 0;
 	}
 
 	.nap-szam {
@@ -318,6 +325,51 @@
 		color: var(--muted);
 		font-size: 0.75em;
 		margin-top: 0.7em;
+	}
+
+
+	.nap-tulora .nap-jel {
+		font-size: 1em;
+		letter-spacing: -1px;
+	}
+
+	@media (max-width: 520px) {
+
+		body {
+			align-items: flex-start;
+			padding: 12px 0;
+		}
+
+		.card {
+			width: 96%;
+			max-width: 440px;
+			padding: 2.3em 0.9em 1.6em;
+		}
+
+		.naptar-fejlec,
+		.naptar-napok {
+			gap: 5px;
+		}
+
+		.nap {
+			min-height: 54px;
+			border-radius: 10px;
+			font-size: 0.8em;
+			padding: 4px 1px;
+		}
+
+		.nap-jel {
+			font-size: 1.15em;
+		}
+
+		.nap-tulora .nap-jel {
+			font-size: 0.95em;
+			letter-spacing: -2px;
+		}
+
+		.nap-szam {
+			margin-top: 4px;
+		}
 	}
 
 </style>
