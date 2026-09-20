@@ -5,7 +5,7 @@ const TABLA_NEV = "MuszakModositasok";
 
 function getTableClient() {
     const connectionString =
-        process.env.STORAGE_CONNECTION_STRING;
+        process.env.MuszakModositasokStorage;
 
     if (!connectionString) {
         throw new Error(
