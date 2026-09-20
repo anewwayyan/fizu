@@ -98,6 +98,7 @@ app.http("muszakokPost", {
                 "ejszaka",
                 "szabad",
                 "szabi",
+                "tsz",
                 "nappal_tulora",
                 "ejszaka_tulora"
             ];
