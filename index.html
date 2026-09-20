@@ -429,6 +429,153 @@
 		}
 	}
 
+
+	/* =========================
+	   NAPTÁRBEJEGYZÉSEK
+	   ========================= */
+
+	.nap {
+		position: relative;
+	}
+
+	.naptar-pont {
+		position: absolute;
+		top: 5px;
+		right: 5px;
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: #e53935;
+		box-shadow: 0 0 0 2px var(--card-bg);
+	}
+
+	.naptar-bejegyzes-gomb {
+		width: 100%;
+		margin-top: 0.7em;
+		border: 1px solid rgba(128,128,128,0.35);
+		border-radius: 10px;
+		padding: 0.75em 0.9em;
+		background: var(--bg);
+		color: var(--text);
+		font-size: 0.95em;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.naptar-bejegyzes-gomb:hover {
+		border-color: var(--accent);
+	}
+
+	.naptar-modal-hatter {
+		display: none;
+		position: fixed;
+		inset: 0;
+		background: rgba(0,0,0,0.45);
+		z-index: 1100;
+		align-items: center;
+		justify-content: center;
+		padding: 1em;
+	}
+
+	.naptar-modal-hatter.lathato {
+		display: flex;
+	}
+
+	.naptar-modal {
+		width: min(380px, 100%);
+		background: var(--card-bg);
+		color: var(--text);
+		border-radius: 18px;
+		padding: 1.4em;
+		box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+		text-align: left;
+	}
+
+	.naptar-modal h2 {
+		margin: 0 0 0.25em 0;
+		font-size: 1.15em;
+	}
+
+	.naptar-modal-datum {
+		color: var(--muted);
+		font-size: 0.9em;
+		margin-bottom: 1em;
+	}
+
+	.naptar-mezo {
+		margin-bottom: 0.9em;
+	}
+
+	.naptar-mezo label {
+		display: block;
+		font-size: 0.82em;
+		font-weight: 600;
+		margin-bottom: 0.35em;
+	}
+
+	.naptar-mezo input,
+	.naptar-mezo textarea {
+		width: 100%;
+		border: 1px solid rgba(128,128,128,0.35);
+		border-radius: 10px;
+		padding: 0.75em;
+		background: var(--bg);
+		color: var(--text);
+		font: inherit;
+	}
+
+	.naptar-mezo textarea {
+		min-height: 90px;
+		resize: vertical;
+	}
+
+	.naptar-modal-gombok {
+		display: grid;
+		gap: 0.55em;
+	}
+
+	.naptar-mentes,
+	.naptar-torles,
+	.naptar-megse {
+		width: 100%;
+		border-radius: 10px;
+		padding: 0.75em 0.9em;
+		font-size: 0.95em;
+		cursor: pointer;
+	}
+
+	.naptar-mentes {
+		border: 0;
+		background: var(--accent);
+		color: white;
+		font-weight: 700;
+	}
+
+	.naptar-torles {
+		border: 1px solid rgba(192,57,43,0.5);
+		background: transparent;
+		color: #c0392b;
+	}
+
+	.naptar-megse {
+		border: 0;
+		background: transparent;
+		color: var(--muted);
+	}
+
+	.naptar-torles[hidden] {
+		display: none;
+	}
+
+	@media (max-width: 520px) {
+		.naptar-pont {
+			top: 4px;
+			right: 4px;
+			width: 9px;
+			height: 9px;
+		}
+	}
+
 </style>
 </head>
 
@@ -1090,11 +1237,21 @@
 			}
 
 
+			const kulcs = datumKulcs(ev, honap, nap);
+			const vanBejegyzes = !!naptarBejegyzesek[kulcs];
+
+			const pontHtml =
+				vanBejegyzes
+					? `<span class="naptar-pont" title="Van naptárbejegyzés"></span>`
+					: "";
+
 			html += `
 
 				<div class="${osztaly}"
 					onclick="muszakModalMegnyit(${ev}, ${honap}, ${nap})"
-					title="Kattints a műszak módosításához">
+					title="Kattints a nap beállításaihoz">
+
+					${pontHtml}
 
 					<div class="nap-jel">
 						${jel}
@@ -1314,6 +1471,247 @@
 		}
 	}
 
+
+	/* =========================
+	   NAPTÁRBEJEGYZÉSEK – AZURE API
+	   ========================= */
+
+	let naptarBejegyzesek = {};
+	let kivalasztottNaptarDatum = null;
+
+	async function naptarBejegyzesekBetoltese() {
+
+		try {
+
+			const response = await fetch("/api/naptar", {
+				method: "GET",
+				headers: {
+					"Accept": "application/json"
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error("HTTP " + response.status);
+			}
+
+			naptarBejegyzesek = await response.json();
+
+			generalMuszakNaptar();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült betölteni a naptárbejegyzéseket:",
+				error
+			);
+
+			naptarBejegyzesek = {};
+			generalMuszakNaptar();
+		}
+	}
+
+	function naptarModalMegnyitKivalasztottNapra() {
+
+		if (!kivalasztottDatum) {
+			return;
+		}
+
+		const datum = kivalasztottDatum;
+
+		muszakModalBezar();
+
+		naptarModalMegnyit(datum);
+	}
+
+	function naptarModalMegnyit(datum) {
+
+		kivalasztottNaptarDatum = datum;
+
+		const [ev, honap, nap] =
+			datum.split("-").map(Number);
+
+		const jsDatum =
+			new Date(ev, honap - 1, nap);
+
+		document.getElementById("naptar-modal-datum")
+			.textContent = formatDatum(jsDatum);
+
+		const adat =
+			naptarBejegyzesek[datum] || {
+				cim: "",
+				megjegyzes: "",
+				ido: ""
+			};
+
+		document.getElementById("naptar-cim-input").value =
+			adat.cim || "";
+
+		document.getElementById("naptar-ido-input").value =
+			adat.ido || "";
+
+		document.getElementById("naptar-megjegyzes-input").value =
+			adat.megjegyzes || "";
+
+		document.getElementById("naptar-torles-gomb").hidden =
+			!naptarBejegyzesek[datum];
+
+		document.getElementById("naptar-modal-hatter")
+			.classList.add("lathato");
+
+		setTimeout(function() {
+			document.getElementById("naptar-cim-input").focus();
+		}, 50);
+	}
+
+	function naptarModalBezar() {
+
+		kivalasztottNaptarDatum = null;
+
+		document.getElementById("naptar-modal-hatter")
+			.classList.remove("lathato");
+	}
+
+	function naptarModalHatterKattintas(event) {
+
+		if (event.target.id === "naptar-modal-hatter") {
+			naptarModalBezar();
+		}
+	}
+
+	async function naptarBejegyzesMent() {
+
+		if (!kivalasztottNaptarDatum) {
+			return;
+		}
+
+		const datum = kivalasztottNaptarDatum;
+
+		const cim =
+			document.getElementById("naptar-cim-input")
+				.value.trim();
+
+		const ido =
+			document.getElementById("naptar-ido-input")
+				.value;
+
+		const megjegyzes =
+			document.getElementById("naptar-megjegyzes-input")
+				.value.trim();
+
+		if (!cim) {
+			alert("Adj meg egy címet a bejegyzéshez.");
+			return;
+		}
+
+		try {
+
+			const response = await fetch("/api/naptar", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Accept": "application/json"
+				},
+				body: JSON.stringify({
+					datum: datum,
+					cim: cim,
+					ido: ido,
+					megjegyzes: megjegyzes
+				})
+			});
+
+			if (!response.ok) {
+
+				let hibaSzoveg = "HTTP " + response.status;
+
+				try {
+					const hibaAdat = await response.json();
+
+					if (hibaAdat.hiba) {
+						hibaSzoveg = hibaAdat.hiba;
+					}
+				} catch (_) {}
+
+				throw new Error(hibaSzoveg);
+			}
+
+			naptarBejegyzesek[datum] = {
+				cim: cim,
+				ido: ido,
+				megjegyzes: megjegyzes
+			};
+
+			naptarModalBezar();
+			generalMuszakNaptar();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült elmenteni a naptárbejegyzést:",
+				error
+			);
+
+			alert(
+				"Nem sikerült elmenteni a naptárbejegyzést az Azure-ba.\n\n" +
+				error.message
+			);
+		}
+	}
+
+	async function naptarBejegyzesTorol() {
+
+		if (!kivalasztottNaptarDatum) {
+			return;
+		}
+
+		const datum = kivalasztottNaptarDatum;
+
+		try {
+
+			const response = await fetch(
+				"/api/naptar?datum=" +
+					encodeURIComponent(datum),
+				{
+					method: "DELETE",
+					headers: {
+						"Accept": "application/json"
+					}
+				}
+			);
+
+			if (!response.ok) {
+
+				let hibaSzoveg = "HTTP " + response.status;
+
+				try {
+					const hibaAdat = await response.json();
+
+					if (hibaAdat.hiba) {
+						hibaSzoveg = hibaAdat.hiba;
+					}
+				} catch (_) {}
+
+				throw new Error(hibaSzoveg);
+			}
+
+			delete naptarBejegyzesek[datum];
+
+			naptarModalBezar();
+			generalMuszakNaptar();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült törölni a naptárbejegyzést:",
+				error
+			);
+
+			alert(
+				"Nem sikerült törölni a naptárbejegyzést.\n\n" +
+				error.message
+			);
+		}
+	}
+
 	/* =========================
 	   INDÍTÁS
 	   ========================= */
@@ -1324,11 +1722,14 @@
 
 	muszakModositasokBetoltese();
 
+	naptarBejegyzesekBetoltese();
+
 	frissitPrivacyGomb();
 
 	document.addEventListener("keydown", function(event) {
 		if (event.key === "Escape") {
 			muszakModalBezar();
+			naptarModalBezar();
 		}
 	});
 
@@ -1356,7 +1757,49 @@
 				<button class="muszak-opcio torles" onclick="muszakTorol()">↩ Alapbeosztás visszaállítása</button>
 			</div>
 
+			<button class="naptar-bejegyzes-gomb" onclick="naptarModalMegnyitKivalasztottNapra()">🔴 Naptárbejegyzés</button>
+
 			<button class="muszak-modal-bezar" onclick="muszakModalBezar()">Mégsem</button>
+		</div>
+	</div>
+
+
+	<div class="naptar-modal-hatter" id="naptar-modal-hatter" onclick="naptarModalHatterKattintas(event)">
+		<div class="naptar-modal" onclick="event.stopPropagation()">
+			<h2>Naptárbejegyzés</h2>
+			<div class="naptar-modal-datum" id="naptar-modal-datum"></div>
+
+			<div class="naptar-mezo">
+				<label for="naptar-cim-input">Cím</label>
+				<input
+					id="naptar-cim-input"
+					type="text"
+					placeholder="pl. Orvosi vizsgálat"
+					autocomplete="off"
+				>
+			</div>
+
+			<div class="naptar-mezo">
+				<label for="naptar-ido-input">Időpont (nem kötelező)</label>
+				<input
+					id="naptar-ido-input"
+					type="time"
+				>
+			</div>
+
+			<div class="naptar-mezo">
+				<label for="naptar-megjegyzes-input">Megjegyzés (nem kötelező)</label>
+				<textarea
+					id="naptar-megjegyzes-input"
+					placeholder="pl. Üzemorvos, vigyem a leleteket"
+				></textarea>
+			</div>
+
+			<div class="naptar-modal-gombok">
+				<button class="naptar-mentes" onclick="naptarBejegyzesMent()">Mentés</button>
+				<button class="naptar-torles" id="naptar-torles-gomb" onclick="naptarBejegyzesTorol()" hidden>Bejegyzés törlése</button>
+				<button class="naptar-megse" onclick="naptarModalBezar()">Mégsem</button>
+			</div>
 		</div>
 	</div>
 
