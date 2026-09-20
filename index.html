@@ -971,48 +971,112 @@
 
 		/* Aktuális műszak állapota */
 
-		const tipus = muszakTipus(most);
+		let aktivTipus = null;
+		let aktivIntervallum = null;
+
+		/*
+		   Éjszakás műszak átnyúlik a következő napra.
+		   Ezért először a tegnap kezdődött műszakot nézzük meg.
+		*/
+
+		const tegnap = new Date(
+			most.getFullYear(),
+			most.getMonth(),
+			most.getDate() - 1
+		);
+
+		const tegnapiIntervallum =
+			muszakIdointervallum(tegnap);
+
+		if (tegnapiIntervallum) {
+
+			const [tegnapKezdet, tegnapVeg] =
+				tegnapiIntervallum;
+
+			if (
+				most >= tegnapKezdet &&
+				most <= tegnapVeg
+			) {
+				aktivTipus = muszakTipus(tegnap);
+				aktivIntervallum = tegnapiIntervallum;
+			}
+		}
+
+		/*
+		   Ha nem tart még a tegnapi műszak,
+		   akkor megnézzük a mai nap műszakját.
+		*/
+
+		if (!aktivIntervallum) {
+
+			const maiIntervallum =
+				muszakIdointervallum(most);
+
+			if (maiIntervallum) {
+
+				const [maiKezdet, maiVeg] =
+					maiIntervallum;
+
+				if (
+					most >= maiKezdet &&
+					most <= maiVeg
+				) {
+					aktivTipus = muszakTipus(most);
+					aktivIntervallum = maiIntervallum;
+				}
+			}
+		}
 
 		let statusSzoveg;
 
+		if (aktivIntervallum) {
 
-		if (tipus === "szabad") {
+			let muszakNev;
+
+			if (aktivTipus === "nappal") {
+
+				muszakNev =
+					"🌞 Nappalos műszak";
+
+			} else if (aktivTipus === "nappal_tulora") {
+
+				muszakNev =
+					"🌞⚡ Nappalos műszak (túlóra, 200%)";
+
+			} else if (aktivTipus === "ejszaka_tulora") {
+
+				muszakNev =
+					"🌙⚡ Éjszakás műszak (túlóra, 200%)";
+
+			} else {
+
+				muszakNev =
+					"🌙 Éjszakás műszak";
+			}
 
 			statusSzoveg =
-				"😴 Ma szabadnap van, a számláló most nem nő.";
-
-		} else if (tipus === "szabi") {
-
-			statusSzoveg =
-				"🅂 Szabin vagy, a számláló most nem nő.";
-
-		} else if (tipus === "tsz") {
-
-			statusSzoveg =
-				"TSZ Többlet szabadság – ma nem dolgozol, erre a napra nem jár bér.";
+				muszakNev +
+				" – megy a számláló!";
 
 		} else {
 
-			const intervallum =
-				muszakIdointervallum(most);
+			const maiTipus =
+				muszakTipus(most);
 
-			const [ms, me] = intervallum;
-
-			if (most >= ms && most <= me) {
-
-				let muszakNev;
-
-				if (tipus === "nappal") {
-					muszakNev = "🌞 Nappalos műszak";
-				} else if (tipus === "nappal_tulora") {
-					muszakNev = "🌞⚡ Nappalos műszak (P-túlóra, 200%)";
-				} else {
-					muszakNev = "🌙 Éjszakás műszak";
-				}
+			if (maiTipus === "szabad") {
 
 				statusSzoveg =
-					muszakNev +
-					" – megy a számláló!";
+					"😴 Ma szabadnap van, a számláló most nem nő.";
+
+			} else if (maiTipus === "szabi") {
+
+				statusSzoveg =
+					"🅂 Szabin vagy, a számláló most nem nő.";
+
+			} else if (maiTipus === "tsz") {
+
+				statusSzoveg =
+					"TSZ Többlet szabadság – ma nem dolgozol, erre a napra nem jár bér.";
 
 			} else {
 
