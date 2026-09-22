@@ -582,12 +582,11 @@
 	   ========================= */
 
 	.auth-box {
-		position: absolute;
-		top: 3.25em;
-		right: 1em;
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		gap: 0.45em;
+		margin: 0.2em 0 0.45em 0;
 		z-index: 20;
 	}
 
@@ -626,14 +625,27 @@
 
 	@media (max-width: 520px) {
 		.auth-box {
-			position: static;
-			justify-content: flex-end;
-			margin: 0.65em 0 0.15em 0;
+			justify-content: center;
+			margin: 0.15em 0 0.5em 0;
 		}
 
 		.auth-btn {
 			font-size: 0.8em;
 		}
+	}
+
+
+	.auth-profile-icon {
+		width: 16px;
+		height: 16px;
+		display: inline-block;
+		flex: 0 0 auto;
+	}
+
+	.auth-profile-icon svg {
+		width: 100%;
+		height: 100%;
+		display: block;
 	}
 
 </style>
@@ -651,7 +663,15 @@
 		<a class="auth-btn" id="auth-login-btn" href="/.auth/login/aad">Microsoft belépés</a>
 
 		<div id="auth-logged-in" style="display:none; align-items:center; gap:0.45em;">
-			<span class="auth-status"><span class="auth-dot"></span> Belépve</span>
+			<span class="auth-status" style="display:inline-flex; align-items:center; gap:0.35em;">
+				<span class="auth-profile-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<circle cx="12" cy="8" r="4"></circle>
+						<path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
+					</svg>
+				</span>
+				Belépve
+			</span>
 			<a class="auth-btn" href="/.auth/logout">Kilépés</a>
 		</div>
 	</div>
