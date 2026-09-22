@@ -10,7 +10,7 @@
 	}
 </script>
 
-<title>Mennyi most a fizum? 💸</title>
+<title>Fizu 💸</title>
 
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
 
@@ -648,6 +648,81 @@
 		display: block;
 	}
 
+
+	/* =========================
+	   EASTER EGGEK
+	   ========================= */
+
+	#fizu-osszeg {
+		cursor: pointer;
+	}
+
+	.secret-overlay {
+		position: fixed;
+		inset: 0;
+		display: none;
+		align-items: center;
+		justify-content: center;
+		background: rgba(0,0,0,0.55);
+		z-index: 3000;
+		padding: 1em;
+	}
+
+	.secret-overlay.lathato {
+		display: flex;
+	}
+
+	.secret-card {
+		background: var(--card-bg);
+		color: var(--text);
+		border-radius: 18px;
+		padding: 1.5em;
+		width: min(360px, 100%);
+		text-align: center;
+		box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+	}
+
+	.secret-card h2 {
+		margin: 0 0 0.5em 0;
+	}
+
+	.secret-card p {
+		color: var(--muted);
+		line-height: 1.5;
+	}
+
+	.secret-card button {
+		margin-top: 0.8em;
+		border: 0;
+		border-radius: 10px;
+		padding: 0.7em 1em;
+		background: var(--accent);
+		color: white;
+		font-weight: 700;
+		cursor: pointer;
+	}
+
+	.confetti {
+		position: fixed;
+		top: -20px;
+		width: 9px;
+		height: 14px;
+		z-index: 3500;
+		pointer-events: none;
+		animation: confetti-eses 2.6s linear forwards;
+	}
+
+	@keyframes confetti-eses {
+		0% {
+			transform: translateY(-20px) rotate(0deg);
+			opacity: 1;
+		}
+		100% {
+			transform: translateY(110vh) rotate(720deg);
+			opacity: 0.95;
+		}
+	}
+
 </style>
 </head>
 
@@ -677,7 +752,7 @@
 	</div>
 
 
-	<p id="fizu-osszeg">0 Ft</p>
+	<p id="fizu-osszeg" onclick="fizuKattintasEasterEgg()" title="😉">0 Ft</p>
 
 	<p id="fizu-status"></p>
 
@@ -970,7 +1045,7 @@
 	   FIZU FRISSÍTÉSE
 	   ========================= */
 
-	function frissitFizumat() {
+	function frissitFizu() {
 
 		const most = new Date();
 
@@ -1578,7 +1653,7 @@
 
 			muszakModositasok = await response.json();
 
-			frissitFizumat();
+			frissitFizu();
 			generalMuszakNaptar();
 
 		} catch (error) {
@@ -1590,7 +1665,7 @@
 
 			muszakModositasok = {};
 
-			frissitFizumat();
+			frissitFizu();
 			generalMuszakNaptar();
 		}
 	}
@@ -1672,7 +1747,7 @@
 
 			muszakModalBezar();
 
-			frissitFizumat();
+			frissitFizu();
 			generalMuszakNaptar();
 
 		} catch (error) {
@@ -1734,7 +1809,7 @@
 
 			muszakModalBezar();
 
-			frissitFizumat();
+			frissitFizu();
 			generalMuszakNaptar();
 
 		} catch (error) {
@@ -2002,11 +2077,134 @@
 		}
 	}
 
+
+	/* =========================
+	   EASTER EGGEK
+	   ========================= */
+
+	const KONAMI_KOD = [
+		"ArrowUp",
+		"ArrowUp",
+		"ArrowDown",
+		"ArrowDown",
+		"ArrowLeft",
+		"ArrowRight",
+		"ArrowLeft",
+		"ArrowRight",
+		"b",
+		"a"
+	];
+
+	let konamiPozicio = 0;
+	let fizuKattintasok = 0;
+	let fizuKattintasTimer = null;
+
+	function secretOverlayMegnyit() {
+		document.getElementById("secret-overlay")
+			.classList.add("lathato");
+
+		konfettiIndit(70);
+	}
+
+	function secretOverlayBezar() {
+		document.getElementById("secret-overlay")
+			.classList.remove("lathato");
+	}
+
+	function secretOverlayKattintas(event) {
+		if (event.target.id === "secret-overlay") {
+			secretOverlayBezar();
+		}
+	}
+
+	document.addEventListener("keydown", function(event) {
+
+		const vartBillentyu =
+			KONAMI_KOD[konamiPozicio];
+
+		const kapott =
+			event.key.length === 1
+				? event.key.toLowerCase()
+				: event.key;
+
+		if (kapott === vartBillentyu) {
+
+			konamiPozicio++;
+
+			if (konamiPozicio === KONAMI_KOD.length) {
+
+				konamiPozicio = 0;
+				secretOverlayMegnyit();
+			}
+
+		} else {
+
+			konamiPozicio =
+				kapott === KONAMI_KOD[0]
+					? 1
+					: 0;
+		}
+	});
+
+	function fizuKattintasEasterEgg() {
+
+		fizuKattintasok++;
+
+		clearTimeout(fizuKattintasTimer);
+
+		fizuKattintasTimer = setTimeout(function() {
+			fizuKattintasok = 0;
+		}, 1600);
+
+		if (fizuKattintasok >= 5) {
+
+			fizuKattintasok = 0;
+
+			konfettiIndit(90);
+
+			setTimeout(function() {
+				alert("Na jó, ettől még nem lett több. 😂");
+			}, 250);
+		}
+	}
+
+	function konfettiIndit(db) {
+
+		for (let i = 0; i < db; i++) {
+
+			const elem =
+				document.createElement("div");
+
+			elem.className = "confetti";
+
+			elem.style.left =
+				Math.random() * 100 + "vw";
+
+			elem.style.animationDelay =
+				(Math.random() * 0.6) + "s";
+
+			elem.style.animationDuration =
+				(2 + Math.random() * 1.4) + "s";
+
+			elem.style.background =
+				`hsl(${Math.floor(Math.random() * 360)}, 80%, 58%)`;
+
+			elem.style.transform =
+				`rotate(${Math.random() * 360}deg)`;
+
+			document.body.appendChild(elem);
+
+			setTimeout(function() {
+				elem.remove();
+			}, 4200);
+		}
+	}
+
 	/* =========================
 	   INDÍTÁS
 	   ========================= */
 
-	frissitFizumat();
+	frissitFizu();
 
 	generalMuszakNaptar();
 
@@ -2026,7 +2224,7 @@
 	});
 
 	setInterval(
-		frissitFizumat,
+		frissitFizu,
 		1000
 	);
 
@@ -2098,6 +2296,15 @@
 				<button class="naptar-torles" id="naptar-torles-gomb" onclick="naptarBejegyzesTorol()" hidden>Bejegyzés törlése</button>
 				<button class="naptar-megse" onclick="naptarModalBezar()">Mégsem</button>
 			</div>
+		</div>
+	</div>
+
+
+	<div class="secret-overlay" id="secret-overlay" onclick="secretOverlayKattintas(event)">
+		<div class="secret-card" onclick="event.stopPropagation()">
+			<h2>💸 Fizu Secret Mode</h2>
+			<p>Gratulálok. Megtaláltad azt a funkciót, ami semmire nem jó. 😂</p>
+			<button onclick="secretOverlayBezar()">Bezárás</button>
 		</div>
 	</div>
 
