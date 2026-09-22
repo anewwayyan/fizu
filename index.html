@@ -10,7 +10,7 @@
 	}
 </script>
 
-<title> Beo + fizu</title>
+<title>💸 Beo + fizu</title>
 
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
 
@@ -771,7 +771,49 @@
 	   BEÁLLÍTÁSOK
 	   ========================= */
 
-	const ORABER = 2750;
+	// Béradatok a 2026. júliusi és augusztusi bérpapír alapján.
+	const HAVI_ALAPBER = 544600;
+
+	// A pótlékok bázisa a bérpapírokból visszaszámolva:
+	// 37 559 Ft / 12 óra ≈ 3 129,92 Ft/óra.
+	// Ez gyakorlatilag 544 600 / 174.
+	const POTLEK_ORADIJ = HAVI_ALAPBER / 174;
+
+	// 15% SZJA + 18,5% TB = kb. 66,5% nettó.
+	const NETTO_SZORZO = 0.665;
+
+	// Fix bankszámla-hozzájárulás a bérpapíron.
+	const BANKSZAMLA_HOZZAJARULAS = 500;
+
+	// Becsült távolléti díj a két ismert bérpapír átlaga alapján:
+	// 2026.07: 4 080,28 Ft/óra
+	// 2026.08: 3 975,20 Ft/óra
+	const TAVOLLETI_ORADIJ =
+		(4080.28 + 3975.20) / 2; // 4 027,74 Ft/óra
+
+	// Egy 12 órás fizetett szabadság becsült távolléti díja.
+	const SZABI_12_ORA_TAVOLLETI =
+		12 * TAVOLLETI_ORADIJ; // kb. 48 333 Ft
+
+	/*
+	   A havibéres alapbér sor szabadság esetén csökken,
+	   és helyette külön jelenik meg a fizetett szabadság.
+	   A két ismert hónapból visszaszámolt átlagos kieső alapbérrész:
+
+	   Július: 544 600 - 504 751 = 39 849 Ft
+	   Augusztus: 544 600 - 505 700 = 38 900 Ft
+	*/
+	const SZABI_ALAPBER_KIESO_RESZ =
+		((544600 - 504751) + (544600 - 505700)) / 2;
+
+	// A havi fix alapbérhez csak a kettő különbségét kell hozzáadni,
+	// különben a szabadságot kétszer számolnánk.
+	const SZABI_NAPI_KORREKCIO =
+		SZABI_12_ORA_TAVOLLETI -
+		SZABI_ALAPBER_KIESO_RESZ;
+
+	// TSZ: nem fizetett nap. Becsült levonás 12 óra pótlékalappal.
+	const TSZ_NAPI_LEVONAS = 12 * POTLEK_ORADIJ;
 
 	/*
 	   2026. szeptember 8. = nappalos
@@ -838,7 +880,11 @@
 		const honap = nap.getMonth();
 		const napSzam = nap.getDate();
 
-		if (tipus === "nappal" || tipus === "nappal_tulora") {
+		if (
+			tipus === "nappal" ||
+			tipus === "nappal_tulora" ||
+			tipus === "nappal_tulora_150"
+		) {
 
 			return [
 				new Date(ev, honap, napSzam, 7, 0, 0),
@@ -848,7 +894,8 @@
 
 		if (
 			tipus === "ejszaka" ||
-			tipus === "ejszaka_tulora"
+			tipus === "ejszaka_tulora" ||
+			tipus === "ejszaka_tulora_150"
 		) {
 
 			return [
@@ -862,57 +909,220 @@
 
 
 	/* =========================
-	   BÉRSZORZÓ MŰSZAKTÍPUSONKÉNT
+	   BÉRSZÁMÍTÁS
 	   ========================= */
 
-	// nappal / éjszaka: normál 100%
-	// nappal_tulora: beosztás szerinti pihenőnapon (P) végzett munka
-	//                -> Mt. 143. § alapján +100% pótlék, azaz 200% (dupla fizu)
-	function muszakSzorzo(tipus) {
+	function husvetVasarnap(ev) {
 
-		if (
-			tipus === "nappal_tulora" ||
-			tipus === "ejszaka_tulora"
-		) {
-			return 2;
-		}
+		const a = ev % 19;
+		const b = Math.floor(ev / 100);
+		const c = ev % 100;
+		const d = Math.floor(b / 4);
+		const e = b % 4;
+		const f = Math.floor((b + 8) / 25);
+		const g = Math.floor((b - f + 1) / 3);
+		const h = (19 * a + b - d - g + 15) % 30;
+		const i = Math.floor(c / 4);
+		const k = c % 4;
+		const l = (32 + 2 * e + 2 * i - h - k) % 7;
+		const m = Math.floor((a + 11 * h + 22 * l) / 451);
+		const honap = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+		const nap = ((h + l - 7 * m + 114) % 31) + 1;
 
-		return 1;
+		return new Date(ev, honap, nap);
 	}
 
 
-	/* =========================
-	   LEDOLGOZOTT ÓRÁK ÉS PÉNZ
-	   ========================= */
-
-	function idoszakOsszesites(tol, ig) {
-
-		let osszOraMs = 0;
-		let osszPenz = 0;
-
-		const kezdoNap = new Date(
-			tol.getFullYear(),
-			tol.getMonth(),
-			tol.getDate() - 1
+	function datumEltol(datum, napok) {
+		return new Date(
+			datum.getFullYear(),
+			datum.getMonth(),
+			datum.getDate() + napok
 		);
+	}
 
-		const utolsoNap = new Date(
-			ig.getFullYear(),
-			ig.getMonth(),
-			ig.getDate()
-		);
 
-		for (
-			let d = new Date(kezdoNap);
-			d <= utolsoNap;
-			d.setDate(d.getDate() + 1)
+	function magyarMunkaszunetiNap(datum) {
+
+		const ev = datum.getFullYear();
+		const honap = datum.getMonth() + 1;
+		const nap = datum.getDate();
+
+		const fix = [
+			"1-1",
+			"3-15",
+			"5-1",
+			"8-20",
+			"10-23",
+			"11-1",
+			"12-25",
+			"12-26"
+		];
+
+		if (fix.includes(honap + "-" + nap)) {
+			return true;
+		}
+
+		const husvet = husvetVasarnap(ev);
+
+		const mozgoUnnepek = [
+			datumEltol(husvet, -2), // nagypéntek
+			datumEltol(husvet, 1),  // húsvéthétfő
+			datumEltol(husvet, 50)  // pünkösdhétfő
+		];
+
+		return mozgoUnnepek.some(function (d) {
+			return (
+				d.getFullYear() === ev &&
+				d.getMonth() === datum.getMonth() &&
+				d.getDate() === nap
+			);
+		});
+	}
+
+
+	function metszetOra(kezdet1, veg1, kezdet2, veg2) {
+
+		const kezdet =
+			kezdet1 > kezdet2 ? kezdet1 : kezdet2;
+
+		const veg =
+			veg1 < veg2 ? veg1 : veg2;
+
+		return veg > kezdet
+			? (veg - kezdet) / 3600000
+			: 0;
+	}
+
+
+	function muszakPotlekOrak(datum, tipus, tol, ig) {
+
+		if (
+			tipus !== "nappal" &&
+			tipus !== "nappal_tulora" &&
+			tipus !== "nappal_tulora_150" &&
+			tipus !== "ejszaka" &&
+			tipus !== "ejszaka_tulora" &&
+			tipus !== "ejszaka_tulora_150"
+		) {
+			return {
+				husz: 0,
+				otven: 0
+			};
+		}
+
+		const ev = datum.getFullYear();
+		const honap = datum.getMonth();
+		const nap = datum.getDate();
+
+		let husz = 0;
+		let otven = 0;
+
+		if (
+			tipus === "nappal" ||
+			tipus === "nappal_tulora" ||
+			tipus === "nappal_tulora_150"
 		) {
 
+			husz += metszetOra(
+				new Date(ev, honap, nap, 14, 0, 0),
+				new Date(ev, honap, nap, 19, 0, 0),
+				tol,
+				ig
+			);
+
+		} else {
+
+			husz += metszetOra(
+				new Date(ev, honap, nap, 19, 0, 0),
+				new Date(ev, honap, nap, 22, 0, 0),
+				tol,
+				ig
+			);
+
+			otven += metszetOra(
+				new Date(ev, honap, nap, 22, 0, 0),
+				new Date(ev, honap, nap + 1, 6, 0, 0),
+				tol,
+				ig
+			);
+		}
+
+		return {
+			husz: husz,
+			otven: otven
+		};
+	}
+
+
+	function haviBerOsszesites(ev, honap, ig) {
+
+		const honapKezdete =
+			new Date(ev, honap, 1, 0, 0, 0);
+
+		const honapVege =
+			new Date(ev, honap + 1, 0, 23, 59, 59, 999);
+
+		const veg =
+			ig && ig < honapVege
+				? ig
+				: honapVege;
+
+		let teljesNormalOra = 0;
+		let eddigiNormalOra = 0;
+
+		let teljesLedolgozottOra = 0;
+		let eddigiLedolgozottOra = 0;
+
+		let teljesExtraBrutto = 0;
+		let eddigiExtraBrutto = 0;
+
+		let szabiNapok = 0;
+		let tszNapok = 0;
+
+		const utolsoNap =
+			new Date(ev, honap + 1, 0).getDate();
+
+		for (let nap = 1; nap <= utolsoNap; nap++) {
+
+			const datum =
+				new Date(ev, honap, nap);
+
 			const tipus =
-				muszakTipus(d);
+				muszakTipus(datum);
 
 			const intervallum =
-				muszakIdointervallum(d);
+				muszakIdointervallum(datum);
+
+			const tulora150 =
+				tipus === "nappal_tulora_150" ||
+				tipus === "ejszaka_tulora_150";
+
+			const tulora200 =
+				tipus === "nappal_tulora" ||
+				tipus === "ejszaka_tulora";
+
+			const tulora =
+				tulora150 || tulora200;
+
+			if (tipus === "szabi") {
+
+				szabiNapok++;
+
+				teljesNormalOra += 12;
+
+				if (veg >= new Date(ev, honap, nap, 19, 0, 0)) {
+					eddigiNormalOra += 12;
+				}
+
+				continue;
+			}
+
+			if (tipus === "tsz") {
+
+				tszNapok++;
+				continue;
+			}
 
 			if (!intervallum) {
 				continue;
@@ -920,33 +1130,152 @@
 
 			const [ms, me] = intervallum;
 
-			const metszetKezdet =
-				ms > tol ? ms : tol;
+			const teljesOra =
+				(me - ms) / 3600000;
 
-			const metszetVeg =
-				me < ig ? me : ig;
+			const eddigiOra =
+				metszetOra(
+					ms,
+					me,
+					honapKezdete,
+					veg
+				);
 
-			if (metszetVeg > metszetKezdet) {
+			teljesLedolgozottOra += teljesOra;
+			eddigiLedolgozottOra += eddigiOra;
 
-				const oraMs =
-					metszetVeg - metszetKezdet;
+			if (!tulora) {
+				teljesNormalOra += teljesOra;
+				eddigiNormalOra += eddigiOra;
+			}
 
-				const ora =
-					oraMs / 3600000;
+			// 20% és 50% műszakpótlék.
+			const teljesPotlekOrak =
+				muszakPotlekOrak(
+					datum,
+					tipus,
+					honapKezdete,
+					honapVege
+				);
 
-				osszOraMs += oraMs;
+			const eddigiPotlekOrak =
+				muszakPotlekOrak(
+					datum,
+					tipus,
+					honapKezdete,
+					veg
+				);
 
-				osszPenz +=
-					ora * ORABER * muszakSzorzo(tipus);
+			teljesExtraBrutto +=
+				teljesPotlekOrak.husz *
+					POTLEK_ORADIJ * 0.20 +
+				teljesPotlekOrak.otven *
+					POTLEK_ORADIJ * 0.50;
+
+			eddigiExtraBrutto +=
+				eddigiPotlekOrak.husz *
+					POTLEK_ORADIJ * 0.20 +
+				eddigiPotlekOrak.otven *
+					POTLEK_ORADIJ * 0.50;
+
+			// Sima túlóra: alap + 50% pótlék = 150%.
+			if (tulora150) {
+
+				teljesExtraBrutto +=
+					teljesOra *
+					POTLEK_ORADIJ *
+					1.5;
+
+				eddigiExtraBrutto +=
+					eddigiOra *
+					POTLEK_ORADIJ *
+					1.5;
+			}
+
+			// Pihenőnapos túlóra: alap + 100% pótlék = 200%.
+			if (tulora200) {
+
+				teljesExtraBrutto +=
+					teljesOra *
+					POTLEK_ORADIJ *
+					2;
+
+				eddigiExtraBrutto +=
+					eddigiOra *
+					POTLEK_ORADIJ *
+					2;
+			}
+
+			// Munkaszüneti napon végzett műszak:
+			// a bérpapír alapján +200% pótlék.
+			if (magyarMunkaszunetiNap(datum)) {
+
+				teljesExtraBrutto +=
+					teljesOra *
+					POTLEK_ORADIJ *
+					2;
+
+				eddigiExtraBrutto +=
+					eddigiOra *
+					POTLEK_ORADIJ *
+					2;
 			}
 		}
 
+		const haviAlapKorrigalt =
+			Math.max(
+				0,
+				HAVI_ALAPBER +
+				szabiNapok * SZABI_NAPI_KORREKCIO -
+				tszNapok * TSZ_NAPI_LEVONAS
+			);
+
+		const alapArany =
+			teljesNormalOra > 0
+				? Math.min(
+					eddigiNormalOra / teljesNormalOra,
+					1
+				)
+				: 1;
+
+		const teljesBrutto =
+			haviAlapKorrigalt +
+			teljesExtraBrutto +
+			BANKSZAMLA_HOZZAJARULAS;
+
+		const eddigiBrutto =
+			haviAlapKorrigalt * alapArany +
+			eddigiExtraBrutto +
+			BANKSZAMLA_HOZZAJARULAS * alapArany;
+
 		return {
-			orak: osszOraMs / 3600000,
-			penz: osszPenz
+			orak: teljesLedolgozottOra,
+			eddigiOrak: eddigiLedolgozottOra,
+			brutto: teljesBrutto,
+			netto: teljesBrutto * NETTO_SZORZO,
+			eddigiBrutto: eddigiBrutto,
+			eddigiNetto: eddigiBrutto * NETTO_SZORZO,
+			szabiNapok: szabiNapok,
+			tszNapok: tszNapok
 		};
 	}
 
+
+	function idoszakOsszesites(tol, ig) {
+
+		const havi =
+			haviBerOsszesites(
+				tol.getFullYear(),
+				tol.getMonth(),
+				ig
+			);
+
+		return {
+			orak: havi.eddigiOrak,
+			penz: havi.eddigiNetto,
+			brutto: havi.eddigiBrutto
+		};
+	}
 
 	/* =========================
 	   FORMÁZÁS
@@ -1042,8 +1371,9 @@
 		/* Teljes havi várható fizetés */
 
 		const havi =
-			idoszakOsszesites(
-				honapKezdete,
+			haviBerOsszesites(
+				most.getFullYear(),
+				most.getMonth(),
 				honapVege
 			);
 
@@ -1051,13 +1381,17 @@
 			havi.orak;
 
 		const haviOsszeg =
-			havi.penz;
+			havi.netto;
 
 		document.getElementById("fizu-varhato")
 			.textContent =
-				"💰 Várható fizetés 8-án: ~" +
+				"💰 Várható nettó 8-án: ~" +
 				formatFt(haviOsszeg) +
-				" (" + haviOrak + " óra)";
+				" · bruttó ~" +
+				formatFt(havi.brutto) +
+				" (" +
+				Math.round(haviOrak * 10) / 10 +
+				" ledolgozott óra)";
 
 
 		/* Progress bar */
@@ -1143,15 +1477,25 @@
 				muszakNev =
 					"🌞 Nappalos műszak";
 
+			} else if (aktivTipus === "nappal_tulora_150") {
+
+				muszakNev =
+					"🌞⚡ Nappalos túlóra (150%)";
+
+			} else if (aktivTipus === "ejszaka_tulora_150") {
+
+				muszakNev =
+					"🌙⚡ Éjszakás túlóra (150%)";
+
 			} else if (aktivTipus === "nappal_tulora") {
 
 				muszakNev =
-					"🌞⚡ Nappalos műszak (túlóra, 200%)";
+					"🌞⚡ P-túlóra (200%)";
 
 			} else if (aktivTipus === "ejszaka_tulora") {
 
 				muszakNev =
-					"🌙⚡ Éjszakás műszak (túlóra, 200%)";
+					"🌙⚡ Éjszakás P-túlóra (200%)";
 
 			} else {
 
@@ -1215,7 +1559,8 @@
 				formatDatum(kovetkezo) +
 				" (" +
 				napokAFizuig +
-				" nap múlva)";
+				" nap múlva)" +
+				" · Becsült nettó: 66,5%";
 	}
 
 
@@ -1357,19 +1702,26 @@
 				osztaly += "nap-nappal";
 				jel = "🌞";
 
-			} else if (tipus === "nappal_tulora") {
+			} else if (
+				tipus === "nappal_tulora" ||
+				tipus === "nappal_tulora_150"
+			) {
 
 				osztaly += "nap-nappal nap-tulora";
 				jel = "🌞⚡";
 
 			} else if (
 				tipus === "ejszaka" ||
-				tipus === "ejszaka_tulora"
+				tipus === "ejszaka_tulora" ||
+				tipus === "ejszaka_tulora_150"
 			) {
 
 				osztaly += "nap-ejszaka";
 
-				if (tipus === "ejszaka_tulora") {
+				if (
+					tipus === "ejszaka_tulora" ||
+					tipus === "ejszaka_tulora_150"
+				) {
 					osztaly += " nap-tulora";
 					jel = "🌙⚡";
 				} else {
@@ -2048,8 +2400,10 @@
 				<button class="muszak-opcio" onclick="muszakBeallit('szabad')">😴 Szabadnap</button>
 				<button class="muszak-opcio" onclick="muszakBeallit('szabi')">🅂 Szabadság</button>
 				<button class="muszak-opcio" onclick="muszakBeallit('tsz')">TSZ Többlet szabadság (0 Ft)</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora')">🌞⚡ Nappal + túlóra (200%)</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora')">🌙⚡ Éjszaka + túlóra (200%)</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora_150')">🌞⚡ Nappalos túlóra (150%)</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora_150')">🌙⚡ Éjszakás túlóra (150%)</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora')">🌞⚡ P-túlóra (200%)</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora')">🌙⚡ Éjszakás P-túlóra (200%)</button>
 				<button class="muszak-opcio torles" onclick="muszakTorol()">↩ Alapbeosztás visszaállítása</button>
 			</div>
 
