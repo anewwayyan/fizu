@@ -576,6 +576,66 @@
 		}
 	}
 
+
+	/* =========================
+	   BEJELENTKEZÉS / OWNER MÓD
+	   ========================= */
+
+	.auth-box {
+		position: absolute;
+		top: 3.25em;
+		right: 1em;
+		display: flex;
+		align-items: center;
+		gap: 0.45em;
+		z-index: 20;
+	}
+
+	.auth-btn {
+		border: 1px solid var(--muted);
+		border-radius: 20px;
+		background: var(--card-bg);
+		color: var(--text);
+		padding: 0.4em 0.75em;
+		font-size: 0.78em;
+		cursor: pointer;
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35em;
+		white-space: nowrap;
+	}
+
+	.auth-btn:hover {
+		border-color: var(--accent);
+	}
+
+	.auth-status {
+		font-size: 0.75em;
+		color: var(--muted);
+		white-space: nowrap;
+	}
+
+	.auth-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: var(--accent);
+		display: inline-block;
+	}
+
+	@media (max-width: 520px) {
+		.auth-box {
+			position: static;
+			justify-content: flex-end;
+			margin: 0.65em 0 0.15em 0;
+		}
+
+		.auth-btn {
+			font-size: 0.8em;
+		}
+	}
+
 </style>
 </head>
 
@@ -587,7 +647,15 @@
 
 	<button class="theme-toggle" onclick="toggleTheme()">🌙</button>
 
-	<h1>Mennyi most a fizum? 💸</h1>
+	<div class="auth-box" id="auth-box">
+		<a class="auth-btn" id="auth-login-btn" href="/.auth/login/aad">Microsoft belépés</a>
+
+		<div id="auth-logged-in" style="display:none; align-items:center; gap:0.45em;">
+			<span class="auth-status"><span class="auth-dot"></span> Belépve</span>
+			<a class="auth-btn" href="/.auth/logout">Kilépés</a>
+		</div>
+	</div>
+
 
 	<p id="fizu-osszeg">0 Ft</p>
 
@@ -653,10 +721,26 @@
 		});
 
 		btn.innerHTML = osszegRejtve ? ATHUZOTT_SZEM_IKON : SZEM_IKON;
-		btn.title = osszegRejtve ? "Összeg megjelenítése" : "Összeg elrejtése";
+
+		if (!isOwner) {
+			btn.title = "Az összeg megjelenítéséhez ownerként kell bejelentkezni";
+			btn.style.opacity = "0.55";
+			btn.style.cursor = "not-allowed";
+		} else {
+			btn.title = osszegRejtve ? "Összeg megjelenítése" : "Összeg elrejtése";
+			btn.style.opacity = "1";
+			btn.style.cursor = "pointer";
+		}
 	}
 
 	function toggleOsszegLathatosag() {
+
+		if (!isOwner) {
+			osszegRejtve = true;
+			frissitPrivacyGomb();
+			return;
+		}
+
 		osszegRejtve = !osszegRejtve;
 		frissitPrivacyGomb();
 	}
@@ -1341,6 +1425,106 @@
 
 
 
+
+	/* =========================
+	   AUTH / OWNER ELLENŐRZÉS
+	   ========================= */
+
+	let isOwner = false;
+	let bejelentkezve = false;
+
+	async function authAllapotBetoltese() {
+
+		try {
+
+			const response = await fetch("/.auth/me", {
+				headers: {
+					"Accept": "application/json"
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error("HTTP " + response.status);
+			}
+
+			const adat = await response.json();
+			const principal = adat.clientPrincipal;
+
+			if (principal) {
+
+				bejelentkezve = true;
+
+				const szerepkorok =
+					Array.isArray(principal.userRoles)
+						? principal.userRoles
+						: [];
+
+				isOwner = szerepkorok.includes("owner");
+
+			} else {
+
+				bejelentkezve = false;
+				isOwner = false;
+			}
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült lekérni a bejelentkezési állapotot:",
+				error
+			);
+
+			bejelentkezve = false;
+			isOwner = false;
+		}
+
+		frissitAuthFelulet();
+	}
+
+	function frissitAuthFelulet() {
+
+		const loginBtn =
+			document.getElementById("auth-login-btn");
+
+		const loggedIn =
+			document.getElementById("auth-logged-in");
+
+		if (bejelentkezve) {
+			loginBtn.style.display = "none";
+			loggedIn.style.display = "flex";
+		} else {
+			loginBtn.style.display = "inline-flex";
+			loggedIn.style.display = "none";
+		}
+
+		if (!isOwner) {
+			osszegRejtve = true;
+		}
+
+		frissitPrivacyGomb();
+	}
+
+	function frissitSzerkesztesJog() {
+
+		const ownerResz =
+			document.getElementById("owner-szerkesztes");
+
+		const nemOwnerUzenet =
+			document.getElementById("nem-owner-uzenet");
+
+		if (!ownerResz || !nemOwnerUzenet) {
+			return;
+		}
+
+		if (isOwner) {
+			ownerResz.style.display = "block";
+			nemOwnerUzenet.style.display = "none";
+		} else {
+			ownerResz.style.display = "none";
+			nemOwnerUzenet.style.display = "block";
+		}
+	}
+
 	/* =========================
 	   INTERAKTÍV MŰSZAKMENÜ
 	   AZURE API SZINKRONNAL
@@ -1403,6 +1587,8 @@
 		document.getElementById("muszak-modal-datum").textContent =
 			formatDatum(datum);
 
+		frissitSzerkesztesJog();
+
 		document.getElementById("muszak-modal-hatter")
 			.classList.add("lathato");
 	}
@@ -1421,6 +1607,11 @@
 	}
 
 	async function muszakBeallit(tipus) {
+
+		if (!isOwner) {
+			alert("A műszakok szerkesztéséhez ownerként kell bejelentkezned.");
+			return;
+		}
 
 		if (!kivalasztottDatum) {
 			return;
@@ -1479,6 +1670,11 @@
 	}
 
 	async function muszakTorol() {
+
+		if (!isOwner) {
+			alert("A műszakok szerkesztéséhez ownerként kell bejelentkezned.");
+			return;
+		}
 
 		if (!kivalasztottDatum) {
 			return;
@@ -1644,6 +1840,11 @@
 
 	async function naptarBejegyzesMent() {
 
+		if (!isOwner) {
+			alert("A naptár szerkesztéséhez ownerként kell bejelentkezned.");
+			return;
+		}
+
 		if (!kivalasztottNaptarDatum) {
 			return;
 		}
@@ -1723,6 +1924,11 @@
 
 	async function naptarBejegyzesTorol() {
 
+		if (!isOwner) {
+			alert("A naptár szerkesztéséhez ownerként kell bejelentkezned.");
+			return;
+		}
+
 		if (!kivalasztottNaptarDatum) {
 			return;
 		}
@@ -1788,6 +1994,8 @@
 
 	naptarBejegyzesekBetoltese();
 
+	authAllapotBetoltese();
+
 	frissitPrivacyGomb();
 
 	document.addEventListener("keydown", function(event) {
@@ -1810,6 +2018,7 @@
 			<h2 id="muszak-modal-cim">Műszak módosítása</h2>
 			<div class="muszak-modal-datum" id="muszak-modal-datum"></div>
 
+			<div id="owner-szerkesztes" style="display:none;">
 			<div class="muszak-opciok">
 				<button class="muszak-opcio" onclick="muszakBeallit('nappal')">🌞 Nappalos</button>
 				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka')">🌙 Éjszakás</button>
@@ -1822,6 +2031,11 @@
 			</div>
 
 			<button class="naptar-bejegyzes-gomb" onclick="naptarModalMegnyitKivalasztottNapra()">🔴 Naptárbejegyzés</button>
+			</div>
+
+			<div id="nem-owner-uzenet" style="display:none; color:var(--muted); font-size:0.9em; line-height:1.5; margin-top:0.8em;">
+				A naptár megtekinthető, de szerkeszteni csak bejelentkezett ownerként lehet.
+			</div>
 
 			<button class="muszak-modal-bezar" onclick="muszakModalBezar()">Mégsem</button>
 		</div>
