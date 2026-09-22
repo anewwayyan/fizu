@@ -9,7 +9,7 @@ function getTableClient() {
 
     if (!connectionString) {
         throw new Error(
-            "Hiányzik a STORAGE_CONNECTION_STRING környezeti változó."
+            "Hiányzik a MuszakModositasokStorage környezeti változó."
         );
     }
 
@@ -22,7 +22,7 @@ function getTableClient() {
 
 // =====================================
 // GET /api/muszakok
-// Összes módosítás lekérése
+// Összes műszakmódosítás lekérése
 // =====================================
 
 app.http("muszakokGet", {
@@ -39,9 +39,7 @@ app.http("muszakokGet", {
             const modositasok = {};
 
             for await (const entity of client.listEntities()) {
-
-                modositasok[entity.rowKey] =
-                    entity.tipus;
+                modositasok[entity.rowKey] = entity.tipus;
             }
 
             return {
@@ -99,6 +97,8 @@ app.http("muszakokPost", {
                 "szabad",
                 "szabi",
                 "tsz",
+                "nappal_tulora_150",
+                "ejszaka_tulora_150",
                 "nappal_tulora",
                 "ejszaka_tulora"
             ];
@@ -186,8 +186,6 @@ app.http("muszakokDelete", {
 
             } catch (error) {
 
-                // Ha nincs ilyen bejegyzés,
-                // akkor sincs baj.
                 if (error.statusCode !== 404) {
                     throw error;
                 }
