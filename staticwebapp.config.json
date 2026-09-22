@@ -1,0 +1,24 @@
+{
+  "routes": [
+    {
+      "route": "/api/muszakok*",
+      "methods": ["GET"],
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/muszakok*",
+      "methods": ["POST", "DELETE"],
+      "allowedRoles": ["owner"]
+    },
+    {
+      "route": "/api/naptar*",
+      "methods": ["GET"],
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/naptar*",
+      "methods": ["POST", "DELETE"],
+      "allowedRoles": ["owner"]
+    }
+  ]
+}
