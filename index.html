@@ -649,6 +649,105 @@
 	}
 
 
+
+	/* =========================
+	   JELMAGYARÁZAT
+	   ========================= */
+
+	.jelmagyarazat {
+		margin-top: 0.9em;
+		border: 1px solid rgba(128,128,128,0.25);
+		border-radius: 12px;
+		background: var(--bg);
+		overflow: hidden;
+		text-align: left;
+	}
+
+	.jelmagyarazat summary {
+		cursor: pointer;
+		padding: 0.8em 0.95em;
+		font-size: 0.85em;
+		font-weight: 600;
+		color: var(--text);
+		user-select: none;
+		list-style: none;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.jelmagyarazat summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.jelmagyarazat summary::after {
+		content: "⌄";
+		font-size: 1.1em;
+		color: var(--muted);
+		transition: transform 0.15s ease;
+	}
+
+	.jelmagyarazat[open] summary::after {
+		transform: rotate(180deg);
+	}
+
+	.jelmagyarazat-tartalom {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.55em 0.8em;
+		padding: 0 0.95em 0.95em;
+		font-size: 0.78em;
+		color: var(--muted);
+	}
+
+	.jelmagyarazat-sor {
+		display: flex;
+		align-items: center;
+		gap: 0.5em;
+		min-width: 0;
+	}
+
+	.jelmagyarazat-jel {
+		min-width: 28px;
+		text-align: center;
+		font-size: 1.15em;
+		font-weight: 700;
+		color: var(--text);
+	}
+
+	.jelmagyarazat-pont {
+		width: 9px;
+		height: 9px;
+		border-radius: 50%;
+		background: #e53935;
+		display: inline-block;
+	}
+
+	.jelmagyarazat-ma {
+		width: 22px;
+		height: 22px;
+		border: 2px solid var(--accent);
+		border-radius: 6px;
+		display: inline-block;
+	}
+
+	.jelmagyarazat-tulora {
+		width: 25px;
+		height: 22px;
+		border: 2px solid #e67e22;
+		border-radius: 6px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.9em;
+	}
+
+	@media (max-width: 520px) {
+		.jelmagyarazat-tartalom {
+			grid-template-columns: 1fr;
+		}
+	}
+
 </style>
 </head>
 
@@ -689,6 +788,60 @@
 	</div>
 
 	<div id="muszak-naptar"></div>
+
+
+	<details class="jelmagyarazat">
+		<summary>Jelmagyarázat</summary>
+
+		<div class="jelmagyarazat-tartalom">
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-jel">🌞</span>
+				<span>Nappalos műszak</span>
+			</div>
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-jel">🌙</span>
+				<span>Éjszakás műszak</span>
+			</div>
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-jel">😴</span>
+				<span>Szabadnap</span>
+			</div>
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-jel">SZ</span>
+				<span>Fizetett szabadság</span>
+			</div>
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-jel">TSZ</span>
+				<span>Többlet szabadság / nem fizetett nap</span>
+			</div>
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-tulora">⚡</span>
+				<span>Túlóra</span>
+			</div>
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-jel">
+					<span class="jelmagyarazat-pont"></span>
+				</span>
+				<span>Naptárbejegyzés</span>
+			</div>
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-jel">
+					<span class="jelmagyarazat-ma"></span>
+				</span>
+				<span>Mai nap</span>
+			</div>
+
+		</div>
+	</details>
+
 
 	<p id="fizu-info"></p>
 
@@ -1488,12 +1641,12 @@
 			} else if (aktivTipus === "nappal_tulora") {
 
 				muszakNev =
-					"🌞⚡ P-Nappalos túlóra (200%)";
+					"🌞⚡ P-túlóra (200%)";
 
 			} else if (aktivTipus === "ejszaka_tulora") {
 
 				muszakNev =
-					"🌙⚡ P-Éjszakás túlóra (200%)";
+					"🌙⚡ Éjszakás P-túlóra (200%)";
 
 			} else {
 
@@ -2400,8 +2553,8 @@
 				<button class="muszak-opcio" onclick="muszakBeallit('tsz')">TSZ Többlet szabadság (0 Ft)</button>
 				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora_150')">🌞⚡ Nappalos túlóra (150%)</button>
 				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora_150')">🌙⚡ Éjszakás túlóra (150%)</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora')">🌞⚡ P-Nappalos túlóra (200%)</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora')">🌙⚡ P-Éjszakás túlóra (200%)</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora')">🌞⚡ P-túlóra (200%)</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora')">🌙⚡ Éjszakás P-túlóra (200%)</button>
 				<button class="muszak-opcio torles" onclick="muszakTorol()">↩ Alapbeosztás visszaállítása</button>
 			</div>
 
