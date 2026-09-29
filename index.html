@@ -891,7 +891,7 @@
 
 			<div class="jelmagyarazat-sor">
 				<span class="jelmagyarazat-jel">TSZ</span>
-				<span>Többlet szabadság / nem fizetett nap</span>
+				<span>Többlet szabadság</span>
 			</div>
 
 			<div class="jelmagyarazat-sor">
@@ -1409,9 +1409,28 @@
 
 			if (tipus === "tsz") {
 
-				tszNapok++;
-				continue;
-			}
+    tszNapok++;
+
+    // A TSZ nem ledolgozott idő,
+    // de a havi alapbért nem csökkenti.
+    // Ezért az alapbér időarányos számlálásában
+    // 12 fizetett óraként kezeljük.
+    teljesNormalOra += 12;
+
+    const tszNapVege =
+        new Date(
+            ev,
+            honap,
+            nap,
+            19, 0, 0
+        );
+
+    if (veg >= tszNapVege) {
+        eddigiNormalOra += 12;
+    }
+
+    continue;
+}
 
 			if (!intervallum) {
 				continue;
@@ -1876,7 +1895,7 @@
 			} else if (maiTipus === "tsz") {
 
 				statusSzoveg =
-					"TSZ Többlet szabadság – ma nem dolgozol, erre a napra nem jár bér.";
+					"TSZ Többlet szabadság – ma nem dolgozol.";
 
 			} else {
 
@@ -3059,7 +3078,7 @@
 				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka')">🌙 Éjszakás</button>
 				<button class="muszak-opcio" onclick="muszakBeallit('szabad')">😴 Szabadnap</button>
 				<button class="muszak-opcio" onclick="muszakBeallit('szabi')">🅂 Szabadság</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('tsz')">TSZ Többlet szabadság (0 Ft)</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('tsz')">TSZ Többlet szabadság</button>
 				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora_150')">🌞⚡ Nappalos túlóra (150%)</button>
 				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora_150')">🌙⚡ Éjszakás túlóra (150%)</button>
 				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora')">🌞⚡ P-Nappalos túlóra (200%)</button>
