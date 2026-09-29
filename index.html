@@ -927,6 +927,17 @@
 
 	<p id="fizu-info"></p>
 
+	<details id="ber-debug" style="margin-top:1em; text-align:left;">
+		<summary style="cursor:pointer; font-weight:600;">
+			🧪 Ideiglenes bér-részletező
+		</summary>
+
+		<div id="ber-debug-tartalom"
+			 style="margin-top:0.8em; font-size:0.85em; line-height:1.7;">
+		</div>
+	</details>
+
+
 </div>
 
 <script>
@@ -1315,6 +1326,25 @@
 		let szabiNapok = 0;
 		let tszNapok = 0;
 
+		// IDEIGLENES DEBUG – részletes bérbontás
+		let debugNappalDb = 0;
+		let debugEjszakaDb = 0;
+
+		let debugTulora150Db = 0;
+		let debugTulora200Db = 0;
+
+		let debugPotlek20Ora = 0;
+		let debugPotlek50Ora = 0;
+
+		let debugPotlek20Brutto = 0;
+		let debugPotlek50Brutto = 0;
+
+		let debugTulora150Brutto = 0;
+		let debugTulora200Brutto = 0;
+
+		let debugMunkaszunetiOra = 0;
+		let debugMunkaszunetiBrutto = 0;
+
 		const utolsoNap =
 			new Date(ev, honap + 1, 0).getDate();
 
@@ -1339,6 +1369,31 @@
 
 			const tulora =
 				tulora150 || tulora200;
+
+			// IDEIGLENES DEBUG – műszakdarabszámok
+			if (
+				tipus === "nappal" ||
+				tipus === "nappal_tulora" ||
+				tipus === "nappal_tulora_150"
+			) {
+				debugNappalDb++;
+			}
+
+			if (
+				tipus === "ejszaka" ||
+				tipus === "ejszaka_tulora" ||
+				tipus === "ejszaka_tulora_150"
+			) {
+				debugEjszakaDb++;
+			}
+
+			if (tulora150) {
+				debugTulora150Db++;
+			}
+
+			if (tulora200) {
+				debugTulora200Db++;
+			}
 
 			if (tipus === "szabi") {
 
@@ -1401,11 +1456,31 @@
 					veg
 				);
 
-			teljesExtraBrutto +=
+			const potlek20Brutto =
 				teljesPotlekOrak.husz *
-					POTLEK_ORADIJ * 0.20 +
+				POTLEK_ORADIJ *
+				0.20;
+
+			const potlek50Brutto =
 				teljesPotlekOrak.otven *
-					POTLEK_ORADIJ * 0.50;
+				POTLEK_ORADIJ *
+				0.50;
+
+			debugPotlek20Ora +=
+				teljesPotlekOrak.husz;
+
+			debugPotlek50Ora +=
+				teljesPotlekOrak.otven;
+
+			debugPotlek20Brutto +=
+				potlek20Brutto;
+
+			debugPotlek50Brutto +=
+				potlek50Brutto;
+
+			teljesExtraBrutto +=
+				potlek20Brutto +
+				potlek50Brutto;
 
 			eddigiExtraBrutto +=
 				eddigiPotlekOrak.husz *
@@ -1416,10 +1491,16 @@
 			// Sima túlóra: alap + 50% pótlék = 150%.
 			if (tulora150) {
 
-				teljesExtraBrutto +=
+				const tulora150Brutto =
 					teljesOra *
 					POTLEK_ORADIJ *
 					1.5;
+
+				debugTulora150Brutto +=
+					tulora150Brutto;
+
+				teljesExtraBrutto +=
+					tulora150Brutto;
 
 				eddigiExtraBrutto +=
 					eddigiOra *
@@ -1430,10 +1511,16 @@
 			// Pihenőnapos túlóra: alap + 100% pótlék = 200%.
 			if (tulora200) {
 
-				teljesExtraBrutto +=
+				const tulora200Brutto =
 					teljesOra *
 					POTLEK_ORADIJ *
 					2;
+
+				debugTulora200Brutto +=
+					tulora200Brutto;
+
+				teljesExtraBrutto +=
+					tulora200Brutto;
 
 				eddigiExtraBrutto +=
 					eddigiOra *
@@ -1441,36 +1528,29 @@
 					2;
 			}
 
-			// Munkaszüneti napi pótlék.
-//
-// Nálunk a műszak BEOSZTÁS SZERINTI kezdőnapja számít.
-// Példa:
-// aug. 20. 19:00 – aug. 21. 07:00 = teljes 12 óra ünnepnapi
-// aug. 19. 19:00 – aug. 20. 07:00 = nem ünnepnapi műszak
-//
-// A bérpapír alapján a pótlék +200%.
+			// Munkaszüneti napon végzett műszak:
+			// a bérpapír alapján +200% pótlék.
+			if (magyarMunkaszunetiNap(datum)) {
 
-const munkaszunetiMuszak =
-    magyarMunkaszunetiNap(datum);
+				const munkaszunetiBrutto =
+					teljesOra *
+					POTLEK_ORADIJ *
+					2;
 
-if (munkaszunetiMuszak) {
+				debugMunkaszunetiOra +=
+					teljesOra;
 
-    const teljesMunkaszunetiPotlek =
-        teljesOra *
-        POTLEK_ORADIJ *
-        2;
+				debugMunkaszunetiBrutto +=
+					munkaszunetiBrutto;
 
-    const eddigiMunkaszunetiPotlek =
-        eddigiOra *
-        POTLEK_ORADIJ *
-        2;
+				teljesExtraBrutto +=
+					munkaszunetiBrutto;
 
-    teljesExtraBrutto +=
-        teljesMunkaszunetiPotlek;
-
-    eddigiExtraBrutto +=
-        eddigiMunkaszunetiPotlek;
-}
+				eddigiExtraBrutto +=
+					eddigiOra *
+					POTLEK_ORADIJ *
+					2;
+			}
 		}
 
 		const haviAlapKorrigalt =
@@ -1507,7 +1587,31 @@ if (munkaszunetiMuszak) {
 			eddigiBrutto: eddigiBrutto,
 			eddigiNetto: eddigiBrutto * NETTO_SZORZO,
 			szabiNapok: szabiNapok,
-			tszNapok: tszNapok
+			tszNapok: tszNapok,
+
+			// IDEIGLENES DEBUG – ezt később ki lehet venni
+			debug: {
+				nappalDb: debugNappalDb,
+				ejszakaDb: debugEjszakaDb,
+
+				tulora150Db: debugTulora150Db,
+				tulora200Db: debugTulora200Db,
+
+				potlek20Ora: debugPotlek20Ora,
+				potlek50Ora: debugPotlek50Ora,
+
+				potlek20Brutto: debugPotlek20Brutto,
+				potlek50Brutto: debugPotlek50Brutto,
+
+				tulora150Brutto: debugTulora150Brutto,
+				tulora200Brutto: debugTulora200Brutto,
+
+				munkaszunetiOra: debugMunkaszunetiOra,
+				munkaszunetiBrutto: debugMunkaszunetiBrutto,
+
+				haviAlapKorrigalt: haviAlapKorrigalt,
+				bank: BANKSZAMLA_HOZZAJARULAS
+			}
 		};
 	}
 
@@ -2607,6 +2711,95 @@ if (munkaszunetiMuszak) {
 
 
 
+
+	/* =========================
+	   IDEIGLENES BÉR-RÉSZLETEZŐ
+	   ========================= */
+
+	function frissitBerDebug() {
+
+		const debugDoboz =
+			document.getElementById("ber-debug-tartalom");
+
+		if (!debugDoboz) {
+			return;
+		}
+
+		// Most célzottan a 2026. augusztusi bérpapírt ellenőrizzük.
+		const ev = 2026;
+		const honap = 7; // 0 = január, 7 = augusztus
+
+		const honapVege =
+			new Date(
+				ev,
+				honap + 1,
+				0,
+				23, 59, 59, 999
+			);
+
+		const havi =
+			haviBerOsszesites(
+				ev,
+				honap,
+				honapVege
+			);
+
+		const d = havi.debug;
+
+		debugDoboz.innerHTML = `
+
+			<strong>2026. augusztus</strong><br><br>
+
+			🌞 Nappalos műszakok:
+			<strong>${d.nappalDb} db</strong><br>
+
+			🌙 Éjszakás műszakok:
+			<strong>${d.ejszakaDb} db</strong><br>
+
+			🅂 Fizetett szabadság:
+			<strong>${havi.szabiNapok} nap</strong><br>
+
+			TSZ:
+			<strong>${havi.tszNapok} nap</strong><br><br>
+
+			⚡ 150%-os túlóra:
+			<strong>${d.tulora150Db} db</strong>
+			(${formatFt(d.tulora150Brutto)})<br>
+
+			⚡ P-túlóra 200%:
+			<strong>${d.tulora200Db} db</strong>
+			(${formatFt(d.tulora200Brutto)})<br><br>
+
+			🌇 20%-os pótlék:
+			<strong>${Math.round(d.potlek20Ora * 10) / 10} óra</strong>
+			=
+			<strong>${formatFt(d.potlek20Brutto)}</strong><br>
+
+			🌙 50%-os pótlék:
+			<strong>${Math.round(d.potlek50Ora * 10) / 10} óra</strong>
+			=
+			<strong>${formatFt(d.potlek50Brutto)}</strong><br><br>
+
+			🎉 Munkaszüneti napi pótlék:
+			<strong>${Math.round(d.munkaszunetiOra * 10) / 10} óra</strong>
+			=
+			<strong>${formatFt(d.munkaszunetiBrutto)}</strong><br><br>
+
+			Havi korrigált alap:
+			<strong>${formatFt(d.haviAlapKorrigalt)}</strong><br>
+
+			Bankszámla-hozzájárulás:
+			<strong>${formatFt(d.bank)}</strong><br><br>
+
+			<strong>Összes bruttó:
+			${formatFt(havi.brutto)}</strong><br>
+
+			<strong>Számolt nettó:
+			${formatFt(havi.netto)}</strong>
+		`;
+	}
+
+
 	/* =========================
 	   FIZETÉSELŐZMÉNYEK – AZURE API
 	   ========================= */
@@ -2826,6 +3019,9 @@ if (munkaszunetiMuszak) {
 			naptarBejegyzesekBetoltese(),
 			authAllapotBetoltese()
 		]);
+
+		// Csak a betöltött Azure műszakmódosítások után számoljuk a debug bontást.
+		frissitBerDebug();
 
 		if (isOwner) {
 			await fizetesElozmenyekBetoltese();
