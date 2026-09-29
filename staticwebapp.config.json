@@ -19,6 +19,11 @@
       "route": "/api/naptar*",
       "methods": ["POST", "DELETE"],
       "allowedRoles": ["owner"]
+    },
+    {
+      "route": "/api/fizetesek*",
+      "methods": ["GET", "POST"],
+      "allowedRoles": ["owner"]
     }
   ]
 }
