@@ -1441,20 +1441,36 @@
 					2;
 			}
 
-			// Munkaszüneti napon végzett műszak:
-			// a bérpapír alapján +200% pótlék.
-			if (magyarMunkaszunetiNap(datum)) {
+			// Munkaszüneti napi pótlék.
+//
+// Nálunk a műszak BEOSZTÁS SZERINTI kezdőnapja számít.
+// Példa:
+// aug. 20. 19:00 – aug. 21. 07:00 = teljes 12 óra ünnepnapi
+// aug. 19. 19:00 – aug. 20. 07:00 = nem ünnepnapi műszak
+//
+// A bérpapír alapján a pótlék +200%.
 
-				teljesExtraBrutto +=
-					teljesOra *
-					POTLEK_ORADIJ *
-					2;
+const munkaszunetiMuszak =
+    magyarMunkaszunetiNap(datum);
 
-				eddigiExtraBrutto +=
-					eddigiOra *
-					POTLEK_ORADIJ *
-					2;
-			}
+if (munkaszunetiMuszak) {
+
+    const teljesMunkaszunetiPotlek =
+        teljesOra *
+        POTLEK_ORADIJ *
+        2;
+
+    const eddigiMunkaszunetiPotlek =
+        eddigiOra *
+        POTLEK_ORADIJ *
+        2;
+
+    teljesExtraBrutto +=
+        teljesMunkaszunetiPotlek;
+
+    eddigiExtraBrutto +=
+        eddigiMunkaszunetiPotlek;
+}
 		}
 
 		const haviAlapKorrigalt =
