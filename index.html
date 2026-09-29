@@ -1059,7 +1059,6 @@
 		SZABI_ALAPBER_KIESO_RESZ;
 
 	// TSZ: nem fizetett nap. Becsült levonás 12 óra pótlékalappal.
-	const TSZ_NAPI_LEVONAS = 12 * POTLEK_ORADIJ;
 
 	/*
 	   2026. szeptember 8. = nappalos
@@ -1557,8 +1556,7 @@
 			Math.max(
 				0,
 				HAVI_ALAPBER +
-				szabiNapok * SZABI_NAPI_KORREKCIO -
-				tszNapok * TSZ_NAPI_LEVONAS
+				szabiNapok * SZABI_NAPI_KORREKCIO
 			);
 
 		const alapArany =
