@@ -748,6 +748,80 @@
 		}
 	}
 
+
+	/* =========================
+	   KORÁBBI FIZETÉSEK
+	   ========================= */
+
+	.fizetes-elozmenyek {
+		margin-top: 0.75em;
+		border: 1px solid rgba(128,128,128,0.25);
+		border-radius: 12px;
+		background: var(--bg);
+		overflow: hidden;
+		text-align: left;
+	}
+
+	.fizetes-elozmenyek summary {
+		cursor: pointer;
+		padding: 0.8em 0.95em;
+		font-size: 0.85em;
+		font-weight: 600;
+		color: var(--text);
+		user-select: none;
+		list-style: none;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.fizetes-elozmenyek summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.fizetes-elozmenyek summary::after {
+		content: "⌄";
+		font-size: 1.1em;
+		color: var(--muted);
+		transition: transform 0.15s ease;
+	}
+
+	.fizetes-elozmenyek[open] summary::after {
+		transform: rotate(180deg);
+	}
+
+	.fizetes-elozmenyek-lista {
+		padding: 0 0.95em 0.95em;
+		display: grid;
+		gap: 0.55em;
+	}
+
+	.fizetes-elozmeny-sor {
+		padding: 0.7em 0.8em;
+		border-radius: 10px;
+		background: var(--card-bg);
+		border: 1px solid rgba(128,128,128,0.18);
+	}
+
+	.fizetes-elozmeny-honap {
+		font-size: 0.82em;
+		font-weight: 700;
+		color: var(--text);
+		margin-bottom: 0.2em;
+	}
+
+	.fizetes-elozmeny-adat {
+		font-size: 0.78em;
+		color: var(--muted);
+		line-height: 1.45;
+	}
+
+	.fizetes-elozmenyek-ures {
+		padding: 0.1em 0 0.2em;
+		font-size: 0.78em;
+		color: var(--muted);
+	}
+
 </style>
 </head>
 
@@ -839,6 +913,14 @@
 				<span>Mai nap</span>
 			</div>
 
+		</div>
+	</details>
+
+
+	<details class="fizetes-elozmenyek" id="fizetes-elozmenyek" style="display:none;">
+		<summary>📊 Korábbi fizetések</summary>
+		<div class="fizetes-elozmenyek-lista" id="fizetes-elozmenyek-lista">
+			<div class="fizetes-elozmenyek-ures">Még nincs elmentett hónap.</div>
 		</div>
 	</details>
 
@@ -1641,12 +1723,12 @@
 			} else if (aktivTipus === "nappal_tulora") {
 
 				muszakNev =
-					"🌞⚡ P-túlóra (200%)";
+					"🌞⚡ P-Nappalos túlóra (200%)";
 
 			} else if (aktivTipus === "ejszaka_tulora") {
 
 				muszakNev =
-					"🌙⚡ Éjszakás P-túlóra (200%)";
+					"🌙⚡ P-Éjszakás túlóra (200%)";
 
 			} else {
 
@@ -2025,6 +2107,7 @@
 		}
 
 		frissitPrivacyGomb();
+		fizetesElozmenyekMegjelenitese();
 	}
 
 	function frissitSzerkesztesJog() {
@@ -2507,21 +2590,238 @@
 
 
 
+
+	/* =========================
+	   FIZETÉSELŐZMÉNYEK – AZURE API
+	   ========================= */
+
+	let fizetesElozmenyek = {};
+
+	function honapKulcs(ev, honap) {
+		return ev + "-" + String(honap + 1).padStart(2, "0");
+	}
+
+	function honapMegjelenites(kulcs) {
+		const [ev, honap] = kulcs.split("-").map(Number);
+
+		const honapNev =
+			new Intl.DateTimeFormat("hu-HU", {
+				month: "long"
+			}).format(new Date(ev, honap - 1, 1));
+
+		return ev + ". " + honapNev;
+	}
+
+	function fizetesElozmenyekMegjelenitese() {
+
+		const doboz =
+			document.getElementById("fizetes-elozmenyek");
+
+		const lista =
+			document.getElementById("fizetes-elozmenyek-lista");
+
+		if (!doboz || !lista) {
+			return;
+		}
+
+		if (!isOwner) {
+			doboz.style.display = "none";
+			return;
+		}
+
+		doboz.style.display = "block";
+
+		const kulcsok =
+			Object.keys(fizetesElozmenyek)
+				.sort()
+				.reverse();
+
+		if (kulcsok.length === 0) {
+			lista.innerHTML =
+				'<div class="fizetes-elozmenyek-ures">Még nincs elmentett hónap.</div>';
+			return;
+		}
+
+		lista.innerHTML =
+			kulcsok.map(function (kulcs) {
+
+				const adat = fizetesElozmenyek[kulcs];
+
+				const netto =
+					Number(adat.kalkulaltNetto || 0);
+
+				const orak =
+					Number(adat.ledolgozottOra || 0);
+
+				return `
+					<div class="fizetes-elozmeny-sor">
+						<div class="fizetes-elozmeny-honap">
+							${honapMegjelenites(kulcs)}
+						</div>
+						<div class="fizetes-elozmeny-adat">
+							Kalkulált nettó: <strong>${formatFt(netto)}</strong>
+							· ${Math.round(orak * 10) / 10} ledolgozott óra
+						</div>
+					</div>
+				`;
+			}).join("");
+	}
+
+	async function fizetesElozmenyekBetoltese() {
+
+		if (!isOwner) {
+			fizetesElozmenyek = {};
+			fizetesElozmenyekMegjelenitese();
+			return;
+		}
+
+		try {
+
+			const response = await fetch("/api/fizetesek", {
+				method: "GET",
+				headers: {
+					"Accept": "application/json"
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error("HTTP " + response.status);
+			}
+
+			fizetesElozmenyek = await response.json();
+			fizetesElozmenyekMegjelenitese();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült betölteni a fizetéselőzményeket:",
+				error
+			);
+
+			fizetesElozmenyek = {};
+			fizetesElozmenyekMegjelenitese();
+		}
+	}
+
+	async function elozoHonapAutomatikusMentese() {
+
+		if (!isOwner) {
+			return;
+		}
+
+		const most = new Date();
+
+		const elozoHonap =
+			new Date(
+				most.getFullYear(),
+				most.getMonth() - 1,
+				1
+			);
+
+		const ev = elozoHonap.getFullYear();
+		const honap = elozoHonap.getMonth();
+		const kulcs = honapKulcs(ev, honap);
+
+		// Ha már egyszer elmentettük, nem írjuk felül.
+		if (fizetesElozmenyek[kulcs]) {
+			return;
+		}
+
+		const honapVege =
+			new Date(
+				ev,
+				honap + 1,
+				0,
+				23, 59, 59, 999
+			);
+
+		const havi =
+			haviBerOsszesites(
+				ev,
+				honap,
+				honapVege
+			);
+
+		const mentendo = {
+			honap: kulcs,
+			kalkulaltNetto: Math.round(havi.netto),
+			ledolgozottOra:
+				Math.round(havi.orak * 10) / 10
+		};
+
+		try {
+
+			const response = await fetch("/api/fizetesek", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Accept": "application/json"
+				},
+				body: JSON.stringify(mentendo)
+			});
+
+			if (!response.ok) {
+
+				let hibaSzoveg = "HTTP " + response.status;
+
+				try {
+					const hibaAdat = await response.json();
+
+					if (hibaAdat.hiba) {
+						hibaSzoveg = hibaAdat.hiba;
+					}
+				} catch (_) {}
+
+				throw new Error(hibaSzoveg);
+			}
+
+			const valasz = await response.json();
+
+			fizetesElozmenyek[kulcs] =
+				valasz.adat || {
+					kalkulaltNetto: mentendo.kalkulaltNetto,
+					ledolgozottOra: mentendo.ledolgozottOra
+				};
+
+			fizetesElozmenyekMegjelenitese();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült automatikusan elmenteni az előző havi fizetést:",
+				error
+			);
+		}
+	}
+
+
 	/* =========================
 	   INDÍTÁS
 	   ========================= */
 
-	frissitFizu();
+	async function inditas() {
 
-	generalMuszakNaptar();
+		frissitFizu();
+		generalMuszakNaptar();
+		frissitPrivacyGomb();
 
-	muszakModositasokBetoltese();
+		await Promise.all([
+			muszakModositasokBetoltese(),
+			naptarBejegyzesekBetoltese(),
+			authAllapotBetoltese()
+		]);
 
-	naptarBejegyzesekBetoltese();
+		if (isOwner) {
+			await fizetesElozmenyekBetoltese();
+			await elozoHonapAutomatikusMentese();
+		}
 
-	authAllapotBetoltese();
+		fizetesElozmenyekMegjelenitese();
+		frissitFizu();
+		generalMuszakNaptar();
+	}
 
-	frissitPrivacyGomb();
+	inditas();
 
 	document.addEventListener("keydown", function(event) {
 		if (event.key === "Escape") {
@@ -2552,8 +2852,8 @@
 				<button class="muszak-opcio" onclick="muszakBeallit('tsz')">TSZ Többlet szabadság (0 Ft)</button>
 				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora_150')">🌞⚡ Nappalos túlóra (150%)</button>
 				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora_150')">🌙⚡ Éjszakás túlóra (150%)</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora')">🌞⚡ P-túlóra (200%)</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora')">🌙⚡ Éjszakás P-túlóra (200%)</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora')">🌞⚡ P-Nappalos túlóra (200%)</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora')">🌙⚡ P-Éjszakás túlóra (200%)</button>
 				<button class="muszak-opcio torles" onclick="muszakTorol()">↩ Alapbeosztás visszaállítása</button>
 			</div>
 
