@@ -2828,15 +2828,17 @@
 	}
 
 	function honapMegjelenites(kulcs) {
-		const [ev, honap] = kulcs.split("-").map(Number);
+    const [ev, honap] = kulcs.split("-").map(Number);
 
-		const honapNev =
-			new Intl.DateTimeFormat("hu-HU", {
-				month: "long"
-			}).format(new Date(ev, honap - 1, 1));
+    const datum = new Date(ev, honap, 1);
 
-		return ev + ". " + honapNev;
-	}
+    const honapNev =
+        new Intl.DateTimeFormat("hu-HU", {
+            month: "long"
+        }).format(datum);
+
+    return datum.getFullYear() + ". " + honapNev;
+}
 
 	function fizetesElozmenyekMegjelenitese() {
 
