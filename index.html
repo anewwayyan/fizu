@@ -203,6 +203,11 @@
 		font-weight: bold;
 	}
 
+	.nap-unnepnap {
+		outline: 2px solid #e53935;
+		outline-offset: -2px;
+	}
+
 	.nap-jel {
 		font-size: 1.1em;
 		line-height: 1;
@@ -2113,6 +2118,11 @@
 				jel = "😴";
 			}
 
+
+			/* Munkaszüneti nap kiemelése */
+			if (magyarMunkaszunetiNap(datum)) {
+				osztaly += " nap-unnepnap";
+			}
 
 			/* Mai nap kiemelése */
 
