@@ -423,6 +423,23 @@
 		border-color: var(--accent);
 	}
 
+	.naptar-ma-gomb {
+		margin-top: 0.35em;
+		border: 1px solid rgba(128,128,128,0.35);
+		background: var(--bg);
+		color: var(--text);
+		border-radius: 8px;
+		padding: 0.25em 0.7em;
+		font-size: 0.72em;
+		font-weight: 600;
+		cursor: pointer;
+		touch-action: manipulation;
+	}
+
+	.naptar-ma-gomb:hover {
+		border-color: var(--accent);
+	}
+
 	@media (max-width: 520px) {
 		.naptar-cim-sor {
 			grid-template-columns: 46px 1fr 46px;
@@ -1949,6 +1966,11 @@
 		generalMuszakNaptar();
 	}
 
+	function naptarMa() {
+		naptarHonapEltolas = 0;
+		generalMuszakNaptar();
+	}
+
 	function generalMuszakNaptar() {
 
 		const most = new Date();
@@ -2006,7 +2028,13 @@
 				>‹</button>
 
 				<div class="naptar-cim">
-					${ev}. ${honapNeve}
+					<div>${ev}. ${honapNeve}</div>
+					<button
+						class="naptar-ma-gomb"
+						onclick="naptarMa()"
+						title="Ugrás a mai hónapra"
+						aria-label="Ugrás a mai hónapra"
+					>Ma</button>
 				</div>
 
 				<button
