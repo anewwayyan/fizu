@@ -812,6 +812,16 @@
 		transform: rotate(180deg);
 	}
 
+	.fizetes-elozmenyek.zarolt summary {
+		opacity: 0.55;
+		cursor: not-allowed;
+	}
+
+	.fizetes-elozmenyek.zarolt summary::after {
+		content: "🔒";
+		transform: none;
+	}
+
 	.fizetes-elozmenyek-lista {
 		padding: 0 0.95em 0.95em;
 		display: grid;
@@ -939,8 +949,8 @@
 	</details>
 
 
-	<details class="fizetes-elozmenyek" id="fizetes-elozmenyek" style="display:none;">
-		<summary>📊 Korábbi fizetések</summary>
+	<details class="fizetes-elozmenyek" id="fizetes-elozmenyek">
+		<summary id="fizetes-elozmenyek-summary" onclick="fizetesElozmenyekKattintasTiltas(event)">🔒 Korábbi fizetések</summary>
 		<div class="fizetes-elozmenyek-lista" id="fizetes-elozmenyek-lista">
 			<div class="fizetes-elozmenyek-ures">Még nincs elmentett hónap.</div>
 		</div>
@@ -949,7 +959,7 @@
 
 	<p id="fizu-info"></p>
 
-	<details id="ber-debug" style="margin-top:1em; text-align:left;">
+	<details id="ber-debug" style="margin-top:1em; text-align:left; display:none;">
 		<summary style="cursor:pointer; font-weight:600;">
 			🧪 Ideiglenes bér-részletező
 		</summary>
@@ -2281,6 +2291,16 @@
 			osszegRejtve = true;
 		}
 
+		const berDebug = document.getElementById("ber-debug");
+
+		if (berDebug) {
+			berDebug.style.display = isOwner ? "block" : "none";
+
+			if (!isOwner) {
+				berDebug.removeAttribute("open");
+			}
+		}
+
 		frissitPrivacyGomb();
 		fizetesElozmenyekMegjelenitese();
 	}
@@ -2878,6 +2898,15 @@
     return datum.getFullYear() + ". " + honapNev;
 }
 
+	function fizetesElozmenyekKattintasTiltas(event) {
+		const doboz = document.getElementById("fizetes-elozmenyek");
+
+		if (!isOwner && doboz) {
+			event.preventDefault();
+			doboz.removeAttribute("open");
+		}
+	}
+
 	function fizetesElozmenyekMegjelenitese() {
 
 		const doboz =
@@ -2890,12 +2919,31 @@
 			return;
 		}
 
+		const summary =
+			document.getElementById("fizetes-elozmenyek-summary");
+
 		if (!isOwner) {
-			doboz.style.display = "none";
+			doboz.style.display = "block";
+			doboz.classList.add("zarolt");
+			doboz.removeAttribute("open");
+
+			if (summary) {
+				summary.textContent = "🔒 Korábbi fizetések";
+				summary.title = bejelentkezve
+					? "Ehhez owner jogosultság szükséges."
+					: "A megnyitáshoz jelentkezz be.";
+			}
+
 			return;
 		}
 
 		doboz.style.display = "block";
+		doboz.classList.remove("zarolt");
+
+		if (summary) {
+			summary.textContent = "📊 Korábbi fizetések";
+			summary.title = "";
+		}
 
 		const kulcsok =
 			Object.keys(fizetesElozmenyek)
