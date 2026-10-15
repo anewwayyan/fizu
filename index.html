@@ -337,6 +337,26 @@
 		cursor: pointer;
 	}
 
+	.mentes-statusz {
+		margin-top: 0.8em;
+		font-size: 0.85em;
+		min-height: 1.4em;
+		text-align: center;
+		font-weight: 600;
+	}
+
+	.mentes-statusz.mentes {
+		color: var(--muted);
+	}
+
+	.mentes-statusz.siker {
+		color: #2e7d32;
+	}
+
+	.mentes-statusz.hiba {
+		color: #c62828;
+	}
+
 	.naptar-segitseg {
 		text-align: center;
 		color: var(--muted);
@@ -2390,6 +2410,12 @@
 
 		frissitSzerkesztesJog();
 
+		const mentesStatusz = document.getElementById("muszak-mentes-statusz");
+		if (mentesStatusz) {
+			mentesStatusz.className = "mentes-statusz";
+			mentesStatusz.textContent = "";
+		}
+
 		document.getElementById("muszak-modal-hatter")
 			.classList.add("lathato");
 	}
@@ -2419,6 +2445,12 @@
 		}
 
 		const datum = kivalasztottDatum;
+
+		const statusz = document.getElementById("muszak-mentes-statusz");
+		if (statusz) {
+			statusz.className = "mentes-statusz mentes";
+			statusz.textContent = "◌ Mentés folyamatban...";
+		}
 
 		try {
 
@@ -2451,12 +2483,23 @@
 
 			muszakModositasok[datum] = tipus;
 
-			muszakModalBezar();
+			if (statusz) {
+				statusz.className = "mentes-statusz siker";
+				statusz.textContent = "✓ Sikeresen mentve";
+			}
 
-			frissitFizu();
-			generalMuszakNaptar();
+			setTimeout(function () {
+				muszakModalBezar();
+				frissitFizu();
+				generalMuszakNaptar();
+			}, 600);
 
 		} catch (error) {
+
+			if (statusz) {
+				statusz.className = "mentes-statusz hiba";
+				statusz.textContent = "⊗ Sikertelen mentés";
+			}
 
 			console.error(
 				"Nem sikerült elmenteni a műszakot:",
@@ -2482,6 +2525,12 @@
 		}
 
 		const datum = kivalasztottDatum;
+
+		const statusz = document.getElementById("muszak-mentes-statusz");
+		if (statusz) {
+			statusz.className = "mentes-statusz mentes";
+			statusz.textContent = "◌ Törlés folyamatban...";
+		}
 
 		try {
 
@@ -2513,12 +2562,23 @@
 
 			delete muszakModositasok[datum];
 
-			muszakModalBezar();
+			if (statusz) {
+				statusz.className = "mentes-statusz siker";
+				statusz.textContent = "✓ Sikeresen törölve";
+			}
 
-			frissitFizu();
-			generalMuszakNaptar();
+			setTimeout(function () {
+				muszakModalBezar();
+				frissitFizu();
+				generalMuszakNaptar();
+			}, 600);
 
 		} catch (error) {
+
+			if (statusz) {
+				statusz.className = "mentes-statusz hiba";
+				statusz.textContent = "⊗ Sikertelen törlés";
+			}
 
 			console.error(
 				"Nem sikerült törölni a műszakmódosítást:",
@@ -3180,6 +3240,8 @@
 			<div id="nem-owner-uzenet" style="display:none; color:var(--muted); font-size:0.9em; line-height:1.5; margin-top:0.8em;">
 				A naptár megtekinthető, de szerkeszteni csak bejelentkezett ownerként lehet.
 			</div>
+		<div id="muszak-mentes-statusz" class="mentes-statusz"></div>
+
 
 			<button class="muszak-modal-bezar" onclick="muszakModalBezar()">Mégsem</button>
 		</div>
