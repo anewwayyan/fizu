@@ -874,6 +874,20 @@
 		color: var(--muted);
 	}
 
+	/* Béradatok csak ownerként láthatók. Alapból rejtve, így betöltéskor sem villannak fel. */
+	.owner-beradat {
+		display: none;
+	}
+
+	.app-verzio {
+		margin-top: 1.4em;
+		font-size: 0.68em;
+		color: var(--muted);
+		opacity: 0.65;
+		text-align: center;
+		user-select: none;
+	}
+
 </style>
 </head>
 
@@ -881,7 +895,7 @@
 
 <div class="card">
 
-	<button class="privacy-toggle" id="privacy-btn" onclick="toggleOsszegLathatosag()" title="Összeg megjelenítése"></button>
+	<button class="privacy-toggle owner-beradat" id="privacy-btn" onclick="toggleOsszegLathatosag()" title="Összeg megjelenítése"></button>
 
 	<button class="theme-toggle" onclick="toggleTheme()">🌙</button>
 
@@ -903,13 +917,13 @@
 	</div>
 
 
-	<p id="fizu-osszeg">0 Ft</p>
+	<p id="fizu-osszeg" class="owner-beradat">0 Ft</p>
 
 	<p id="fizu-status"></p>
 
-	<p id="fizu-varhato"></p>
+	<p id="fizu-varhato" class="owner-beradat"></p>
 
-	<div class="progress-container">
+	<div class="progress-container owner-beradat">
 		<div id="progress-bar"></div>
 	</div>
 
@@ -977,7 +991,7 @@
 	</details>
 
 
-	<p id="fizu-info"></p>
+	<p id="fizu-info" class="owner-beradat"></p>
 
 	<details id="ber-debug" style="margin-top:1em; text-align:left; display:none;">
 		<summary style="cursor:pointer; font-weight:600;">
@@ -989,6 +1003,7 @@
 		</div>
 	</details>
 
+	<div class="app-verzio">ver. 1.6</div>
 
 </div>
 
@@ -1925,9 +1940,9 @@
 					"🌙 Éjszakás műszak";
 			}
 
-			statusSzoveg =
-				muszakNev +
-				" – megy a számláló!";
+			statusSzoveg = isOwner
+				? muszakNev + " – megy a számláló!"
+				: muszakNev;
 
 		} else {
 
@@ -1936,23 +1951,27 @@
 
 			if (maiTipus === "szabad") {
 
-				statusSzoveg =
-					"😴 Ma szabadnap van, a számláló most nem nő.";
+				statusSzoveg = isOwner
+					? "😴 Ma szabadnap van, a számláló most nem nő."
+					: "😴 Szabadnap";
 
 			} else if (maiTipus === "szabi") {
 
-				statusSzoveg =
-					"🅂 Szabin vagy, a számláló most nem nő.";
+				statusSzoveg = isOwner
+					? "🅂 Szabin vagy, a számláló most nem nő."
+					: "🅂 Szabadság";
 
 			} else if (maiTipus === "tsz") {
 
-				statusSzoveg =
-					"TSZ Többlet szabadság – ma nem dolgozol.";
+				statusSzoveg = isOwner
+					? "TSZ Többlet szabadság – ma nem dolgozol."
+					: "TSZ Többlet szabadság";
 
 			} else {
 
-				statusSzoveg =
-					"⏸️ Most nincs műszak, a számláló szünetel.";
+				statusSzoveg = isOwner
+					? "⏸️ Most nincs műszak, a számláló szünetel."
+					: "⏸️ Most nincs műszak";
 			}
 		}
 
@@ -2311,6 +2330,10 @@
 			osszegRejtve = true;
 		}
 
+		document.querySelectorAll(".owner-beradat").forEach(function (el) {
+			el.style.display = isOwner ? "" : "none";
+		});
+
 		const berDebug = document.getElementById("ber-debug");
 
 		if (berDebug) {
@@ -2323,6 +2346,7 @@
 
 		frissitPrivacyGomb();
 		fizetesElozmenyekMegjelenitese();
+		frissitFizu();
 	}
 
 	function frissitSzerkesztesJog() {
