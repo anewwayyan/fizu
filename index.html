@@ -2218,7 +2218,7 @@
 			const vanBejegyzes = !!naptarBejegyzesek[kulcs];
 
 			const pontHtml =
-				vanBejegyzes
+				isOwner && vanBejegyzes
 					? `<span class="naptar-pont" title="Van naptárbejegyzés"></span>`
 					: "";
 
