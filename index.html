@@ -1003,7 +1003,7 @@
 		</div>
 	</details>
 
-	<div class="app-verzio">ver. 1.6</div>
+	<div class="app-verzio">ver. 1.6.1</div>
 
 </div>
 
@@ -2331,7 +2331,19 @@
 		}
 
 		document.querySelectorAll(".owner-beradat").forEach(function (el) {
-			el.style.display = isOwner ? "" : "none";
+			if (!isOwner) {
+				el.style.display = "none";
+				return;
+			}
+
+			// Az owner nézetben visszaadjuk az elem eredeti megjelenési módját.
+			// A CSS-ben az .owner-beradat alapból display:none, ezért az üres
+			// inline display nem elég a visszakapcsoláshoz.
+			if (el.id === "privacy-btn") {
+				el.style.display = "flex";
+			} else {
+				el.style.display = "block";
+			}
 		});
 
 		const berDebug = document.getElementById("ber-debug");
