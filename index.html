@@ -951,9 +951,7 @@
             background: #203a5c;
             color: #f2f7ff;
             box-shadow: inset -1px 0 rgba(255,255,255,.04);
-            /* Stabil saját réteg a görgetésnél, hogy az ikon ne remegjen. */
-            transform: translateZ(0);
-            backface-visibility: hidden;
+            /* A sticky oldalsávot nem kényszerítjük külön GPU-rétegre. */
         }
         html[data-theme="dark"] .desktop-sidebar {
             background: #101f36;
@@ -1190,16 +1188,17 @@
         .desktop-logout:hover, .desktop-login:hover {
             background: #263f61; border-color: #5378a9;
         }
-        /* A kilépés ikonja ne mozogjon a sor magasságával vagy scroll közben. */
-        .desktop-logout svg {
+        /* Előre raszterizált ikon: nem változik az SVG vonalak pozíciója scrollnál. */
+        .desktop-logout-icon {
             display: block;
             width: 19px;
             height: 19px;
+            min-width: 19px;
             flex: 0 0 19px;
             align-self: center;
-            vertical-align: middle;
-            transform: translateZ(0);
-            backface-visibility: hidden;
+            object-fit: contain;
+            pointer-events: none;
+            user-select: none;
         }
         .dashboard-topbar .auth-box { display: none; }
     }
@@ -1311,9 +1310,7 @@
             <div class="desktop-account-name" id="desktop-account-name">Filus Tamás</div>
             <div class="desktop-account-role" id="desktop-account-role">owner</div>
             <a class="desktop-logout" href="/.auth/logout">
-                <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/>
-                </svg>
+                <img class="desktop-logout-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEwAAABMCAYAAADHl1ErAAAABmJLR0QA/wD/AP+gvaeTAAAD6klEQVR4nO2cwWsUVxjAf99M1JBQoRhXDQma3Qz11nroUTTxYKleCy209tBCafsX9B9osUdBLy0IHrx460HEQlJtr6V6LJNNAg1rdluhREjRzczXg7aonbfbFfe9b9j5wV7mfR/v48ebN4+dNw8qKioqKioqipHQBTzP2pqO55Ms5jA5tE4yfh8b587cq/LnoKmmhK229HAeswTUPXSXAd+T8/X8IVn+v0mmhK209SrwXoCur0xkfDo9Ldv9AiMf1QzA64H6Pbcdc6PV0ol+gdaE3Q3Y9/HtmEv9gkwJizK+AFYDlvBhek9P9gowNYeBh6ekMi5wCngfiAvar88flDOudHPCfNHs6NuqfMd/pXV1jKlkn2wV5Zm6JX3SqMl14GpB0y7NeMOVN7LCAEQoXH8JHHTljLQwch4WXY5yxlwpoy3sBaiEDYhz6A0TVY2abT5S4aQI65FyoX5A2iFqGZQgwpodLiF8IgAKufLBSkcX52uyEqKeQfB+S/7a0ing42cuCrMoyysdnfddz6B4FyYxeylaYcNMGaR5F5bUWAN+cTSbl+Z/hImowjvAhiPEtLQgy4rkgDTjnOPAuiPErLRg67C5Q7Ie5yxQMmlBF65llBZ8pV82acGFQbmkmRAG5ZFmRhiUQ5opYWBfmjlhYFuaSWFgV1rPv3fS+zojO3ypypsi7PZV1D9kgECksENxrTPk3G129HSjJj/5qMkpLE11j+ywBCQS8GWc9gsQJnJlKU11KkmKX429TNy35F5OAMmwC3gZCOziFT730ZfZOcwqbmFb3AJSf6W8OApdHnDRR1/OOSxJ5GF6XxdDTvoAAmMK07hqVbajiNMND/MXziKekOyTDeCcj0KKWLunR7KIZdx1bhCx0PD48sTsHPaUrCOOkA2EBd9vmkwKsyoLDAqzLAuMCbMuCwwJK4MsMCKsLLLAgLAyyYLAwsomCwIKK6MsCLTdKW1rI4MfgBlHiElZEGCEqaoIXKOEsiCAsLTDHHDM0WxaFoQYYRlbPP73+XnMy4IAwl6blj+Ab5+5qPxWBlkQaNJv1Pis2ebnfzcFw4V6rdoU7EREcuCbJ79SEXylXzYqYQMy2sIixosu5xE77pQRJlcWi64rbLpyRlZYc1PPCrxb0NTNxbktPsxTshfD/oRZYFKUU/r4uIeiT5hvHt0vD1z5poSttvRwFrOEUh/mdo5e+zWiiPO9ck3dknnMV/g5FaUQVS7Xa/JjrxhTI4xwB30gcHtPt/+GFlMjjEAHfahyefcj3pqdlb/6xZo6hsHzYUVdlJtRxPl+t+HTmBIGfo7DimHzkXCn19OwoqKioqKiYlD+BoCYmwVlhHpjAAAAAElFTkSuQmCC" width="19" height="19" alt="" aria-hidden="true" draggable="false">
                 <span>Kijelentkezés</span>
             </a>
         </div>
