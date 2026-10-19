@@ -1,0 +1,3548 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+	if (localStorage.getItem("theme") === "dark") {
+		document.documentElement.setAttribute("data-theme", "dark");
+	}
+</script>
+
+<title> Beo + fizu</title>
+
+	<link rel="manifest" href="/manifest.json">
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+	<meta property="og:title" content="Beo + fizu">
+	<meta property="og:description" content="Műszaknaptár és fizetéskalkulátor">
+	<meta property="og:image" content="https://www.beoesfizu.nl/share-preview.png">
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="https://www.beoesfizu.nl/">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
+
+<style>
+	:root {
+		--bg: #f4f5f7;
+		--card-bg: #ffffff;
+		--text: #1a1a1a;
+		--muted: #666;
+		--accent: #2f8f4e;
+	}
+
+	html[data-theme="dark"] {
+		--bg: #14161a;
+		--card-bg: #1f2227;
+		--text: #f2f2f2;
+		--muted: #9a9a9a;
+		--accent: #4ade80;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	body {
+		margin: 0;
+		min-height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--bg);
+		color: var(--text);
+		font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+		transition: background 0.2s, color 0.2s;
+	}
+
+	.card {
+		background: var(--card-bg);
+		border-radius: 18px;
+		padding: 2.5em 2em;
+		max-width: 420px;
+		width: 90%;
+		text-align: center;
+		box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+		position: relative;
+	}
+
+	h1 {
+		margin: 0 0 0.2em 0;
+		font-size: 1.4em;
+	}
+
+	#fizu-osszeg {
+		font-size: 2.6em;
+		font-weight: bold;
+		color: var(--accent);
+		margin: 0.3em 0 0.15em 0;
+		font-variant-numeric: tabular-nums;
+		transition: filter 0.2s ease;
+	}
+
+	#fizu-status {
+		font-size: 1em;
+		margin: 0.3em 0;
+	}
+
+	#fizu-varhato {
+		font-size: 1em;
+		font-weight: 600;
+		margin: 0.8em 0;
+		transition: filter 0.2s ease;
+	}
+
+	#fizu-osszeg,
+	#fizu-varhato {
+		will-change: filter;
+		transform: translateZ(0);
+	}
+
+	.osszeg-elrejtve {
+		filter: blur(9px);
+		user-select: none;
+	}
+
+	#fizu-info {
+		color: var(--muted);
+		font-size: 0.85em;
+		line-height: 1.6;
+		margin-top: 1em;
+	}
+
+	.progress-container {
+		width: 100%;
+		height: 12px;
+		background: var(--bg);
+		border-radius: 10px;
+		overflow: hidden;
+		margin: 1em 0 1.5em 0;
+	}
+
+	#progress-bar {
+		height: 100%;
+		width: 0%;
+		background: var(--accent);
+		border-radius: 10px;
+		transition: width 0.5s ease;
+	}
+
+	#muszak-naptar {
+		margin-top: 1.5em;
+		text-align: left;
+	}
+
+	.naptar-cim {
+		text-align: center;
+		font-weight: 600;
+		margin-bottom: 0.8em;
+	}
+
+	.naptar-fejlec,
+	.naptar-napok {
+		display: grid;
+		grid-template-columns: repeat(7, 1fr);
+		gap: 4px;
+	}
+
+	.naptar-fejlec {
+		font-size: 0.7em;
+		color: var(--muted);
+		text-align: center;
+		margin-bottom: 4px;
+	}
+
+	.nap {
+		min-height: 50px;
+		border-radius: 9px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.78em;
+		padding: 3px 1px;
+		touch-action: manipulation;
+	}
+
+	.nap-ures {
+		background: transparent;
+	}
+
+	.nap-nappal {
+		background: rgba(47, 143, 78, 0.15);
+	}
+
+	.nap-ejszaka {
+		background: rgba(100, 100, 100, 0.15);
+	}
+
+	.nap-szabad {
+		background: var(--bg);
+	}
+
+	.nap-szabi {
+		background: rgba(230, 126, 34, 0.18);
+	}
+
+	.nap-tsz {
+		background: rgba(142, 68, 173, 0.16);
+		box-shadow: inset 0 0 0 2px rgba(142, 68, 173, 0.55);
+	}
+
+	.nap-tsz .nap-jel {
+		font-size: 1.05em;
+		font-weight: 800;
+		color: #8e44ad;
+		letter-spacing: -0.5px;
+	}
+
+	.nap-tulora {
+		box-shadow: inset 0 0 0 2px #e67e22;
+	}
+
+	.nap-szabi .nap-jel {
+		font-size: 1.3em;
+		font-weight: 800;
+		color: #e67e22;
+	}
+
+	.nap-ma {
+		outline: 2px solid var(--accent);
+		font-weight: bold;
+	}
+
+	.nap-unnepnap {
+		outline: 2px solid #e53935;
+		outline-offset: -2px;
+	}
+
+	.nap-jel {
+		font-size: 1.1em;
+		line-height: 1;
+		white-space: nowrap;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 0;
+	}
+
+	.nap-szam {
+		margin-top: 2px;
+	}
+
+	.theme-toggle,
+	.privacy-toggle {
+		position: absolute;
+		top: 1em;
+		background: none;
+		border: 1px solid var(--muted);
+		border-radius: 20px;
+		color: var(--text);
+		padding: 0.35em 0.7em;
+		font-size: 0.8em;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.theme-toggle {
+		right: 1em;
+	}
+
+	.privacy-toggle {
+		left: 1em;
+	}
+
+	.privacy-toggle svg {
+		width: 18px;
+		height: 18px;
+		display: block;
+	}
+
+	/* =========================
+	   INTERAKTÍV MŰSZAKBEÁLLÍTÁS
+	   ========================= */
+
+	.nap {
+		cursor: pointer;
+		transition: transform 0.12s ease, box-shadow 0.12s ease;
+	}
+
+	.nap:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+	}
+
+	.muszak-modal-hatter {
+		display: none;
+		position: fixed;
+		inset: 0;
+		background: rgba(0,0,0,0.45);
+		z-index: 1000;
+		align-items: center;
+		justify-content: center;
+		padding: 1em;
+	}
+
+	.muszak-modal-hatter.lathato {
+		display: flex;
+	}
+
+	.muszak-modal {
+		width: min(360px, 100%);
+		background: var(--card-bg);
+		color: var(--text);
+		border-radius: 18px;
+		padding: 1.4em;
+		box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+		text-align: left;
+	}
+
+	.muszak-modal h2 {
+		margin: 0 0 0.25em 0;
+		font-size: 1.15em;
+	}
+
+	.muszak-modal-datum {
+		color: var(--muted);
+		font-size: 0.9em;
+		margin-bottom: 1em;
+	}
+
+	.muszak-opciok {
+		display: grid;
+		gap: 0.55em;
+	}
+
+	.muszak-opcio {
+		width: 100%;
+		border: 1px solid rgba(128,128,128,0.35);
+		border-radius: 10px;
+		padding: 0.75em 0.9em;
+		background: var(--bg);
+		color: var(--text);
+		font-size: 0.95em;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.muszak-opcio:hover {
+		border-color: var(--accent);
+	}
+
+	.muszak-opcio.torles {
+		color: #c0392b;
+	}
+
+	.muszak-modal-bezar {
+		margin-top: 0.8em;
+		width: 100%;
+		border: 0;
+		background: transparent;
+		color: var(--muted);
+		padding: 0.6em;
+		cursor: pointer;
+	}
+
+	.mentes-statusz {
+		margin-top: 0.8em;
+		font-size: 0.85em;
+		min-height: 1.4em;
+		text-align: center;
+		font-weight: 600;
+	}
+
+	.mentes-statusz.mentes {
+		color: var(--muted);
+	}
+
+	.mentes-statusz.siker {
+		color: #2e7d32;
+	}
+
+	.mentes-statusz.hiba {
+		color: #c62828;
+	}
+
+	.naptar-segitseg {
+		text-align: center;
+		color: var(--muted);
+		font-size: 0.75em;
+		margin-top: 0.7em;
+	}
+
+
+	.nap-tulora .nap-jel {
+		font-size: 1em;
+		letter-spacing: -1px;
+	}
+
+	@media (max-width: 520px) {
+
+		body {
+			align-items: flex-start;
+			padding: 12px 0;
+		}
+
+		.card {
+			width: 96%;
+			max-width: 440px;
+			padding: 2.3em 0.9em 1.6em;
+		}
+
+		.naptar-fejlec,
+		.naptar-napok {
+			gap: 5px;
+		}
+
+		.nap {
+			min-height: 54px;
+			border-radius: 10px;
+			font-size: 0.8em;
+			padding: 4px 1px;
+		}
+
+		.nap-jel {
+			font-size: 1.15em;
+		}
+
+		.nap-tulora .nap-jel {
+			font-size: 0.95em;
+			letter-spacing: -2px;
+		}
+
+		.nap-szam {
+			margin-top: 4px;
+		}
+	}
+
+
+	.naptar-cim-sor {
+		display: grid;
+		grid-template-columns: 42px 1fr 42px;
+		align-items: center;
+		gap: 6px;
+		margin-bottom: 0.8em;
+	}
+
+	.naptar-cim {
+		text-align: center;
+		font-weight: 600;
+		margin-bottom: 0;
+	}
+
+	.naptar-nav {
+		border: 1px solid rgba(128,128,128,0.35);
+		background: var(--bg);
+		color: var(--text);
+		border-radius: 10px;
+		height: 38px;
+		font-size: 1.25em;
+		line-height: 1;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		touch-action: manipulation;
+	}
+
+	.naptar-nav:hover {
+		border-color: var(--accent);
+	}
+
+	.naptar-ma-gomb {
+		margin-top: 0.35em;
+		border: 1px solid rgba(128,128,128,0.35);
+		background: var(--bg);
+		color: var(--text);
+		border-radius: 8px;
+		padding: 0.25em 0.7em;
+		font-size: 0.72em;
+		font-weight: 600;
+		cursor: pointer;
+		touch-action: manipulation;
+	}
+
+	.naptar-ma-gomb:hover {
+		border-color: var(--accent);
+	}
+
+	@media (max-width: 520px) {
+		.naptar-cim-sor {
+			grid-template-columns: 46px 1fr 46px;
+		}
+
+		.naptar-nav {
+			height: 42px;
+			font-size: 1.35em;
+		}
+	}
+
+
+	/* =========================
+	   NAPTÁRBEJEGYZÉSEK
+	   ========================= */
+
+	.nap {
+		position: relative;
+	}
+
+	.naptar-pont {
+		position: absolute;
+		top: 5px;
+		right: 5px;
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: #e53935;
+		box-shadow: 0 0 0 2px var(--card-bg);
+	}
+
+	.naptar-bejegyzes-gomb {
+		width: 100%;
+		margin-top: 0.7em;
+		border: 1px solid rgba(128,128,128,0.35);
+		border-radius: 10px;
+		padding: 0.75em 0.9em;
+		background: var(--bg);
+		color: var(--text);
+		font-size: 0.95em;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.naptar-bejegyzes-gomb:hover {
+		border-color: var(--accent);
+	}
+
+	.naptar-modal-hatter {
+		display: none;
+		position: fixed;
+		inset: 0;
+		background: rgba(0,0,0,0.45);
+		z-index: 1100;
+		align-items: center;
+		justify-content: center;
+		padding: 1em;
+	}
+
+	.naptar-modal-hatter.lathato {
+		display: flex;
+	}
+
+	.naptar-modal {
+		width: min(380px, 100%);
+		background: var(--card-bg);
+		color: var(--text);
+		border-radius: 18px;
+		padding: 1.4em;
+		box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+		text-align: left;
+	}
+
+	.naptar-modal h2 {
+		margin: 0 0 0.25em 0;
+		font-size: 1.15em;
+	}
+
+	.naptar-modal-datum {
+		color: var(--muted);
+		font-size: 0.9em;
+		margin-bottom: 1em;
+	}
+
+	.naptar-mezo {
+		margin-bottom: 0.9em;
+	}
+
+	.naptar-mezo label {
+		display: block;
+		font-size: 0.82em;
+		font-weight: 600;
+		margin-bottom: 0.35em;
+	}
+
+	.naptar-mezo input,
+	.naptar-mezo textarea {
+		width: 100%;
+		border: 1px solid rgba(128,128,128,0.35);
+		border-radius: 10px;
+		padding: 0.75em;
+		background: var(--bg);
+		color: var(--text);
+		font: inherit;
+	}
+
+	.naptar-mezo textarea {
+		min-height: 90px;
+		resize: vertical;
+	}
+
+	.naptar-modal-gombok {
+		display: grid;
+		gap: 0.55em;
+	}
+
+	.naptar-mentes,
+	.naptar-torles,
+	.naptar-megse {
+		width: 100%;
+		border-radius: 10px;
+		padding: 0.75em 0.9em;
+		font-size: 0.95em;
+		cursor: pointer;
+	}
+
+	.naptar-mentes {
+		border: 0;
+		background: var(--accent);
+		color: white;
+		font-weight: 700;
+	}
+
+	.naptar-torles {
+		border: 1px solid rgba(192,57,43,0.5);
+		background: transparent;
+		color: #c0392b;
+	}
+
+	.naptar-megse {
+		border: 0;
+		background: transparent;
+		color: var(--muted);
+	}
+
+	.naptar-torles[hidden] {
+		display: none;
+	}
+
+	@media (max-width: 520px) {
+		.naptar-pont {
+			top: 4px;
+			right: 4px;
+			width: 9px;
+			height: 9px;
+		}
+	}
+
+
+	/* =========================
+	   BEJELENTKEZÉS / OWNER MÓD
+	   ========================= */
+
+	.auth-box {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.45em;
+		margin: -0.15em 0 0.8em 0;
+		z-index: 20;
+	}
+
+	.auth-btn {
+		border: 1px solid var(--muted);
+		border-radius: 20px;
+		background: var(--card-bg);
+		color: var(--text);
+		padding: 0.4em 0.75em;
+		font-size: 0.78em;
+		cursor: pointer;
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35em;
+		white-space: nowrap;
+	}
+
+	.auth-btn:hover {
+		border-color: var(--accent);
+	}
+
+	.auth-status {
+		font-size: 0.75em;
+		color: var(--muted);
+		white-space: nowrap;
+	}
+
+	.auth-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: var(--accent);
+		display: inline-block;
+	}
+
+	@media (max-width: 520px) {
+		.auth-box {
+			justify-content: center;
+			margin: -0.15em 0 0.8em 0;
+		}
+
+		.auth-btn {
+			font-size: 0.8em;
+		}
+	}
+
+
+	.auth-profile-icon {
+		width: 16px;
+		height: 16px;
+		display: inline-block;
+		flex: 0 0 auto;
+	}
+
+	.auth-profile-icon svg {
+		width: 100%;
+		height: 100%;
+		display: block;
+	}
+
+
+
+	/* =========================
+	   JELMAGYARÁZAT
+	   ========================= */
+
+	.jelmagyarazat {
+		margin-top: 0.9em;
+		border: 1px solid rgba(128,128,128,0.25);
+		border-radius: 12px;
+		background: var(--bg);
+		overflow: hidden;
+		text-align: left;
+	}
+
+	.jelmagyarazat summary {
+		cursor: pointer;
+		padding: 0.8em 0.95em;
+		font-size: 0.85em;
+		font-weight: 600;
+		color: var(--text);
+		user-select: none;
+		list-style: none;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.jelmagyarazat summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.jelmagyarazat summary::after {
+		content: "⌄";
+		font-size: 1.1em;
+		color: var(--muted);
+		transition: transform 0.15s ease;
+	}
+
+	.jelmagyarazat[open] summary::after {
+		transform: rotate(180deg);
+	}
+
+	.jelmagyarazat-tartalom {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.55em 0.8em;
+		padding: 0 0.95em 0.95em;
+		font-size: 0.78em;
+		color: var(--muted);
+	}
+
+	.jelmagyarazat-sor {
+		display: flex;
+		align-items: center;
+		gap: 0.5em;
+		min-width: 0;
+	}
+
+	.jelmagyarazat-jel {
+		min-width: 28px;
+		text-align: center;
+		font-size: 1.15em;
+		font-weight: 700;
+		color: var(--text);
+	}
+
+	.jelmagyarazat-pont {
+		width: 9px;
+		height: 9px;
+		border-radius: 50%;
+		background: #e53935;
+		display: inline-block;
+	}
+
+	.jelmagyarazat-ma {
+		width: 22px;
+		height: 22px;
+		border: 2px solid var(--accent);
+		border-radius: 6px;
+		display: inline-block;
+	}
+
+	.jelmagyarazat-tulora {
+		width: 25px;
+		height: 22px;
+		border: 2px solid #e67e22;
+		border-radius: 6px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.9em;
+	}
+
+	@media (max-width: 520px) {
+		.jelmagyarazat-tartalom {
+			grid-template-columns: 1fr;
+		}
+	}
+
+
+	/* =========================
+	   KORÁBBI FIZETÉSEK
+	   ========================= */
+
+	.fizetes-elozmenyek {
+		margin-top: 0.75em;
+		border: 1px solid rgba(128,128,128,0.25);
+		border-radius: 12px;
+		background: var(--bg);
+		overflow: hidden;
+		text-align: left;
+	}
+
+	.fizetes-elozmenyek summary {
+		cursor: pointer;
+		padding: 0.8em 0.95em;
+		font-size: 0.85em;
+		font-weight: 600;
+		color: var(--text);
+		user-select: none;
+		list-style: none;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.fizetes-elozmenyek summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.fizetes-elozmenyek summary::after {
+		content: "⌄";
+		font-size: 1.1em;
+		color: var(--muted);
+		transition: transform 0.15s ease;
+	}
+
+	.fizetes-elozmenyek[open] summary::after {
+		transform: rotate(180deg);
+	}
+
+	.fizetes-elozmenyek.zarolt summary {
+		opacity: 0.55;
+		cursor: not-allowed;
+	}
+
+	.fizetes-elozmenyek.zarolt summary::after {
+		content: "🔒";
+		transform: none;
+	}
+
+	.fizetes-elozmenyek-lista {
+		padding: 0 0.95em 0.95em;
+		display: grid;
+		gap: 0.55em;
+	}
+
+	.fizetes-elozmeny-sor {
+		padding: 0.7em 0.8em;
+		border-radius: 10px;
+		background: var(--card-bg);
+		border: 1px solid rgba(128,128,128,0.18);
+	}
+
+	.fizetes-elozmeny-honap {
+		font-size: 0.82em;
+		font-weight: 700;
+		color: var(--text);
+		margin-bottom: 0.2em;
+	}
+
+	.fizetes-elozmeny-adat {
+		font-size: 0.78em;
+		color: var(--muted);
+		line-height: 1.45;
+	}
+
+	.fizetes-elozmenyek-ures {
+		padding: 0.1em 0 0.2em;
+		font-size: 0.78em;
+		color: var(--muted);
+	}
+
+	/* Béradatok csak ownerként láthatók. Alapból rejtve, így betöltéskor sem villannak fel. */
+	.owner-beradat {
+		display: none;
+	}
+
+	.app-verzio {
+		margin-top: 1.4em;
+		font-size: 0.68em;
+		color: var(--muted);
+		opacity: 0.65;
+		text-align: center;
+		user-select: none;
+	}
+
+
+    /* =======================================================
+       DESKTOP DASHBOARD – kizárólag nagy képernyőn (>= 1100px)
+       Mobilon a korábbi 1.7-es megjelenés marad.
+       ======================================================= */
+    .desktop-sidebar, .desktop-page-title, .desktop-section-heading { display: none; }
+    .dashboard-topbar, .dashboard-pay, .dashboard-calendar,
+    .dashboard-legend, .dashboard-history, .dashboard-bottom { min-width: 0; }
+
+    @media (min-width: 1100px) {
+        :root {
+            --desk-border: #e2e8f0;
+            --desk-panel: #ffffff;
+            --desk-ink: #14223b;
+            --desk-muted: #66758e;
+            --desk-blue: #2563eb;
+            --desk-soft: #f0f5ff;
+            --desk-shadow: 0 10px 35px rgba(18, 40, 75, .045);
+        }
+        html[data-theme="dark"] {
+            --bg: #0d1626;
+            --card-bg: #17243a;
+            --text: #e9f0fc;
+            --muted: #9eacc3;
+            --accent: #58db9a;
+            --desk-border: #293c55;
+            --desk-panel: #17243a;
+            --desk-ink: #e9f0fc;
+            --desk-muted: #9eacc3;
+            --desk-blue: #5a9dff;
+            --desk-soft: #213752;
+            --desk-shadow: 0 10px 30px rgba(0,0,0,.13);
+        }
+        body {
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--desk-ink);
+        }
+        .desktop-sidebar {
+            width: 228px;
+            flex: 0 0 228px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 28px 15px 22px;
+            background: #101f36;
+            color: #f2f7ff;
+            box-shadow: inset -1px 0 rgba(255,255,255,.04);
+        }
+        .desktop-brand { display: flex; align-items: center; gap: 11px; padding: 3px 7px 32px; }
+        .desktop-brand-icon {
+            width: 46px; height: 46px; flex: 0 0 46px;
+            border-radius: 14px; display: grid; place-items: center;
+            font-size: 23px; background: linear-gradient(145deg,#2563eb,#54b9ff);
+            box-shadow: 0 6px 20px rgba(30,118,255,.28);
+        }
+        .desktop-brand strong { display: block; font-size: 19px; white-space: nowrap; }
+        .desktop-brand small { display: block; margin-top: 4px; color: #9eb0cb; font-size: 11px; white-space: nowrap; }
+        .desktop-nav { display: grid; gap: 7px; }
+        .desktop-nav-link {
+            display: flex; align-items: center; gap: 14px;
+            text-decoration: none; color: #bac8de;
+            padding: 13px 14px; border-radius: 11px;
+            font-size: 14px; font-weight: 600;
+            transition: background .15s, color .15s;
+        }
+        .desktop-nav-link:first-letter { font-size: 19px; }
+        .desktop-nav-link:hover { background: #203957; color: #fff; }
+        .desktop-nav-link.active { color: #fff; background: linear-gradient(120deg,#1d55b7,#267af1); }
+        .desktop-sidebar-foot { margin-top: auto; padding: 12px; font-size: 17px; color: #dce8ff; }
+        .desktop-sidebar-foot div { font-size: 12px; margin-top: 9px; color: #91a5c2; }
+        .card {
+            flex: 1 1 0;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(310px, 350px);
+            grid-template-areas:
+                "top top"
+                "calendar pay"
+                "legend history"
+                "bottom bottom"
+                "version version";
+            gap: 18px;
+            width: auto;
+            max-width: none;
+            min-width: 0;
+            padding: 26px;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            text-align: left;
+        }
+        .dashboard-topbar { grid-area: top; display: flex; align-items: center; gap: 16px; min-height: 53px; }
+        .desktop-page-title { display: flex; flex-direction: column; gap: 4px; margin-right: auto; }
+        .desktop-kicker { font-size: 10px; letter-spacing: .14em; font-weight: 800; color: var(--desk-blue); }
+        .desktop-page-title strong { font-size: clamp(19px,2vw,26px); letter-spacing: -.035em; }
+        .dashboard-topbar .theme-toggle {
+            position: static; flex: 0 0 auto; border-radius: 10px;
+            border: 1px solid var(--desk-border); background: var(--desk-panel);
+            padding: 9px 13px; font-size: 15px;
+        }
+        .dashboard-topbar .auth-box { margin: 0; justify-content: flex-end; }
+        .dashboard-topbar .auth-btn { border-color: var(--desk-border); padding: 10px 13px; border-radius: 10px; font-size: 12px; }
+        .dashboard-calendar, .dashboard-pay, .dashboard-legend, .dashboard-history, .dashboard-bottom {
+            background: var(--desk-panel);
+            border: 1px solid var(--desk-border);
+            border-radius: 17px;
+            box-shadow: var(--desk-shadow);
+            min-width: 0;
+        }
+        .dashboard-calendar { grid-area: calendar; padding: 21px; }
+        .dashboard-pay { grid-area: pay; padding: 22px 20px; position: relative; align-self: stretch; }
+        .dashboard-legend { grid-area: legend; padding: 0 5px; }
+        .dashboard-history { grid-area: history; padding: 0 5px; }
+        .dashboard-bottom { grid-area: bottom; padding: 4px 22px 18px; }
+        .desktop-section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+        .desktop-section-heading span { font-weight: 800; font-size: 16px; }
+        .desktop-section-heading small { font-size: 11px; color: var(--desk-muted); text-align: right; }
+        #muszak-naptar { margin-top: 0; }
+        .naptar-cim-sor { grid-template-columns: 43px minmax(0,1fr) 43px; max-width: 460px; margin: 0 auto 20px; }
+        .naptar-cim { font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
+        .naptar-ma-gomb { color: var(--desk-blue); border-color: var(--desk-border); font-size: 11px; margin-top: 6px; }
+        .naptar-nav { background: var(--desk-soft); border-color: var(--desk-border); }
+        .naptar-fejlec, .naptar-napok { gap: 5px; }
+        .naptar-fejlec { font-size: 12px; font-weight: 700; margin-bottom: 7px; }
+        .nap { min-height: clamp(70px, 7.1vw, 106px); font-size: 13px; border-radius: 10px; padding: 8px 3px; border: 1px solid var(--desk-border); }
+        .nap-ures { border-color: transparent; }
+        .nap-jel { font-size: 22px; }
+        .nap-tulora .nap-jel { font-size: 20px; }
+        .nap-szam { margin-top: 7px; }
+        .nap-nappal { background: rgba(255,191,62,.13); }
+        .nap-ejszaka { background: rgba(87,133,247,.13); }
+        .nap-szabad { background: var(--desk-soft); }
+        .nap-szabi { background: rgba(245,180,50,.17); }
+        .nap-tsz { background: rgba(142,68,173,.12); }
+        .nap-ma { outline-color: var(--desk-blue); }
+        .dashboard-pay .privacy-toggle { top: 62px; right: 18px; left: auto; border-color: var(--desk-border); }
+        #fizu-osszeg { margin: 25px 0 12px; font-size: clamp(30px,2.6vw,43px); letter-spacing: -.04em; }
+        #fizu-status { background: var(--desk-soft); padding: 11px 13px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
+        #fizu-varhato { margin: 18px 0; line-height: 1.65; font-size: 14px; }
+        .progress-container { height: 9px; margin: 17px 0 6px; background: var(--desk-soft); }
+        #progress-bar { background: linear-gradient(90deg,#2b73ed,#4ade80); }
+        .jelmagyarazat, .fizetes-elozmenyek { margin: 0; border: 0; background: transparent; }
+        .jelmagyarazat summary, .fizetes-elozmenyek summary { padding: 17px 16px; font-size: 15px; }
+        .jelmagyarazat-tartalom { grid-template-columns: 1fr 1fr; font-size: 12px; padding: 0 16px 17px; }
+        .fizetes-elozmenyek-lista { padding: 0 16px 17px; }
+        .fizetes-elozmeny-sor { background: var(--desk-soft); }
+        #fizu-info { margin-top: 12px; font-size: 12px; }
+        #ber-debug { max-width: 850px; }
+        .app-verzio { grid-area: version; margin-top: 0; padding-bottom: 6px; font-size: 11px; }
+    }
+    @media (min-width: 1100px) and (max-width: 1350px) {
+        .desktop-sidebar { width: 198px; flex-basis: 198px; }
+        .card { padding: 19px; gap: 13px; grid-template-columns: minmax(0,1fr) 300px; }
+        .dashboard-calendar { padding: 14px; }
+        .dashboard-pay { padding: 18px 14px; }
+        .nap { min-height: 68px; }
+        .desktop-section-heading small { display: none; }
+    }
+
+</style>
+</head>
+
+<body>
+
+<aside class="desktop-sidebar" aria-label="Asztali navigáció">
+    <div class="desktop-brand">
+        <div class="desktop-brand-icon">💸</div>
+        <div><strong>Beo + fizu</strong><small>ver. 1.7 · Saját dashboard</small></div>
+    </div>
+    <nav class="desktop-nav">
+        <a class="desktop-nav-link active" href="#muszak-naptar">▦ <span>Műszaknaptár</span></a>
+        <a class="desktop-nav-link" href="#desktop-pay">◉ <span>Fizetés</span></a>
+        <a class="desktop-nav-link" href="#desktop-legend">☷ <span>Jelmagyarázat</span></a>
+        <a class="desktop-nav-link" href="#fizetes-elozmenyek">▤ <span>Korábbi fizetések</span></a>
+    </nav>
+    <div class="desktop-sidebar-foot">🌞 &nbsp; 🌙 &nbsp; 💸<div>A beosztásod, egy helyen.</div></div>
+</aside>
+
+<div class="card">
+
+    <header class="dashboard-topbar">
+        <div class="desktop-page-title"><span class="desktop-kicker">ÁTTEKINTÉS</span><strong>Műszakok és fizetés</strong></div>
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Világos/sötét mód váltása">🌙</button>
+        <div class="auth-box" id="auth-box">
+		<a class="auth-btn" id="auth-login-btn" href="/.auth/login/aad">Microsoft belépés</a>
+
+		<div id="auth-logged-in" style="display:none; align-items:center; gap:0.45em;">
+			<span class="auth-status" style="display:inline-flex; align-items:center; gap:0.35em;">
+				<span class="auth-profile-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<circle cx="12" cy="8" r="4"></circle>
+						<path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
+					</svg>
+				</span>
+				Belépve
+			</span>
+			<a class="auth-btn" href="/.auth/logout">Kilépés</a>
+		</div>
+        </div>
+    </header>
+
+    <section class="dashboard-pay" id="desktop-pay" aria-label="Fizetés áttekintése">
+        <div class="desktop-section-heading"><span>💰 Fizetés</span><small>Aktuális havi becslés</small></div>
+        <button class="privacy-toggle owner-beradat" id="privacy-btn" onclick="toggleOsszegLathatosag()" title="Összeg megjelenítése"></button>
+        <p id="fizu-osszeg" class="owner-beradat">0 Ft</p>
+
+	<p id="fizu-status"></p>
+
+	<p id="fizu-varhato" class="owner-beradat"></p>
+
+	<div class="progress-container owner-beradat">
+		<div id="progress-bar"></div>
+	</div>
+
+    </section>
+
+    <section class="dashboard-calendar" aria-label="Műszaknaptár">
+        <div class="desktop-section-heading"><span>📅 Műszaknaptár</span><small>Kattints egy napra a részletekért</small></div>
+        <div id="muszak-naptar"></div>
+    </section>
+
+
+    <section class="dashboard-legend" id="desktop-legend" aria-label="Jelmagyarázat">
+    <details class="jelmagyarazat">
+		<summary>Jelmagyarázat</summary>
+
+		<div class="jelmagyarazat-tartalom">
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-jel">🌞</span>
+				<span>Nappalos műszak</span>
+			</div>
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-jel">🌙</span>
+				<span>Éjszakás műszak</span>
+			</div>
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-jel">😴</span>
+				<span>Szabadnap</span>
+			</div>
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-jel">SZ</span>
+				<span>Fizetett szabadság</span>
+			</div>
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-jel">TSZ</span>
+				<span>Többlet szabadság</span>
+			</div>
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-tulora">⚡</span>
+				<span>Túlóra</span>
+			</div>
+
+			<div class="jelmagyarazat-sor owner-legend-entry">
+				<span class="jelmagyarazat-jel">
+					<span class="jelmagyarazat-pont"></span>
+				</span>
+				<span>Naptárbejegyzés</span>
+			</div>
+
+			<div class="jelmagyarazat-sor">
+				<span class="jelmagyarazat-jel">
+					<span class="jelmagyarazat-ma"></span>
+				</span>
+				<span>Mai nap</span>
+			</div>
+
+		</div>
+    </details>
+    </section>
+
+    <section class="dashboard-history" aria-label="Korábbi fizetések">
+    <details class="fizetes-elozmenyek" id="fizetes-elozmenyek">
+		<summary id="fizetes-elozmenyek-summary" onclick="fizetesElozmenyekKattintasTiltas(event)">🔒 Korábbi fizetések</summary>
+		<div class="fizetes-elozmenyek-lista" id="fizetes-elozmenyek-lista">
+			<div class="fizetes-elozmenyek-ures">Még nincs elmentett hónap.</div>
+		</div>
+    </details>
+    </section>
+
+    <section class="dashboard-bottom">
+    <p id="fizu-info" class="owner-beradat"></p>
+
+	<details id="ber-debug" style="margin-top:1em; text-align:left; display:none;">
+		<summary style="cursor:pointer; font-weight:600;">
+			🧪 Ideiglenes bér-részletező
+		</summary>
+
+		<div id="ber-debug-tartalom"
+			 style="margin-top:0.8em; font-size:0.85em; line-height:1.7;">
+		</div>
+    </details>
+    </section>
+
+    <div class="app-verzio">ver. 1.7</div>
+
+</div>
+
+<script>
+
+	function toggleTheme() {
+
+		const root = document.documentElement;
+		const dark = root.getAttribute("data-theme") === "dark";
+
+		if (dark) {
+			root.removeAttribute("data-theme");
+			localStorage.setItem("theme", "light");
+		} else {
+			root.setAttribute("data-theme", "dark");
+			localStorage.setItem("theme", "dark");
+		}
+	}
+
+
+	/* =========================
+	   ÖSSZEG ELREJTÉSE (adatvédelem)
+	   ========================= */
+
+	const SZEM_IKON =
+		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+
+	const ATHUZOTT_SZEM_IKON =
+		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-3.22 4.53M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+
+	// Alapértelmezetten el van rejtve az összeg
+	let osszegRejtve = true;
+
+	function frissitPrivacyGomb() {
+
+		const btn = document.getElementById("privacy-btn");
+
+		const celok = [
+			document.getElementById("fizu-osszeg"),
+			document.getElementById("fizu-varhato")
+		];
+
+		celok.forEach(function (el) {
+			if (osszegRejtve) {
+				el.classList.add("osszeg-elrejtve");
+			} else {
+				el.classList.remove("osszeg-elrejtve");
+			}
+		});
+
+		btn.innerHTML = osszegRejtve ? ATHUZOTT_SZEM_IKON : SZEM_IKON;
+
+		if (!isOwner) {
+			btn.title = "Az összeg megjelenítéséhez ownerként kell bejelentkezni";
+			btn.style.opacity = "0.55";
+			btn.style.cursor = "not-allowed";
+		} else {
+			btn.title = osszegRejtve ? "Összeg megjelenítése" : "Összeg elrejtése";
+			btn.style.opacity = "1";
+			btn.style.cursor = "pointer";
+		}
+	}
+
+	function toggleOsszegLathatosag() {
+
+		if (!isOwner) {
+			osszegRejtve = true;
+			frissitPrivacyGomb();
+			return;
+		}
+
+		osszegRejtve = !osszegRejtve;
+		frissitPrivacyGomb();
+	}
+
+
+	/* =========================
+	   BEÁLLÍTÁSOK
+	   ========================= */
+
+	// Béradatok a 2026. júliusi és augusztusi bérpapír alapján.
+	const HAVI_ALAPBER = 544600;
+
+	// A pótlékok bázisa a bérpapírokból visszaszámolva:
+	// 37 559 Ft / 12 óra ≈ 3 129,92 Ft/óra.
+	// Ez gyakorlatilag 544 600 / 174.
+	const POTLEK_ORADIJ = HAVI_ALAPBER / 174;
+
+	// 15% SZJA + 18,5% TB = kb. 66,5% nettó.
+	const NETTO_SZORZO = 0.665;
+
+	// Fix bankszámla-hozzájárulás a bérpapíron.
+	const BANKSZAMLA_HOZZAJARULAS = 500;
+
+	// Becsült távolléti díj a két ismert bérpapír átlaga alapján:
+	// 2026.07: 4 080,28 Ft/óra
+	// 2026.08: 3 975,20 Ft/óra
+	const TAVOLLETI_ORADIJ =
+		(4080.28 + 3975.20) / 2; // 4 027,74 Ft/óra
+
+	// Egy 12 órás fizetett szabadság becsült távolléti díja.
+	const SZABI_12_ORA_TAVOLLETI =
+		12 * TAVOLLETI_ORADIJ; // kb. 48 333 Ft
+
+	/*
+	   A havibéres alapbér sor szabadság esetén csökken,
+	   és helyette külön jelenik meg a fizetett szabadság.
+	   A két ismert hónapból visszaszámolt átlagos kieső alapbérrész:
+
+	   Július: 544 600 - 504 751 = 39 849 Ft
+	   Augusztus: 544 600 - 505 700 = 38 900 Ft
+	*/
+	const SZABI_ALAPBER_KIESO_RESZ =
+		((544600 - 504751) + (544600 - 505700)) / 2;
+
+	// A havi fix alapbérhez csak a kettő különbségét kell hozzáadni,
+	// különben a szabadságot kétszer számolnánk.
+	const SZABI_NAPI_KORREKCIO =
+		SZABI_12_ORA_TAVOLLETI -
+		SZABI_ALAPBER_KIESO_RESZ;
+
+	// TSZ: nem fizetett nap. Becsült levonás 12 óra pótlékalappal.
+
+	/*
+	   2026. szeptember 8. = nappalos
+	   Ciklus:
+	   1. nappal
+	   2. éjszaka
+	   3. szabad
+	   4. szabad
+	*/
+
+	const HORGONY = new Date(2026, 8, 8);
+	HORGONY.setHours(0, 0, 0, 0);
+
+
+	/* =========================
+	   MŰSZAK TÍPUSA
+	   ========================= */
+
+	function muszakTipus(nap) {
+
+	const napKezdet = new Date(
+		nap.getFullYear(),
+		nap.getMonth(),
+		nap.getDate()
+	);
+
+	// Felhasználói módosítás elsőbbséget élvez.
+	const datumKulcs =
+		napKezdet.getFullYear() + "-" +
+		String(napKezdet.getMonth() + 1).padStart(2, "0") + "-" +
+		String(napKezdet.getDate()).padStart(2, "0");
+
+	if (muszakModositasok[datumKulcs]) {
+		return muszakModositasok[datumKulcs];
+	}
+
+	const napokKulonbseg =
+		Math.round((napKezdet - HORGONY) / 86400000);
+
+	const ciklusIndex =
+		((napokKulonbseg % 4) + 4) % 4;
+
+	if (ciklusIndex === 0) {
+		return "nappal";
+	}
+
+	if (ciklusIndex === 1) {
+		return "ejszaka";
+	}
+
+	return "szabad";
+}
+
+
+	/* =========================
+	   MŰSZAK IDŐINTERVALLUM
+	   ========================= */
+
+	function muszakIdointervallum(nap) {
+
+		const tipus = muszakTipus(nap);
+
+		const ev = nap.getFullYear();
+		const honap = nap.getMonth();
+		const napSzam = nap.getDate();
+
+		if (
+			tipus === "nappal" ||
+			tipus === "nappal_tulora" ||
+			tipus === "nappal_tulora_150"
+		) {
+
+			return [
+				new Date(ev, honap, napSzam, 7, 0, 0),
+				new Date(ev, honap, napSzam, 19, 0, 0)
+			];
+		}
+
+		if (
+			tipus === "ejszaka" ||
+			tipus === "ejszaka_tulora" ||
+			tipus === "ejszaka_tulora_150"
+		) {
+
+			return [
+				new Date(ev, honap, napSzam, 19, 0, 0),
+				new Date(ev, honap, napSzam + 1, 7, 0, 0)
+			];
+		}
+
+		return null;
+	}
+
+
+	/* =========================
+	   BÉRSZÁMÍTÁS
+	   ========================= */
+
+	function husvetVasarnap(ev) {
+
+		const a = ev % 19;
+		const b = Math.floor(ev / 100);
+		const c = ev % 100;
+		const d = Math.floor(b / 4);
+		const e = b % 4;
+		const f = Math.floor((b + 8) / 25);
+		const g = Math.floor((b - f + 1) / 3);
+		const h = (19 * a + b - d - g + 15) % 30;
+		const i = Math.floor(c / 4);
+		const k = c % 4;
+		const l = (32 + 2 * e + 2 * i - h - k) % 7;
+		const m = Math.floor((a + 11 * h + 22 * l) / 451);
+		const honap = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+		const nap = ((h + l - 7 * m + 114) % 31) + 1;
+
+		return new Date(ev, honap, nap);
+	}
+
+
+	function datumEltol(datum, napok) {
+		return new Date(
+			datum.getFullYear(),
+			datum.getMonth(),
+			datum.getDate() + napok
+		);
+	}
+
+
+	function magyarMunkaszunetiNap(datum) {
+
+		const ev = datum.getFullYear();
+		const honap = datum.getMonth() + 1;
+		const nap = datum.getDate();
+
+		const fix = [
+			"1-1",
+			"3-15",
+			"5-1",
+			"8-20",
+			"10-23",
+			"11-1",
+			"12-25",
+			"12-26"
+		];
+
+		if (fix.includes(honap + "-" + nap)) {
+			return true;
+		}
+
+		const husvet = husvetVasarnap(ev);
+
+		const mozgoUnnepek = [
+			datumEltol(husvet, -2), // nagypéntek
+			datumEltol(husvet, 1),  // húsvéthétfő
+			datumEltol(husvet, 50)  // pünkösdhétfő
+		];
+
+		return mozgoUnnepek.some(function (d) {
+			return (
+				d.getFullYear() === ev &&
+				d.getMonth() === datum.getMonth() &&
+				d.getDate() === nap
+			);
+		});
+	}
+
+
+	function metszetOra(kezdet1, veg1, kezdet2, veg2) {
+
+		const kezdet =
+			kezdet1 > kezdet2 ? kezdet1 : kezdet2;
+
+		const veg =
+			veg1 < veg2 ? veg1 : veg2;
+
+		return veg > kezdet
+			? (veg - kezdet) / 3600000
+			: 0;
+	}
+
+
+	function muszakPotlekOrak(datum, tipus, tol, ig) {
+
+		if (
+			tipus !== "nappal" &&
+			tipus !== "nappal_tulora" &&
+			tipus !== "nappal_tulora_150" &&
+			tipus !== "ejszaka" &&
+			tipus !== "ejszaka_tulora" &&
+			tipus !== "ejszaka_tulora_150"
+		) {
+			return {
+				husz: 0,
+				otven: 0
+			};
+		}
+
+		const ev = datum.getFullYear();
+		const honap = datum.getMonth();
+		const nap = datum.getDate();
+
+		let husz = 0;
+		let otven = 0;
+
+		if (
+			tipus === "nappal" ||
+			tipus === "nappal_tulora" ||
+			tipus === "nappal_tulora_150"
+		) {
+
+			husz += metszetOra(
+				new Date(ev, honap, nap, 14, 0, 0),
+				new Date(ev, honap, nap, 19, 0, 0),
+				tol,
+				ig
+			);
+
+		} else {
+
+			husz += metszetOra(
+				new Date(ev, honap, nap, 19, 0, 0),
+				new Date(ev, honap, nap, 22, 0, 0),
+				tol,
+				ig
+			);
+
+			otven += metszetOra(
+				new Date(ev, honap, nap, 22, 0, 0),
+				new Date(ev, honap, nap + 1, 6, 0, 0),
+				tol,
+				ig
+			);
+		}
+
+		return {
+			husz: husz,
+			otven: otven
+		};
+	}
+
+
+	function haviBerOsszesites(ev, honap, ig) {
+
+		const honapKezdete =
+			new Date(ev, honap, 1, 0, 0, 0);
+
+		const honapVege =
+			new Date(ev, honap + 1, 0, 23, 59, 59, 999);
+
+		const veg =
+			ig && ig < honapVege
+				? ig
+				: honapVege;
+
+		let teljesNormalOra = 0;
+		let eddigiNormalOra = 0;
+
+		let teljesLedolgozottOra = 0;
+		let eddigiLedolgozottOra = 0;
+
+		let teljesExtraBrutto = 0;
+		let eddigiExtraBrutto = 0;
+
+		let szabiNapok = 0;
+		let tszNapok = 0;
+
+		// IDEIGLENES DEBUG – részletes bérbontás
+		let debugNappalDb = 0;
+		let debugEjszakaDb = 0;
+
+		let debugTulora150Db = 0;
+		let debugTulora200Db = 0;
+
+		let debugPotlek20Ora = 0;
+		let debugPotlek50Ora = 0;
+
+		let debugPotlek20Brutto = 0;
+		let debugPotlek50Brutto = 0;
+
+		let debugTulora150Brutto = 0;
+		let debugTulora200Brutto = 0;
+
+		let debugMunkaszunetiOra = 0;
+		let debugMunkaszunetiBrutto = 0;
+
+		const utolsoNap =
+			new Date(ev, honap + 1, 0).getDate();
+
+		for (let nap = 1; nap <= utolsoNap; nap++) {
+
+			const datum =
+				new Date(ev, honap, nap);
+
+			const tipus =
+				muszakTipus(datum);
+
+			const intervallum =
+				muszakIdointervallum(datum);
+
+			const tulora150 =
+				tipus === "nappal_tulora_150" ||
+				tipus === "ejszaka_tulora_150";
+
+			const tulora200 =
+				tipus === "nappal_tulora" ||
+				tipus === "ejszaka_tulora";
+
+			const tulora =
+				tulora150 || tulora200;
+
+			// IDEIGLENES DEBUG – műszakdarabszámok
+			if (
+				tipus === "nappal" ||
+				tipus === "nappal_tulora" ||
+				tipus === "nappal_tulora_150"
+			) {
+				debugNappalDb++;
+			}
+
+			if (
+				tipus === "ejszaka" ||
+				tipus === "ejszaka_tulora" ||
+				tipus === "ejszaka_tulora_150"
+			) {
+				debugEjszakaDb++;
+			}
+
+			if (tulora150) {
+				debugTulora150Db++;
+			}
+
+			if (tulora200) {
+				debugTulora200Db++;
+			}
+
+			if (tipus === "szabi") {
+
+				szabiNapok++;
+
+				teljesNormalOra += 12;
+
+				if (veg >= new Date(ev, honap, nap, 19, 0, 0)) {
+					eddigiNormalOra += 12;
+				}
+
+				continue;
+			}
+
+			if (tipus === "tsz") {
+
+    tszNapok++;
+
+    // A TSZ nem ledolgozott idő,
+    // de a havi alapbért nem csökkenti.
+    // Ezért az alapbér időarányos számlálásában
+    // 12 fizetett óraként kezeljük.
+    teljesNormalOra += 12;
+
+    const tszNapVege =
+        new Date(
+            ev,
+            honap,
+            nap,
+            19, 0, 0
+        );
+
+    if (veg >= tszNapVege) {
+        eddigiNormalOra += 12;
+    }
+
+    continue;
+}
+
+			if (!intervallum) {
+				continue;
+			}
+
+			const [ms, me] = intervallum;
+
+			const teljesOra =
+				(me - ms) / 3600000;
+
+			const eddigiOra =
+				metszetOra(
+					ms,
+					me,
+					honapKezdete,
+					veg
+				);
+
+			teljesLedolgozottOra += teljesOra;
+			eddigiLedolgozottOra += eddigiOra;
+
+			if (!tulora) {
+				teljesNormalOra += teljesOra;
+				eddigiNormalOra += eddigiOra;
+			}
+
+			// 20% és 50% műszakpótlék.
+			const teljesPotlekOrak =
+				muszakPotlekOrak(
+					datum,
+					tipus,
+					honapKezdete,
+					honapVege
+				);
+
+			const eddigiPotlekOrak =
+				muszakPotlekOrak(
+					datum,
+					tipus,
+					honapKezdete,
+					veg
+				);
+
+			const potlek20Brutto =
+				teljesPotlekOrak.husz *
+				POTLEK_ORADIJ *
+				0.20;
+
+			const potlek50Brutto =
+				teljesPotlekOrak.otven *
+				POTLEK_ORADIJ *
+				0.50;
+
+			debugPotlek20Ora +=
+				teljesPotlekOrak.husz;
+
+			debugPotlek50Ora +=
+				teljesPotlekOrak.otven;
+
+			debugPotlek20Brutto +=
+				potlek20Brutto;
+
+			debugPotlek50Brutto +=
+				potlek50Brutto;
+
+			teljesExtraBrutto +=
+				potlek20Brutto +
+				potlek50Brutto;
+
+			eddigiExtraBrutto +=
+				eddigiPotlekOrak.husz *
+					POTLEK_ORADIJ * 0.20 +
+				eddigiPotlekOrak.otven *
+					POTLEK_ORADIJ * 0.50;
+
+			// Sima túlóra: alap + 50% pótlék = 150%.
+			if (tulora150) {
+
+				const tulora150Brutto =
+					teljesOra *
+					POTLEK_ORADIJ *
+					1.5;
+
+				debugTulora150Brutto +=
+					tulora150Brutto;
+
+				teljesExtraBrutto +=
+					tulora150Brutto;
+
+				eddigiExtraBrutto +=
+					eddigiOra *
+					POTLEK_ORADIJ *
+					1.5;
+			}
+
+			// Pihenőnapos túlóra: alap + 100% pótlék = 200%.
+			if (tulora200) {
+
+				const tulora200Brutto =
+					teljesOra *
+					POTLEK_ORADIJ *
+					2;
+
+				debugTulora200Brutto +=
+					tulora200Brutto;
+
+				teljesExtraBrutto +=
+					tulora200Brutto;
+
+				eddigiExtraBrutto +=
+					eddigiOra *
+					POTLEK_ORADIJ *
+					2;
+			}
+
+			// Munkaszüneti napon végzett műszak:
+			// a bérpapír alapján +200% pótlék.
+			if (magyarMunkaszunetiNap(datum)) {
+
+				const munkaszunetiBrutto =
+					teljesOra *
+					POTLEK_ORADIJ *
+					2;
+
+				debugMunkaszunetiOra +=
+					teljesOra;
+
+				debugMunkaszunetiBrutto +=
+					munkaszunetiBrutto;
+
+				teljesExtraBrutto +=
+					munkaszunetiBrutto;
+
+				eddigiExtraBrutto +=
+					eddigiOra *
+					POTLEK_ORADIJ *
+					2;
+			}
+		}
+
+		const haviAlapKorrigalt =
+			Math.max(
+				0,
+				HAVI_ALAPBER +
+				szabiNapok * SZABI_NAPI_KORREKCIO
+			);
+
+		const alapArany =
+			teljesNormalOra > 0
+				? Math.min(
+					eddigiNormalOra / teljesNormalOra,
+					1
+				)
+				: 1;
+
+		const teljesBrutto =
+			haviAlapKorrigalt +
+			teljesExtraBrutto +
+			BANKSZAMLA_HOZZAJARULAS;
+
+		const eddigiBrutto =
+			haviAlapKorrigalt * alapArany +
+			eddigiExtraBrutto +
+			BANKSZAMLA_HOZZAJARULAS * alapArany;
+
+		return {
+			orak: teljesLedolgozottOra,
+			eddigiOrak: eddigiLedolgozottOra,
+			brutto: teljesBrutto,
+			netto: teljesBrutto * NETTO_SZORZO,
+			eddigiBrutto: eddigiBrutto,
+			eddigiNetto: eddigiBrutto * NETTO_SZORZO,
+			szabiNapok: szabiNapok,
+			tszNapok: tszNapok,
+
+			// IDEIGLENES DEBUG – ezt később ki lehet venni
+			debug: {
+				nappalDb: debugNappalDb,
+				ejszakaDb: debugEjszakaDb,
+
+				tulora150Db: debugTulora150Db,
+				tulora200Db: debugTulora200Db,
+
+				potlek20Ora: debugPotlek20Ora,
+				potlek50Ora: debugPotlek50Ora,
+
+				potlek20Brutto: debugPotlek20Brutto,
+				potlek50Brutto: debugPotlek50Brutto,
+
+				tulora150Brutto: debugTulora150Brutto,
+				tulora200Brutto: debugTulora200Brutto,
+
+				munkaszunetiOra: debugMunkaszunetiOra,
+				munkaszunetiBrutto: debugMunkaszunetiBrutto,
+
+				haviAlapKorrigalt: haviAlapKorrigalt,
+				bank: BANKSZAMLA_HOZZAJARULAS
+			}
+		};
+	}
+
+
+	function idoszakOsszesites(tol, ig) {
+
+		const havi =
+			haviBerOsszesites(
+				tol.getFullYear(),
+				tol.getMonth(),
+				ig
+			);
+
+		return {
+			orak: havi.eddigiOrak,
+			penz: havi.eddigiNetto,
+			brutto: havi.eddigiBrutto
+		};
+	}
+
+	/* =========================
+	   FORMÁZÁS
+	   ========================= */
+
+	function formatFt(szam) {
+
+		return Math.round(szam)
+			.toLocaleString("hu-HU") + " Ft";
+	}
+
+
+	function formatDatum(d) {
+
+		return d.getFullYear() + ". " +
+			String(d.getMonth() + 1).padStart(2, "0") + ". " +
+			String(d.getDate()).padStart(2, "0") + ".";
+	}
+
+
+	/* =========================
+	   FIZU FRISSÍTÉSE
+	   ========================= */
+
+	function frissitFizu() {
+
+		const most = new Date();
+
+
+		/* Aktuális hónap első napja */
+
+		const honapKezdete = new Date(
+			most.getFullYear(),
+			most.getMonth(),
+			1,
+			0, 0, 0
+		);
+
+
+		/* Aktuális hónap utolsó napja */
+
+		const honapVege = new Date(
+			most.getFullYear(),
+			most.getMonth() + 1,
+			0,
+			23, 59, 59
+		);
+
+
+		/* 
+		   Következő fizetés:
+
+		   Ha még nincs 8-a:
+		   aktuális hónap 8.
+
+		   Ha már elmúlt 8-a:
+		   következő hónap 8.
+		*/
+
+		const fizetesHonap =
+			most.getDate() < 8
+				? most.getMonth()
+				: most.getMonth() + 1;
+
+		const fizetesEv =
+			most.getFullYear() +
+			(
+				fizetesHonap > 11
+					? 1
+					: 0
+			);
+
+		const kovetkezo = new Date(
+			fizetesEv,
+			fizetesHonap % 12,
+			8,
+			0, 0, 0
+		);
+
+
+		/* Eddig megkeresett pénz */
+
+		const eddig =
+			idoszakOsszesites(honapKezdete, most);
+
+		const eddigOsszeg =
+			eddig.penz;
+
+		document.getElementById("fizu-osszeg")
+			.textContent = formatFt(eddigOsszeg);
+
+
+		/* Teljes havi várható fizetés */
+
+		const havi =
+			haviBerOsszesites(
+				most.getFullYear(),
+				most.getMonth(),
+				honapVege
+			);
+
+		const haviOrak =
+			havi.orak;
+
+		const haviOsszeg =
+			havi.netto;
+
+		document.getElementById("fizu-varhato")
+			.textContent =
+				"💰 Várható nettó 8-án: ~" +
+				formatFt(haviOsszeg) +
+				" (" +
+				Math.round(haviOrak * 10) / 10 +
+				" ledolgozott óra)";
+
+
+		/* Progress bar */
+
+		const progress =
+			haviOsszeg > 0
+				? Math.min(
+					(eddigOsszeg / haviOsszeg) * 100,
+					100
+				)
+				: 0;
+
+		document.getElementById("progress-bar")
+			.style.width = progress + "%";
+
+
+		/* Aktuális műszak állapota */
+
+		let aktivTipus = null;
+		let aktivIntervallum = null;
+
+		/*
+		   Éjszakás műszak átnyúlik a következő napra.
+		   Ezért először a tegnap kezdődött műszakot nézzük meg.
+		*/
+
+		const tegnap = new Date(
+			most.getFullYear(),
+			most.getMonth(),
+			most.getDate() - 1
+		);
+
+		const tegnapiIntervallum =
+			muszakIdointervallum(tegnap);
+
+		if (tegnapiIntervallum) {
+
+			const [tegnapKezdet, tegnapVeg] =
+				tegnapiIntervallum;
+
+			if (
+				most >= tegnapKezdet &&
+				most <= tegnapVeg
+			) {
+				aktivTipus = muszakTipus(tegnap);
+				aktivIntervallum = tegnapiIntervallum;
+			}
+		}
+
+		/*
+		   Ha nem tart még a tegnapi műszak,
+		   akkor megnézzük a mai nap műszakját.
+		*/
+
+		if (!aktivIntervallum) {
+
+			const maiIntervallum =
+				muszakIdointervallum(most);
+
+			if (maiIntervallum) {
+
+				const [maiKezdet, maiVeg] =
+					maiIntervallum;
+
+				if (
+					most >= maiKezdet &&
+					most <= maiVeg
+				) {
+					aktivTipus = muszakTipus(most);
+					aktivIntervallum = maiIntervallum;
+				}
+			}
+		}
+
+		let statusSzoveg;
+
+		if (aktivIntervallum) {
+
+			let muszakNev;
+
+			if (aktivTipus === "nappal") {
+
+				muszakNev =
+					"🌞 Nappalos műszak";
+
+			} else if (aktivTipus === "nappal_tulora_150") {
+
+				muszakNev =
+					"🌞⚡ Nappalos túlóra (150%)";
+
+			} else if (aktivTipus === "ejszaka_tulora_150") {
+
+				muszakNev =
+					"🌙⚡ Éjszakás túlóra (150%)";
+
+			} else if (aktivTipus === "nappal_tulora") {
+
+				muszakNev =
+					"🌞⚡ P-Nappalos túlóra (200%)";
+
+			} else if (aktivTipus === "ejszaka_tulora") {
+
+				muszakNev =
+					"🌙⚡ P-Éjszakás túlóra (200%)";
+
+			} else {
+
+				muszakNev =
+					"🌙 Éjszakás műszak";
+			}
+
+			statusSzoveg = isOwner
+				? muszakNev + " – megy a számláló!"
+				: muszakNev;
+
+		} else {
+
+			const maiTipus =
+				muszakTipus(most);
+
+			if (maiTipus === "szabad") {
+
+				statusSzoveg = isOwner
+					? "😴 Ma szabadnap van, a számláló most nem nő."
+					: "😴 Szabadnap";
+
+			} else if (maiTipus === "szabi") {
+
+				statusSzoveg = isOwner
+					? "🅂 Szabin vagy, a számláló most nem nő."
+					: "🅂 Szabadság";
+
+			} else if (maiTipus === "tsz") {
+
+				statusSzoveg = isOwner
+					? "TSZ Többlet szabadság – ma nem dolgozol."
+					: "TSZ Többlet szabadság";
+
+			} else {
+
+				statusSzoveg = isOwner
+					? "⏸️ Most nincs műszak, a számláló szünetel."
+					: "⏸️ Most nincs műszak";
+			}
+		}
+
+
+		document.getElementById("fizu-status")
+			.textContent = statusSzoveg;
+
+
+		/* Napok a következő fizetésig */
+
+		const napokAFizuig =
+			Math.ceil(
+				(kovetkezo - most) / 86400000
+			);
+
+
+		/* Alsó információs sor */
+
+		document.getElementById("fizu-info")
+			.textContent =
+				"Időszak: " +
+				formatDatum(honapKezdete) +
+				" – " +
+				formatDatum(honapVege) +
+				" · Következő fizetés: " +
+				formatDatum(kovetkezo) +
+				" (" +
+				napokAFizuig +
+				" nap múlva)";
+	}
+
+
+	/* =========================
+	   MŰSZAKNAPTÁR
+	   ========================= */
+
+	let naptarHonapEltolas = 0;
+
+	function naptarHonapotValt(irany) {
+		naptarHonapEltolas += irany;
+		generalMuszakNaptar();
+	}
+
+	function naptarMa() {
+		naptarHonapEltolas = 0;
+		generalMuszakNaptar();
+	}
+
+	function generalMuszakNaptar() {
+
+		const most = new Date();
+
+		const megjelenitettHonap =
+			new Date(
+				most.getFullYear(),
+				most.getMonth() + naptarHonapEltolas,
+				1
+			);
+
+		const ev = megjelenitettHonap.getFullYear();
+		const honap = megjelenitettHonap.getMonth();
+
+
+		const honapNeve =
+			new Intl.DateTimeFormat("hu-HU", {
+				month: "long"
+			}).format(
+				new Date(ev, honap, 1)
+			);
+
+
+		const napokSzama =
+			new Date(
+				ev,
+				honap + 1,
+				0
+			).getDate();
+
+
+		const elsoNap =
+			new Date(
+				ev,
+				honap,
+				1
+			).getDay();
+
+
+		/* Hétfő legyen az első nap */
+
+		const eltolodas =
+			(elsoNap + 6) % 7;
+
+
+		let html = `
+
+			<div class="naptar-cim-sor">
+
+				<button
+					class="naptar-nav"
+					onclick="naptarHonapotValt(-1)"
+					aria-label="Előző hónap"
+					title="Előző hónap"
+				>‹</button>
+
+				<div class="naptar-cim">
+					<div>${ev}. ${honapNeve}</div>
+					<button
+						class="naptar-ma-gomb"
+						onclick="naptarMa()"
+						title="Ugrás a mai hónapra"
+						aria-label="Ugrás a mai hónapra"
+					>Ma</button>
+				</div>
+
+				<button
+					class="naptar-nav"
+					onclick="naptarHonapotValt(1)"
+					aria-label="Következő hónap"
+					title="Következő hónap"
+				>›</button>
+
+			</div>
+
+			<div class="naptar-fejlec">
+
+				<div>H</div>
+				<div>K</div>
+				<div>Sze</div>
+				<div>Cs</div>
+				<div>P</div>
+				<div>Szo</div>
+				<div>V</div>
+
+			</div>
+
+			<div class="naptar-napok">
+
+		`;
+
+
+		/* Üres mezők a hónap elején */
+
+		for (
+			let i = 0;
+			i < eltolodas;
+			i++
+		) {
+
+			html +=
+				`<div class="nap nap-ures"></div>`;
+		}
+
+
+		/* Napok */
+
+		for (
+			let nap = 1;
+			nap <= napokSzama;
+			nap++
+		) {
+
+			const datum =
+				new Date(
+					ev,
+					honap,
+					nap
+				);
+
+			const tipus =
+				muszakTipus(datum);
+
+
+			let osztaly = "nap ";
+			let jel = "";
+
+
+			if (tipus === "nappal") {
+
+				osztaly += "nap-nappal";
+				jel = "🌞";
+
+			} else if (
+				tipus === "nappal_tulora" ||
+				tipus === "nappal_tulora_150"
+			) {
+
+				osztaly += "nap-nappal nap-tulora";
+				jel = "🌞⚡";
+
+			} else if (
+				tipus === "ejszaka" ||
+				tipus === "ejszaka_tulora" ||
+				tipus === "ejszaka_tulora_150"
+			) {
+
+				osztaly += "nap-ejszaka";
+
+				if (
+					tipus === "ejszaka_tulora" ||
+					tipus === "ejszaka_tulora_150"
+				) {
+					osztaly += " nap-tulora";
+					jel = "🌙⚡";
+				} else {
+					jel = "🌙";
+				}
+
+			} else if (tipus === "szabi") {
+
+				osztaly += "nap-szabi";
+				jel = "SZ";
+
+			} else if (tipus === "tsz") {
+
+				osztaly += "nap-tsz";
+				jel = "TSZ";
+
+			} else {
+
+				osztaly += "nap-szabad";
+				jel = "😴";
+			}
+
+
+			/* Munkaszüneti nap kiemelése */
+			if (magyarMunkaszunetiNap(datum)) {
+				osztaly += " nap-unnepnap";
+			}
+
+			/* Mai nap kiemelése */
+
+			const ma =
+				nap === most.getDate() &&
+				honap === most.getMonth() &&
+				ev === most.getFullYear();
+
+
+			if (ma) {
+				osztaly += " nap-ma";
+			}
+
+
+			const kulcs = datumKulcs(ev, honap, nap);
+			const vanBejegyzes = !!naptarBejegyzesek[kulcs];
+
+			const pontHtml =
+				isOwner && vanBejegyzes
+					? `<span class="naptar-pont" title="Van naptárbejegyzés"></span>`
+					: "";
+
+			html += `
+
+				<div class="${osztaly}"
+					onclick="muszakModalMegnyit(${ev}, ${honap}, ${nap})"
+					title="Kattints a nap beállításaihoz">
+
+					${pontHtml}
+
+					<div class="nap-jel">
+						${jel}
+					</div>
+
+					<div class="nap-szam">
+						${nap}
+					</div>
+
+				</div>
+
+			`;
+		}
+
+
+		html += `</div>`;
+
+
+		document.getElementById(
+			"muszak-naptar"
+		).innerHTML = html;
+	}
+
+
+
+
+	/* =========================
+	   AUTH / OWNER ELLENŐRZÉS
+	   ========================= */
+
+	let isOwner = false;
+	let bejelentkezve = false;
+
+	async function authAllapotBetoltese() {
+
+		try {
+
+			const response = await fetch("/.auth/me", {
+				headers: {
+					"Accept": "application/json"
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error("HTTP " + response.status);
+			}
+
+			const adat = await response.json();
+			const principal = adat.clientPrincipal;
+
+			if (principal) {
+
+				bejelentkezve = true;
+
+				const szerepkorok =
+					Array.isArray(principal.userRoles)
+						? principal.userRoles
+						: [];
+
+				isOwner = szerepkorok.includes("owner");
+
+			} else {
+
+				bejelentkezve = false;
+				isOwner = false;
+			}
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült lekérni a bejelentkezési állapotot:",
+				error
+			);
+
+			bejelentkezve = false;
+			isOwner = false;
+		}
+
+		frissitAuthFelulet();
+	}
+
+	function frissitAuthFelulet() {
+
+		const loginBtn =
+			document.getElementById("auth-login-btn");
+
+		const loggedIn =
+			document.getElementById("auth-logged-in");
+
+		if (bejelentkezve) {
+			loginBtn.style.display = "none";
+			loggedIn.style.display = "flex";
+		} else {
+			loginBtn.style.display = "inline-flex";
+			loggedIn.style.display = "none";
+		}
+
+		if (!isOwner) {
+			osszegRejtve = true;
+		}
+
+		document.querySelectorAll(".owner-beradat").forEach(function (el) {
+			if (!isOwner) {
+				el.style.display = "none";
+				return;
+			}
+
+			// Az owner nézetben visszaadjuk az elem eredeti megjelenési módját.
+			// A CSS-ben az .owner-beradat alapból display:none, ezért az üres
+			// inline display nem elég a visszakapcsoláshoz.
+			if (el.id === "privacy-btn") {
+				el.style.display = "flex";
+			} else {
+				el.style.display = "block";
+			}
+		});
+
+		const berDebug = document.getElementById("ber-debug");
+
+		if (berDebug) {
+			berDebug.style.display = isOwner ? "block" : "none";
+
+			if (!isOwner) {
+				berDebug.removeAttribute("open");
+			}
+		}
+
+		frissitPrivacyGomb();
+        fizetesElozmenyekMegjelenitese();
+        const privLegend = document.querySelector(".owner-legend-entry");
+        if (privLegend) privLegend.style.display = isOwner ? "flex" : "none";
+        if (window.matchMedia("(min-width: 1100px)").matches) {
+            const history = document.getElementById("fizetes-elozmenyek");
+            if (history) history.open = isOwner;
+        }
+        frissitFizu();
+    }
+
+    function frissitSzerkesztesJog() {
+
+		const ownerResz =
+			document.getElementById("owner-szerkesztes");
+
+		const nemOwnerUzenet =
+			document.getElementById("nem-owner-uzenet");
+
+		if (!ownerResz || !nemOwnerUzenet) {
+			return;
+		}
+
+		if (isOwner) {
+			ownerResz.style.display = "block";
+			nemOwnerUzenet.style.display = "none";
+		} else {
+			ownerResz.style.display = "none";
+			nemOwnerUzenet.style.display = "block";
+		}
+	}
+
+	/* =========================
+	   INTERAKTÍV MŰSZAKMENÜ
+	   AZURE API SZINKRONNAL
+	   ========================= */
+
+	let kivalasztottDatum = null;
+
+	// A szerverről betöltött módosítások ideiglenes memóriája.
+	let muszakModositasok = {};
+
+	function datumKulcs(ev, honap, nap) {
+		return ev + "-" +
+			String(honap + 1).padStart(2, "0") + "-" +
+			String(nap).padStart(2, "0");
+	}
+
+	async function muszakModositasokBetoltese() {
+
+		try {
+
+			const response = await fetch("/api/muszakok", {
+				method: "GET",
+				headers: {
+					"Accept": "application/json"
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error("HTTP " + response.status);
+			}
+
+			muszakModositasok = await response.json();
+
+			frissitFizu();
+			generalMuszakNaptar();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült betölteni a műszakmódosításokat:",
+				error
+			);
+
+			muszakModositasok = {};
+
+			frissitFizu();
+			generalMuszakNaptar();
+		}
+	}
+
+	function muszakModalMegnyit(ev, honap, nap) {
+
+		kivalasztottDatum = datumKulcs(ev, honap, nap);
+
+		const datum = new Date(ev, honap, nap);
+
+		document.getElementById("muszak-modal-cim").textContent =
+			"Műszak módosítása";
+
+		document.getElementById("muszak-modal-datum").textContent =
+			formatDatum(datum);
+
+		frissitSzerkesztesJog();
+
+		const mentesStatusz = document.getElementById("muszak-mentes-statusz");
+		if (mentesStatusz) {
+			mentesStatusz.className = "mentes-statusz";
+			mentesStatusz.textContent = "";
+		}
+
+		document.getElementById("muszak-modal-hatter")
+			.classList.add("lathato");
+	}
+
+	function muszakModalBezar() {
+		kivalasztottDatum = null;
+
+		document.getElementById("muszak-modal-hatter")
+			.classList.remove("lathato");
+	}
+
+	function modalHatterKattintas(event) {
+		if (event.target.id === "muszak-modal-hatter") {
+			muszakModalBezar();
+		}
+	}
+
+	async function muszakBeallit(tipus) {
+
+		if (!isOwner) {
+			alert("A műszakok szerkesztéséhez ownerként kell bejelentkezned.");
+			return;
+		}
+
+		if (!kivalasztottDatum) {
+			return;
+		}
+
+		const datum = kivalasztottDatum;
+
+		const statusz = document.getElementById("muszak-mentes-statusz");
+		if (statusz) {
+			statusz.className = "mentes-statusz mentes";
+			statusz.textContent = "◌ Mentés folyamatban...";
+		}
+
+		try {
+
+			const response = await fetch("/api/muszakok", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Accept": "application/json"
+				},
+				body: JSON.stringify({
+					datum: datum,
+					tipus: tipus
+				})
+			});
+
+			if (!response.ok) {
+
+				let hibaSzoveg = "HTTP " + response.status;
+
+				try {
+					const hibaAdat = await response.json();
+
+					if (hibaAdat.hiba) {
+						hibaSzoveg = hibaAdat.hiba;
+					}
+				} catch (_) {}
+
+				throw new Error(hibaSzoveg);
+			}
+
+			muszakModositasok[datum] = tipus;
+
+			if (statusz) {
+				statusz.className = "mentes-statusz siker";
+				statusz.textContent = "✓ Sikeresen mentve";
+			}
+
+			setTimeout(function () {
+				muszakModalBezar();
+				frissitFizu();
+				generalMuszakNaptar();
+			}, 1500);
+
+		} catch (error) {
+
+			if (statusz) {
+				statusz.className = "mentes-statusz hiba";
+				statusz.textContent = "⊗ Sikertelen mentés";
+			}
+
+			console.error(
+				"Nem sikerült elmenteni a műszakot:",
+				error
+			);
+
+			alert(
+				"Nem sikerült elmenteni a módosítást az Azure-ba.\n\n" +
+				error.message
+			);
+		}
+	}
+
+	async function muszakTorol() {
+
+		if (!isOwner) {
+			alert("A műszakok szerkesztéséhez ownerként kell bejelentkezned.");
+			return;
+		}
+
+		if (!kivalasztottDatum) {
+			return;
+		}
+
+		const datum = kivalasztottDatum;
+
+		const statusz = document.getElementById("muszak-mentes-statusz");
+		if (statusz) {
+			statusz.className = "mentes-statusz mentes";
+			statusz.textContent = "◌ Törlés folyamatban...";
+		}
+
+		try {
+
+			const response = await fetch(
+				"/api/muszakok?datum=" +
+					encodeURIComponent(datum),
+				{
+					method: "DELETE",
+					headers: {
+						"Accept": "application/json"
+					}
+				}
+			);
+
+			if (!response.ok) {
+
+				let hibaSzoveg = "HTTP " + response.status;
+
+				try {
+					const hibaAdat = await response.json();
+
+					if (hibaAdat.hiba) {
+						hibaSzoveg = hibaAdat.hiba;
+					}
+				} catch (_) {}
+
+				throw new Error(hibaSzoveg);
+			}
+
+			delete muszakModositasok[datum];
+
+			if (statusz) {
+				statusz.className = "mentes-statusz siker";
+				statusz.textContent = "✓ Sikeresen törölve";
+			}
+
+			setTimeout(function () {
+				muszakModalBezar();
+				frissitFizu();
+				generalMuszakNaptar();
+			}, 1500);
+
+		} catch (error) {
+
+			if (statusz) {
+				statusz.className = "mentes-statusz hiba";
+				statusz.textContent = "⊗ Sikertelen törlés";
+			}
+
+			console.error(
+				"Nem sikerült törölni a műszakmódosítást:",
+				error
+			);
+
+			alert(
+				"Nem sikerült visszaállítani az alapbeosztást.\n\n" +
+				error.message
+			);
+		}
+	}
+
+
+	/* =========================
+	   NAPTÁRBEJEGYZÉSEK – AZURE API
+	   ========================= */
+
+	let naptarBejegyzesek = {};
+	let kivalasztottNaptarDatum = null;
+
+	async function naptarBejegyzesekBetoltese() {
+
+		try {
+
+			const response = await fetch("/api/naptar", {
+				method: "GET",
+				headers: {
+					"Accept": "application/json"
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error("HTTP " + response.status);
+			}
+
+			naptarBejegyzesek = await response.json();
+
+			generalMuszakNaptar();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült betölteni a naptárbejegyzéseket:",
+				error
+			);
+
+			naptarBejegyzesek = {};
+			generalMuszakNaptar();
+		}
+	}
+
+	function naptarModalMegnyitKivalasztottNapra() {
+
+		if (!kivalasztottDatum) {
+			return;
+		}
+
+		const datum = kivalasztottDatum;
+
+		muszakModalBezar();
+
+		naptarModalMegnyit(datum);
+	}
+
+	function naptarModalMegnyit(datum) {
+
+		kivalasztottNaptarDatum = datum;
+
+		const [ev, honap, nap] =
+			datum.split("-").map(Number);
+
+		const jsDatum =
+			new Date(ev, honap - 1, nap);
+
+		document.getElementById("naptar-modal-datum")
+			.textContent = formatDatum(jsDatum);
+
+		const adat =
+			naptarBejegyzesek[datum] || {
+				cim: "",
+				megjegyzes: "",
+				ido: ""
+			};
+
+		document.getElementById("naptar-cim-input").value =
+			adat.cim || "";
+
+		document.getElementById("naptar-ido-input").value =
+			adat.ido || "";
+
+		document.getElementById("naptar-megjegyzes-input").value =
+			adat.megjegyzes || "";
+
+		document.getElementById("naptar-torles-gomb").hidden =
+			!naptarBejegyzesek[datum];
+
+		document.getElementById("naptar-modal-hatter")
+			.classList.add("lathato");
+
+		setTimeout(function() {
+			document.getElementById("naptar-cim-input").focus();
+		}, 50);
+	}
+
+	function naptarModalBezar() {
+
+		kivalasztottNaptarDatum = null;
+
+		document.getElementById("naptar-modal-hatter")
+			.classList.remove("lathato");
+	}
+
+	function naptarModalHatterKattintas(event) {
+
+		if (event.target.id === "naptar-modal-hatter") {
+			naptarModalBezar();
+		}
+	}
+
+	async function naptarBejegyzesMent() {
+
+		if (!isOwner) {
+			alert("A naptár szerkesztéséhez ownerként kell bejelentkezned.");
+			return;
+		}
+
+		if (!kivalasztottNaptarDatum) {
+			return;
+		}
+
+		const datum = kivalasztottNaptarDatum;
+
+		const cim =
+			document.getElementById("naptar-cim-input")
+				.value.trim();
+
+		const ido =
+			document.getElementById("naptar-ido-input")
+				.value;
+
+		const megjegyzes =
+			document.getElementById("naptar-megjegyzes-input")
+				.value.trim();
+
+		if (!cim) {
+			alert("Adj meg egy címet a bejegyzéshez.");
+			return;
+		}
+
+		try {
+
+			const response = await fetch("/api/naptar", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Accept": "application/json"
+				},
+				body: JSON.stringify({
+					datum: datum,
+					cim: cim,
+					ido: ido,
+					megjegyzes: megjegyzes
+				})
+			});
+
+			if (!response.ok) {
+
+				let hibaSzoveg = "HTTP " + response.status;
+
+				try {
+					const hibaAdat = await response.json();
+
+					if (hibaAdat.hiba) {
+						hibaSzoveg = hibaAdat.hiba;
+					}
+				} catch (_) {}
+
+				throw new Error(hibaSzoveg);
+			}
+
+			naptarBejegyzesek[datum] = {
+				cim: cim,
+				ido: ido,
+				megjegyzes: megjegyzes
+			};
+
+			naptarModalBezar();
+			generalMuszakNaptar();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült elmenteni a naptárbejegyzést:",
+				error
+			);
+
+			alert(
+				"Nem sikerült elmenteni a naptárbejegyzést az Azure-ba.\n\n" +
+				error.message
+			);
+		}
+	}
+
+	async function naptarBejegyzesTorol() {
+
+		if (!isOwner) {
+			alert("A naptár szerkesztéséhez ownerként kell bejelentkezned.");
+			return;
+		}
+
+		if (!kivalasztottNaptarDatum) {
+			return;
+		}
+
+		const datum = kivalasztottNaptarDatum;
+
+		try {
+
+			const response = await fetch(
+				"/api/naptar?datum=" +
+					encodeURIComponent(datum),
+				{
+					method: "DELETE",
+					headers: {
+						"Accept": "application/json"
+					}
+				}
+			);
+
+			if (!response.ok) {
+
+				let hibaSzoveg = "HTTP " + response.status;
+
+				try {
+					const hibaAdat = await response.json();
+
+					if (hibaAdat.hiba) {
+						hibaSzoveg = hibaAdat.hiba;
+					}
+				} catch (_) {}
+
+				throw new Error(hibaSzoveg);
+			}
+
+			delete naptarBejegyzesek[datum];
+
+			naptarModalBezar();
+			generalMuszakNaptar();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült törölni a naptárbejegyzést:",
+				error
+			);
+
+			alert(
+				"Nem sikerült törölni a naptárbejegyzést.\n\n" +
+				error.message
+			);
+		}
+	}
+
+
+
+
+
+	/* =========================
+	   IDEIGLENES BÉR-RÉSZLETEZŐ
+	   ========================= */
+
+	function frissitBerDebug() {
+
+		const debugDoboz =
+			document.getElementById("ber-debug-tartalom");
+
+		if (!debugDoboz) {
+			return;
+		}
+
+		// Most célzottan a 2026. októberi bérpapírt ellenőrizzük.
+		const ev = 2026;
+		const honap = 9; // 0 = január, 8 = szeptember
+
+		const honapVege =
+			new Date(
+				ev,
+				honap + 1,
+				0,
+				23, 59, 59, 999
+			);
+
+		const havi =
+			haviBerOsszesites(
+				ev,
+				honap,
+				honapVege
+			);
+
+		const d = havi.debug;
+
+		debugDoboz.innerHTML = `
+
+			<strong>2026. október</strong><br><br>
+
+			🌞 Nappalos műszakok:
+			<strong>${d.nappalDb} db</strong><br>
+
+			🌙 Éjszakás műszakok:
+			<strong>${d.ejszakaDb} db</strong><br>
+
+			🅂 Fizetett szabadság:
+			<strong>${havi.szabiNapok} nap</strong><br>
+
+			TSZ:
+			<strong>${havi.tszNapok} nap</strong><br><br>
+
+			⚡ 150%-os túlóra:
+			<strong>${d.tulora150Db} db</strong>
+			(${formatFt(d.tulora150Brutto)})<br>
+
+			⚡ P-túlóra 200%:
+			<strong>${d.tulora200Db} db</strong>
+			(${formatFt(d.tulora200Brutto)})<br><br>
+
+			🌇 20%-os pótlék:
+			<strong>${Math.round(d.potlek20Ora * 10) / 10} óra</strong>
+			=
+			<strong>${formatFt(d.potlek20Brutto)}</strong><br>
+
+			🌙 50%-os pótlék:
+			<strong>${Math.round(d.potlek50Ora * 10) / 10} óra</strong>
+			=
+			<strong>${formatFt(d.potlek50Brutto)}</strong><br><br>
+
+			🎉 Munkaszüneti napi pótlék:
+			<strong>${Math.round(d.munkaszunetiOra * 10) / 10} óra</strong>
+			=
+			<strong>${formatFt(d.munkaszunetiBrutto)}</strong><br><br>
+
+			Havi korrigált alap:
+			<strong>${formatFt(d.haviAlapKorrigalt)}</strong><br>
+
+			Bankszámla-hozzájárulás:
+			<strong>${formatFt(d.bank)}</strong><br><br>
+
+			<strong>Összes bruttó:
+			${formatFt(havi.brutto)}</strong><br>
+
+			<strong>Számolt nettó:
+			${formatFt(havi.netto)}</strong>
+		`;
+	}
+
+
+	/* =========================
+	   FIZETÉSELŐZMÉNYEK – AZURE API
+	   ========================= */
+
+	let fizetesElozmenyek = {};
+
+	function honapKulcs(ev, honap) {
+		return ev + "-" + String(honap + 1).padStart(2, "0");
+	}
+
+	function honapMegjelenites(kulcs) {
+    const [ev, honap] = kulcs.split("-").map(Number);
+
+    const datum = new Date(ev, honap, 1);
+
+    const honapNev =
+        new Intl.DateTimeFormat("hu-HU", {
+            month: "long"
+        }).format(datum);
+
+    return datum.getFullYear() + ". " + honapNev;
+}
+
+	function fizetesElozmenyekKattintasTiltas(event) {
+		const doboz = document.getElementById("fizetes-elozmenyek");
+
+		if (!isOwner && doboz) {
+			event.preventDefault();
+			doboz.removeAttribute("open");
+		}
+	}
+
+	function fizetesElozmenyekMegjelenitese() {
+
+		const doboz =
+			document.getElementById("fizetes-elozmenyek");
+
+		const lista =
+			document.getElementById("fizetes-elozmenyek-lista");
+
+		if (!doboz || !lista) {
+			return;
+		}
+
+		const summary =
+			document.getElementById("fizetes-elozmenyek-summary");
+
+		if (!isOwner) {
+			doboz.style.display = "block";
+			doboz.classList.add("zarolt");
+			doboz.removeAttribute("open");
+
+			if (summary) {
+				summary.textContent = "🔒 Korábbi fizetések";
+				summary.title = bejelentkezve
+					? "Ehhez owner jogosultság szükséges."
+					: "A megnyitáshoz jelentkezz be.";
+			}
+
+			return;
+		}
+
+		doboz.style.display = "block";
+		doboz.classList.remove("zarolt");
+
+		if (summary) {
+			summary.textContent = "📊 Korábbi fizetések";
+			summary.title = "";
+		}
+
+		const kulcsok =
+			Object.keys(fizetesElozmenyek)
+				.sort()
+				.reverse();
+
+		if (kulcsok.length === 0) {
+			lista.innerHTML =
+				'<div class="fizetes-elozmenyek-ures">Még nincs elmentett hónap.</div>';
+			return;
+		}
+
+		lista.innerHTML =
+			kulcsok.map(function (kulcs) {
+
+				const adat = fizetesElozmenyek[kulcs];
+
+				const netto =
+					Number(adat.kalkulaltNetto || 0);
+
+				const orak =
+					Number(adat.ledolgozottOra || 0);
+
+				return `
+					<div class="fizetes-elozmeny-sor">
+						<div class="fizetes-elozmeny-honap">
+							${honapMegjelenites(kulcs)}
+						</div>
+						<div class="fizetes-elozmeny-adat">
+							Kalkulált nettó: <strong>${formatFt(netto)}</strong>
+							· ${Math.round(orak * 10) / 10} ledolgozott óra
+						</div>
+					</div>
+				`;
+			}).join("");
+	}
+
+	async function fizetesElozmenyekBetoltese() {
+
+		if (!isOwner) {
+			fizetesElozmenyek = {};
+			fizetesElozmenyekMegjelenitese();
+			return;
+		}
+
+		try {
+
+			const response = await fetch("/api/fizetesek", {
+				method: "GET",
+				headers: {
+					"Accept": "application/json"
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error("HTTP " + response.status);
+			}
+
+			fizetesElozmenyek = await response.json();
+			fizetesElozmenyekMegjelenitese();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült betölteni a fizetéselőzményeket:",
+				error
+			);
+
+			fizetesElozmenyek = {};
+			fizetesElozmenyekMegjelenitese();
+		}
+	}
+
+	async function elozoHonapAutomatikusMentese() {
+
+		if (!isOwner) {
+			return;
+		}
+
+		const most = new Date();
+
+		const elozoHonap =
+			new Date(
+				most.getFullYear(),
+				most.getMonth() - 1,
+				1
+			);
+
+		const ev = elozoHonap.getFullYear();
+		const honap = elozoHonap.getMonth();
+		const kulcs = honapKulcs(ev, honap);
+
+		// Ha már egyszer elmentettük, nem írjuk felül.
+		if (fizetesElozmenyek[kulcs]) {
+			return;
+		}
+
+		const honapVege =
+			new Date(
+				ev,
+				honap + 1,
+				0,
+				23, 59, 59, 999
+			);
+
+		const havi =
+			haviBerOsszesites(
+				ev,
+				honap,
+				honapVege
+			);
+
+		const mentendo = {
+			honap: kulcs,
+			kalkulaltNetto: Math.round(havi.netto),
+			ledolgozottOra:
+				Math.round(havi.orak * 10) / 10
+		};
+
+		try {
+
+			const response = await fetch("/api/fizetesek", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"Accept": "application/json"
+				},
+				body: JSON.stringify(mentendo)
+			});
+
+			if (!response.ok) {
+
+				let hibaSzoveg = "HTTP " + response.status;
+
+				try {
+					const hibaAdat = await response.json();
+
+					if (hibaAdat.hiba) {
+						hibaSzoveg = hibaAdat.hiba;
+					}
+				} catch (_) {}
+
+				throw new Error(hibaSzoveg);
+			}
+
+			const valasz = await response.json();
+
+			fizetesElozmenyek[kulcs] =
+				valasz.adat || {
+					kalkulaltNetto: mentendo.kalkulaltNetto,
+					ledolgozottOra: mentendo.ledolgozottOra
+				};
+
+			fizetesElozmenyekMegjelenitese();
+
+		} catch (error) {
+
+			console.error(
+				"Nem sikerült automatikusan elmenteni az előző havi fizetést:",
+				error
+			);
+		}
+	}
+
+
+	/* =========================
+	   INDÍTÁS
+	   ========================= */
+
+	async function inditas() {
+
+		frissitFizu();
+		generalMuszakNaptar();
+		frissitPrivacyGomb();
+
+		await Promise.all([
+			muszakModositasokBetoltese(),
+			naptarBejegyzesekBetoltese(),
+			authAllapotBetoltese()
+		]);
+
+		// Csak a betöltött Azure műszakmódosítások után számoljuk a debug bontást.
+		frissitBerDebug();
+
+		if (isOwner) {
+			await fizetesElozmenyekBetoltese();
+			await elozoHonapAutomatikusMentese();
+		}
+
+		fizetesElozmenyekMegjelenitese();
+		frissitFizu();
+		generalMuszakNaptar();
+	}
+
+    // Asztali nézetben a kártyák rögtön mutassák a tartalmukat.
+    // Mobilon továbbra is lenyithatók maradnak.
+    const desktopMedia = window.matchMedia("(min-width: 1100px)");
+    function desktopReszletekFrissitese(e) {
+        document.querySelectorAll(".jelmagyarazat, .fizetes-elozmenyek").forEach(function (el) {
+            if (e.matches && (isOwner || !el.classList.contains("fizetes-elozmenyek"))) {
+                el.open = true;
+            } else {
+                el.open = false;
+            }
+        });
+    }
+    desktopMedia.addEventListener("change", desktopReszletekFrissitese);
+    desktopReszletekFrissitese(desktopMedia);
+
+    inditas();
+
+	document.addEventListener("keydown", function(event) {
+		if (event.key === "Escape") {
+			muszakModalBezar();
+			naptarModalBezar();
+		}
+	});
+
+	setInterval(
+		frissitFizu,
+		1000
+	);
+
+</script>
+
+
+	<div class="muszak-modal-hatter" id="muszak-modal-hatter" onclick="modalHatterKattintas(event)">
+		<div class="muszak-modal" onclick="event.stopPropagation()">
+			<h2 id="muszak-modal-cim">Műszak módosítása</h2>
+			<div class="muszak-modal-datum" id="muszak-modal-datum"></div>
+
+			<div id="owner-szerkesztes" style="display:none;">
+			<div class="muszak-opciok">
+				<button class="muszak-opcio" onclick="muszakBeallit('nappal')">🌞 Nappalos</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka')">🌙 Éjszakás</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('szabad')">😴 Szabadnap</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('szabi')">🅂 Szabadság</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('tsz')">TSZ Többlet szabadság</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora_150')">🌞⚡ Nappalos túlóra (150%)</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora_150')">🌙⚡ Éjszakás túlóra (150%)</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora')">🌞⚡ P-Nappalos túlóra (200%)</button>
+				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora')">🌙⚡ P-Éjszakás túlóra (200%)</button>
+				<button class="muszak-opcio torles" onclick="muszakTorol()">↩ Alapbeosztás visszaállítása</button>
+			</div>
+
+			<button class="naptar-bejegyzes-gomb" onclick="naptarModalMegnyitKivalasztottNapra()">🔴 Naptárbejegyzés</button>
+			</div>
+
+			<div id="nem-owner-uzenet" style="display:none; color:var(--muted); font-size:0.9em; line-height:1.5; margin-top:0.8em;">
+				A naptár megtekinthető, de szerkeszteni csak bejelentkezett ownerként lehet.
+			</div>
+		<div id="muszak-mentes-statusz" class="mentes-statusz"></div>
+
+
+			<button class="muszak-modal-bezar" onclick="muszakModalBezar()">Mégsem</button>
+		</div>
+	</div>
+
+
+	<div class="naptar-modal-hatter" id="naptar-modal-hatter" onclick="naptarModalHatterKattintas(event)">
+		<div class="naptar-modal" onclick="event.stopPropagation()">
+			<h2>Naptárbejegyzés</h2>
+			<div class="naptar-modal-datum" id="naptar-modal-datum"></div>
+
+			<div class="naptar-mezo">
+				<label for="naptar-cim-input">Cím</label>
+				<input
+					id="naptar-cim-input"
+					type="text"
+					placeholder="pl. Orvosi vizsgálat"
+					autocomplete="off"
+				>
+			</div>
+
+			<div class="naptar-mezo">
+				<label for="naptar-ido-input">Időpont (nem kötelező)</label>
+				<input
+					id="naptar-ido-input"
+					type="time"
+				>
+			</div>
+
+			<div class="naptar-mezo">
+				<label for="naptar-megjegyzes-input">Megjegyzés (nem kötelező)</label>
+				<textarea
+					id="naptar-megjegyzes-input"
+					placeholder="pl. Üzemorvos, vigyem a leleteket"
+				></textarea>
+			</div>
+
+			<div class="naptar-modal-gombok">
+				<button class="naptar-mentes" onclick="naptarBejegyzesMent()">Mentés</button>
+				<button class="naptar-torles" id="naptar-torles-gomb" onclick="naptarBejegyzesTorol()" hidden>Bejegyzés törlése</button>
+				<button class="naptar-megse" onclick="naptarModalBezar()">Mégsem</button>
+			</div>
+		</div>
+	</div>
+
+
+
+</body>
+</html>
