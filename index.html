@@ -1005,7 +1005,7 @@
         }
         .dashboard-topbar .auth-box { margin: 0; justify-content: flex-end; }
         .dashboard-topbar .auth-btn { border-color: var(--desk-border); padding: 10px 13px; border-radius: 10px; font-size: 12px; }
-        .dashboard-calendar, .dashboard-pay, .dashboard-legend, .dashboard-history, .dashboard-bottom {
+        .dashboard-calendar, .dashboard-pay, .dashboard-legend, .dashboard-history {
             background: var(--desk-panel);
             border: 1px solid var(--desk-border);
             border-radius: 17px;
@@ -1016,7 +1016,15 @@
         .dashboard-pay { grid-area: pay; padding: 22px 20px; position: relative; align-self: stretch; }
         .dashboard-legend { grid-area: legend; padding: 0 5px; }
         .dashboard-history { grid-area: history; padding: 0 5px; }
-        .dashboard-bottom { grid-area: bottom; padding: 4px 22px 18px; }
+        /* Az alsó információs/debug rész ne jelenjen meg üres kártyaként. */
+        .dashboard-bottom {
+            grid-area: bottom;
+            padding: 0;
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
+        }
         .desktop-section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 14px; }
         .desktop-section-heading span { font-weight: 800; font-size: 16px; }
         .desktop-section-heading small { font-size: 11px; color: var(--desk-muted); text-align: right; }
@@ -1189,7 +1197,7 @@
 <aside class="desktop-sidebar" aria-label="Asztali navigáció">
     <div class="desktop-brand">
         <div class="desktop-brand-icon">💸</div>
-        <div><strong>Beo + fizu</strong></div>
+        <div><strong>Beo + fizu</strong><small></div>
     </div>
     <nav class="desktop-nav">
         <a class="desktop-nav-link active" href="#muszak-naptar">▦ <span>Műszaknaptár</span></a>
