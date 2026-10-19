@@ -1188,22 +1188,64 @@
     }
 
 
-    /* Egységes, kíméletes témaváltás: csak a váltás idejére aktiválódik. */
-    html.tema-atmenet,
-    html.tema-atmenet *,
-    html.tema-atmenet *::before,
-    html.tema-atmenet *::after {
-        transition-property: background-color, color, border-color, outline-color, box-shadow, fill, stroke !important;
-        transition-duration: 420ms !important;
-        transition-timing-function: cubic-bezier(.22, 1, .36, 1) !important;
-        transition-delay: 0ms !important;
+    /* A böngésző egyszerre készít képet a két témáról,
+       majd finoman átúsztatja őket. Nem száz külön elem animálódik. */
+    @view-transition {
+        navigation: none;
+    }
+
+    ::view-transition-old(root) {
+        animation: 500ms ease-in-out both tema-kifutas;
+    }
+    ::view-transition-new(root) {
+        animation: 500ms ease-in-out both tema-beuszas;
+    }
+
+    @keyframes tema-kifutas {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+    @keyframes tema-beuszas {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Régebbi böngészőkön is egységes, visszafogott átmenet. */
+    html.tema-atmenet body,
+    html.tema-atmenet .card,
+    html.tema-atmenet .nap,
+    html.tema-atmenet .dashboard-panel,
+    html.tema-atmenet .dashboard-topbar,
+    html.tema-atmenet .theme-toggle,
+    html.tema-atmenet .naptar-nav,
+    html.tema-atmenet .naptar-ma-gomb,
+    html.tema-atmenet .jelmagyarazat,
+    html.tema-atmenet .fizetes-elozmenyek,
+    html.tema-atmenet .muszak-modal,
+    html.tema-atmenet .naptar-modal {
+        transition: background-color 500ms ease-in-out,
+                    color 500ms ease-in-out,
+                    border-color 500ms ease-in-out,
+                    outline-color 500ms ease-in-out !important;
     }
 
     @media (prefers-reduced-motion: reduce) {
-        html.tema-atmenet,
-        html.tema-atmenet *,
-        html.tema-atmenet *::before,
-        html.tema-atmenet *::after {
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+            animation-duration: 0.01ms !important;
+        }
+        html.tema-atmenet body,
+        html.tema-atmenet .card,
+        html.tema-atmenet .nap,
+        html.tema-atmenet .dashboard-panel,
+        html.tema-atmenet .dashboard-topbar,
+        html.tema-atmenet .theme-toggle,
+        html.tema-atmenet .naptar-nav,
+        html.tema-atmenet .naptar-ma-gomb,
+        html.tema-atmenet .jelmagyarazat,
+        html.tema-atmenet .fizetes-elozmenyek,
+        html.tema-atmenet .muszak-modal,
+        html.tema-atmenet .naptar-modal {
             transition-duration: 0ms !important;
         }
     }
@@ -1369,6 +1411,7 @@
 <script>
 
 	let temaAtmenetIdozito;
+	let temaValtasFolyamatban = false;
 
 	function temaGombFrissites() {
 		const sotet = document.documentElement.getAttribute("data-theme") === "dark";
@@ -1380,28 +1423,46 @@
 	}
 
 	function toggleTheme() {
+		if (temaValtasFolyamatban) return;
 		const root = document.documentElement;
 		const sotet = root.getAttribute("data-theme") === "dark";
 
-		clearTimeout(temaAtmenetIdozito);
-		root.classList.add("tema-atmenet");
-
-		if (sotet) {
-			root.removeAttribute("data-theme");
-			localStorage.setItem("theme", "light");
-		} else {
-			root.setAttribute("data-theme", "dark");
-			localStorage.setItem("theme", "dark");
+		function alkalmazTema() {
+			if (sotet) {
+				root.removeAttribute("data-theme");
+				localStorage.setItem("theme", "light");
+			} else {
+				root.setAttribute("data-theme", "dark");
+				localStorage.setItem("theme", "dark");
+			}
+			temaGombFrissites();
 		}
 
-		temaGombFrissites();
-		temaAtmenetIdozito = setTimeout(function () {
-			root.classList.remove("tema-atmenet");
-		}, 460);
+		const csokkentettMozgas = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		if (typeof document.startViewTransition === "function" && !csokkentettMozgas) {
+			// Az egész oldal egyetlen, szinkronizált átúszással vált.
+			temaValtasFolyamatban = true;
+			try {
+				const atmenet = document.startViewTransition(alkalmazTema);
+				atmenet.finished.catch(function () {}).finally(function () {
+					temaValtasFolyamatban = false;
+				});
+			} catch (hiba) {
+				alkalmazTema();
+				temaValtasFolyamatban = false;
+			}
+		} else {
+			// Tartalék megoldás olyan böngészőkhöz, ahol nincs View Transition API.
+			clearTimeout(temaAtmenetIdozito);
+			if (!csokkentettMozgas) root.classList.add("tema-atmenet");
+			alkalmazTema();
+			temaAtmenetIdozito = setTimeout(function () {
+				root.classList.remove("tema-atmenet");
+			}, 520);
+		}
 	}
 
 	temaGombFrissites();
-
 
 	/* =========================
 	   ÖSSZEG ELREJTÉSE (adatvédelem)
