@@ -1030,14 +1030,38 @@
         .nap-ures { border-color: transparent; }
         .nap-jel { font-size: 22px; }
         .nap-tulora .nap-jel { font-size: 20px; }
-        .nap-szam { margin-top: 7px; }
+        /* A dátum a naptárcella bal felső sarkában, a műszak ikon középen. */
+        .nap { position: relative; }
+        .nap-szam {
+            position: absolute;
+            top: 8px;
+            left: 10px;
+            margin: 0;
+            font-size: 12px;
+            font-weight: 750;
+            line-height: 1;
+        }
         .nap-nappal { background: rgba(255,191,62,.13); }
         .nap-ejszaka { background: rgba(87,133,247,.13); }
         .nap-szabad { background: var(--desk-soft); }
         .nap-szabi { background: rgba(245,180,50,.17); }
         .nap-tsz { background: rgba(142,68,173,.12); }
         .nap-ma { outline-color: var(--desk-blue); }
-        .dashboard-pay .privacy-toggle { top: 62px; right: 18px; left: auto; border-color: var(--desk-border); }
+        /* A szem gomb a fejléc része, így nem takarja a fizetés összege. */
+        .dashboard-pay .desktop-section-heading { align-items: center; }
+        .dashboard-pay .desktop-section-heading small { margin-left: auto; }
+        .dashboard-pay .privacy-toggle {
+            position: static;
+            flex: 0 0 42px;
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            margin-left: 8px;
+            border-color: var(--desk-border);
+            z-index: 2;
+            cursor: pointer;
+        }
+        .dashboard-pay .privacy-toggle svg { pointer-events: none; }
         #fizu-osszeg { margin: 25px 0 12px; font-size: clamp(30px,2.6vw,43px); letter-spacing: -.04em; }
         #fizu-status { background: var(--desk-soft); padding: 11px 13px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
         #fizu-varhato { margin: 18px 0; line-height: 1.65; font-size: 14px; }
@@ -1050,6 +1074,73 @@
         .fizetes-elozmeny-sor { background: var(--desk-soft); }
         #fizu-info { margin-top: 12px; font-size: 12px; }
         #ber-debug { max-width: 850px; }
+        /* Nagyobb, jól látható naptárbejegyzés-jelölő desktopon. */
+        .naptar-pont {
+            width: 13px;
+            height: 13px;
+            top: 9px;
+            right: 9px;
+            box-shadow: 0 0 0 2px var(--desk-panel);
+        }
+        /* Kompakt, kétoszlopos desktop műszakválasztó – mobilon az eredeti marad. */
+        .muszak-modal-hatter { padding: 20px; backdrop-filter: blur(3px); }
+        .muszak-modal {
+            width: min(465px, 100%);
+            max-height: min(90vh, 760px);
+            overflow-y: auto;
+            border: 1px solid var(--desk-border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 22px 65px rgba(0, 0, 0, .26);
+        }
+        .muszak-modal h2 { font-size: 17px; margin-bottom: 3px; }
+        .muszak-modal-datum { font-size: 12px; margin-bottom: 15px; }
+        .muszak-opciok {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .muszak-opcio {
+            min-height: 40px;
+            padding: 9px 10px;
+            font-size: 12px;
+            line-height: 1.35;
+            border-radius: 9px;
+            background: var(--desk-soft);
+            border-color: var(--desk-border);
+            transition: border-color .15s, background .15s, transform .15s;
+        }
+        .muszak-opcio:hover {
+            background: var(--card-bg);
+            border-color: var(--desk-blue);
+            transform: translateY(-1px);
+        }
+        .muszak-opcio:focus-visible,
+        .naptar-bejegyzes-gomb:focus-visible,
+        .muszak-modal-bezar:focus-visible {
+            outline: 2px solid var(--desk-blue);
+            outline-offset: 2px;
+        }
+        .muszak-opcio.torles {
+            grid-column: 1 / -1;
+            min-height: 36px;
+            text-align: center;
+            background: transparent;
+            font-size: 12px;
+        }
+        .muszak-modal .naptar-bejegyzes-gomb {
+            margin-top: 10px;
+            padding: 10px 12px;
+            font-size: 12px;
+            text-align: center;
+            border-color: var(--desk-border);
+            border-radius: 9px;
+        }
+        .muszak-modal-bezar {
+            margin-top: 4px;
+            padding: 8px;
+            font-size: 12px;
+        }
+        .muszak-modal .mentes-statusz { margin-top: 8px; font-size: 12px; }
         .app-verzio { grid-area: version; margin-top: 0; padding-bottom: 6px; font-size: 11px; }
     }
     @media (min-width: 1100px) and (max-width: 1350px) {
@@ -1061,6 +1152,34 @@
         .desktop-section-heading small { display: none; }
     }
 
+
+    /* Bal alsó fiókpanel: csak a desktop oldalsávban. */
+    .desktop-sidebar-foot { display: none; }
+    @media (min-width: 1100px) {
+        .desktop-sidebar-foot {
+            display: block;
+            margin-top: auto;
+            padding: 14px 7px 0;
+            border-top: 1px solid rgba(190,210,245,.15);
+            color: #e9f1ff;
+        }
+        .desktop-account-status { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+        .desktop-account-name { font-size: 15px; font-weight: 700; line-height: 1.4; }
+        .desktop-account-role { font-size: 12px; color: #9db0cc; margin-top: 2px; }
+        .desktop-logout, .desktop-login {
+            display: flex; align-items: center; gap: 11px;
+            width: 100%; min-height: 46px; margin-top: 18px;
+            padding: 10px 13px; border-radius: 10px;
+            border: 1px solid #2a405e; background: #1a2b43;
+            color: #dce9ff; font-size: 13px; text-decoration: none;
+            transition: background .15s, border-color .15s;
+        }
+        .desktop-logout:hover, .desktop-login:hover {
+            background: #263f61; border-color: #5378a9;
+        }
+        .dashboard-topbar .auth-box { display: none; }
+    }
+
 </style>
 </head>
 
@@ -1069,15 +1188,27 @@
 <aside class="desktop-sidebar" aria-label="Asztali navigáció">
     <div class="desktop-brand">
         <div class="desktop-brand-icon">💸</div>
-        <div><strong>Beo + fizu</strong><small>ver. 1.7 · Saját dashboard</small></div>
+        <div><strong>Beo + fizu</strong><small>ver. 1.8 · Saját dashboard</small></div>
     </div>
     <nav class="desktop-nav">
         <a class="desktop-nav-link active" href="#muszak-naptar">▦ <span>Műszaknaptár</span></a>
-        <a class="desktop-nav-link" href="#desktop-pay">◉ <span>Fizetés</span></a>
         <a class="desktop-nav-link" href="#desktop-legend">☷ <span>Jelmagyarázat</span></a>
         <a class="desktop-nav-link" href="#fizetes-elozmenyek">▤ <span>Korábbi fizetések</span></a>
     </nav>
-    <div class="desktop-sidebar-foot">🌞 &nbsp; 🌙 &nbsp; 💸<div>A beosztásod, egy helyen.</div></div>
+    <div class="desktop-sidebar-foot" aria-label="Fiók és kijelentkezés">
+        <div class="desktop-account" id="desktop-account" style="display:none;">
+            <div class="desktop-account-status">Belépve</div>
+            <div class="desktop-account-name" id="desktop-account-name">Filus Tamás</div>
+            <div class="desktop-account-role" id="desktop-account-role">owner</div>
+            <a class="desktop-logout" href="/.auth/logout">
+                <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/>
+                </svg>
+                <span>Kijelentkezés</span>
+            </a>
+        </div>
+        <a class="desktop-login" id="desktop-login" href="/.auth/login/aad" style="display:none;">Microsoft belépés</a>
+    </div>
 </aside>
 
 <div class="card">
@@ -1104,8 +1235,10 @@
     </header>
 
     <section class="dashboard-pay" id="desktop-pay" aria-label="Fizetés áttekintése">
-        <div class="desktop-section-heading"><span>💰 Fizetés</span><small>Aktuális havi becslés</small></div>
-        <button class="privacy-toggle owner-beradat" id="privacy-btn" onclick="toggleOsszegLathatosag()" title="Összeg megjelenítése"></button>
+        <div class="desktop-section-heading">
+            <span>💰 Fizetés</span><small>Aktuális havi becslés</small>
+            <button class="privacy-toggle owner-beradat" id="privacy-btn" onclick="toggleOsszegLathatosag()" title="Összeg megjelenítése" aria-label="Fizetési összeg elrejtése vagy megjelenítése"></button>
+        </div>
         <p id="fizu-osszeg" class="owner-beradat">0 Ft</p>
 
 	<p id="fizu-status"></p>
@@ -1201,7 +1334,7 @@
     </details>
     </section>
 
-    <div class="app-verzio">ver. 1.7</div>
+    <div class="app-verzio">ver. 1.8</div>
 
 </div>
 
@@ -2523,6 +2656,18 @@
 			loginBtn.style.display = "inline-flex";
 			loggedIn.style.display = "none";
 		}
+
+        // Az asztali oldalsáv a meglévő Microsoft / owner állapotot tükrözi.
+        const desktopAccount = document.getElementById("desktop-account");
+        const desktopLogin = document.getElementById("desktop-login");
+        const desktopAccountName = document.getElementById("desktop-account-name");
+        const desktopAccountRole = document.getElementById("desktop-account-role");
+        if (desktopAccount && desktopLogin) {
+            desktopAccount.style.display = bejelentkezve ? "block" : "none";
+            desktopLogin.style.display = bejelentkezve ? "none" : "flex";
+            if (desktopAccountName) desktopAccountName.textContent = isOwner ? "Filus Tamás" : "Bejelentkezett felhasználó";
+            if (desktopAccountRole) desktopAccountRole.textContent = isOwner ? "owner" : "felhasználó";
+        }
 
 		if (!isOwner) {
 			osszegRejtve = true;
