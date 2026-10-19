@@ -25,8 +25,8 @@
 
 <style>
 	:root {
-		--bg: #f4f5f7;
-		--card-bg: #ffffff;
+		--bg: #edf2f8;
+		--card-bg: #f9fbff;
 		--text: #1a1a1a;
 		--muted: #666;
 		--accent: #2f8f4e;
@@ -910,7 +910,7 @@
     @media (min-width: 1100px) {
         :root {
             --desk-border: #e2e8f0;
-            --desk-panel: #ffffff;
+            --desk-panel: #f9fbff;
             --desk-ink: #14223b;
             --desk-muted: #66758e;
             --desk-blue: #2563eb;
@@ -1187,6 +1187,27 @@
         .dashboard-topbar .auth-box { display: none; }
     }
 
+
+    /* Egységes, kíméletes témaváltás: csak a váltás idejére aktiválódik. */
+    html.tema-atmenet,
+    html.tema-atmenet *,
+    html.tema-atmenet *::before,
+    html.tema-atmenet *::after {
+        transition-property: background-color, color, border-color, outline-color, box-shadow, fill, stroke !important;
+        transition-duration: 420ms !important;
+        transition-timing-function: cubic-bezier(.22, 1, .36, 1) !important;
+        transition-delay: 0ms !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        html.tema-atmenet,
+        html.tema-atmenet *,
+        html.tema-atmenet *::before,
+        html.tema-atmenet *::after {
+            transition-duration: 0ms !important;
+        }
+    }
+
 </style>
 </head>
 
@@ -1347,19 +1368,39 @@
 
 <script>
 
+	let temaAtmenetIdozito;
+
+	function temaGombFrissites() {
+		const sotet = document.documentElement.getAttribute("data-theme") === "dark";
+		const gomb = document.querySelector(".theme-toggle");
+		if (!gomb) return;
+		gomb.textContent = sotet ? "☀️" : "🌙";
+		gomb.title = sotet ? "Váltás világos módra" : "Váltás sötét módra";
+		gomb.setAttribute("aria-label", gomb.title);
+	}
+
 	function toggleTheme() {
-
 		const root = document.documentElement;
-		const dark = root.getAttribute("data-theme") === "dark";
+		const sotet = root.getAttribute("data-theme") === "dark";
 
-		if (dark) {
+		clearTimeout(temaAtmenetIdozito);
+		root.classList.add("tema-atmenet");
+
+		if (sotet) {
 			root.removeAttribute("data-theme");
 			localStorage.setItem("theme", "light");
 		} else {
 			root.setAttribute("data-theme", "dark");
 			localStorage.setItem("theme", "dark");
 		}
+
+		temaGombFrissites();
+		temaAtmenetIdozito = setTimeout(function () {
+			root.classList.remove("tema-atmenet");
+		}, 460);
 	}
+
+	temaGombFrissites();
 
 
 	/* =========================
