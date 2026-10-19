@@ -1267,6 +1267,29 @@
         }
     }
 
+
+    /* Mobilon a fizetési panel címsora rejtett volt, így a benne lévő
+       adatvédelmi szemgomb is eltűnt. Csak a gombot mutatjuk bal felül. */
+    @media (max-width: 1099px) {
+        .dashboard-pay .desktop-section-heading {
+            display: block;
+            height: 0;
+            margin: 0;
+            padding: 0;
+        }
+        .dashboard-pay .desktop-section-heading > span,
+        .dashboard-pay .desktop-section-heading > small {
+            display: none;
+        }
+        .dashboard-pay .privacy-toggle {
+            position: absolute;
+            top: 1em;
+            left: 1em;
+            right: auto;
+            z-index: 5;
+        }
+    }
+
 </style>
 </head>
 
