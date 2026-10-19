@@ -948,9 +948,15 @@
             display: flex;
             flex-direction: column;
             padding: 28px 15px 22px;
-            background: #101f36;
+            background: #203a5c;
             color: #f2f7ff;
             box-shadow: inset -1px 0 rgba(255,255,255,.04);
+            /* Stabil saját réteg a görgetésnél, hogy az ikon ne remegjen. */
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        html[data-theme="dark"] .desktop-sidebar {
+            background: #101f36;
         }
         .desktop-brand { display: flex; align-items: center; gap: 11px; padding: 3px 7px 32px; }
         .desktop-brand-icon {
@@ -1184,6 +1190,17 @@
         .desktop-logout:hover, .desktop-login:hover {
             background: #263f61; border-color: #5378a9;
         }
+        /* A kilépés ikonja ne mozogjon a sor magasságával vagy scroll közben. */
+        .desktop-logout svg {
+            display: block;
+            width: 19px;
+            height: 19px;
+            flex: 0 0 19px;
+            align-self: center;
+            vertical-align: middle;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
         .dashboard-topbar .auth-box { display: none; }
     }
 
@@ -1404,7 +1421,7 @@
     </details>
     </section>
 
-    <div class="app-verzio">ver. 1.8</div>
+    <div class="app-verzio">ver. 2.0</div>
 
 </div>
 
