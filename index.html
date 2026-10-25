@@ -1316,6 +1316,14 @@
         -webkit-user-drag: none;
     }
 
+    /* Asztali gépen nagyobb, nagy felbontású ikon; mobilon marad a 192-es. */
+    @media (min-width: 1100px) {
+        #app-start-splash img {
+            width: 160px;
+            height: 160px;
+        }
+    }
+
     #app-start-splash.is-fading {
         opacity: 0;
         visibility: hidden;
@@ -1337,10 +1345,14 @@
 <body>
 
 <div id="app-start-splash" aria-hidden="true">
-    <img src="/icon-192.png" width="104" height="104" alt="" fetchpriority="high" decoding="sync">
+    <picture>
+        <source media="(min-width: 1100px)" srcset="/icon-512.png">
+        <img src="/icon-192.png" width="104" height="104" alt="" fetchpriority="high" decoding="sync">
+    </picture>
 </div>
 <script>
 (function () {
+    const IKON_MEGJELENES_MS = 1900; // Ennyi ideig maradjon látható az ikon halványulás előtt.
     const splash = document.getElementById("app-start-splash");
     if (!splash) return;
 
@@ -1350,7 +1362,7 @@
             window.setTimeout(function () {
                 splash.remove();
             }, 950);
-        }, 2000);
+        }, IKON_MEGJELENES_MS);
     }
 
     if (document.readyState === "loading") {
