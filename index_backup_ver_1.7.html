@@ -21,12 +21,12 @@
 	<meta property="og:type" content="website">
 	<meta property="og:url" content="https://www.beoesfizu.nl/">
 
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 
 <style>
 	:root {
-		--bg: #f4f5f7;
-		--card-bg: #ffffff;
+		--bg: #edf2f8;
+		--card-bg: #f9fbff;
 		--text: #1a1a1a;
 		--muted: #666;
 		--accent: #2f8f4e;
@@ -207,8 +207,9 @@
 		color: #e67e22;
 	}
 
-	.nap-ma {
-		outline: 2px solid var(--accent);
+	.nap.nap-ma {
+		outline: 3px solid #22c55e;
+		outline-offset: -3px;
 		font-weight: bold;
 	}
 
@@ -897,18 +898,511 @@
 		user-select: none;
 	}
 
+
+    /* =======================================================
+       DESKTOP DASHBOARD – kizárólag nagy képernyőn (>= 1100px)
+       Mobilon a korábbi 1.7-es megjelenés marad.
+       ======================================================= */
+    .desktop-sidebar, .desktop-page-title, .desktop-section-heading { display: none; }
+    .dashboard-topbar, .dashboard-pay, .dashboard-calendar,
+    .dashboard-legend, .dashboard-history, .dashboard-bottom { min-width: 0; }
+
+    @media (min-width: 1100px) {
+        :root {
+            --desk-border: #e2e8f0;
+            --desk-panel: #f9fbff;
+            --desk-ink: #14223b;
+            --desk-muted: #66758e;
+            --desk-blue: #2563eb;
+            --desk-soft: #f0f5ff;
+            --desk-shadow: 0 10px 35px rgba(18, 40, 75, .045);
+        }
+        html[data-theme="dark"] {
+            --bg: #0d1626;
+            --card-bg: #17243a;
+            --text: #e9f0fc;
+            --muted: #9eacc3;
+            --accent: #58db9a;
+            --desk-border: #293c55;
+            --desk-panel: #17243a;
+            --desk-ink: #e9f0fc;
+            --desk-muted: #9eacc3;
+            --desk-blue: #5a9dff;
+            --desk-soft: #213752;
+            --desk-shadow: 0 10px 30px rgba(0,0,0,.13);
+        }
+        body {
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--desk-ink);
+        }
+        .desktop-sidebar {
+            width: 228px;
+            flex: 0 0 228px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 28px 15px 22px;
+            background: #203a5c;
+            color: #f2f7ff;
+            box-shadow: inset -1px 0 rgba(255,255,255,.04);
+            /* A sticky oldalsávot nem kényszerítjük külön GPU-rétegre. */
+        }
+        html[data-theme="dark"] .desktop-sidebar {
+            background: #101f36;
+        }
+        .desktop-brand { display: flex; align-items: center; gap: 11px; padding: 3px 7px 32px; }
+        .desktop-brand-icon {
+            width: 46px; height: 46px; flex: 0 0 46px;
+            border-radius: 12px; display: block; object-fit: cover;
+            box-shadow: 0 6px 20px rgba(30,118,255,.28);
+        }
+        .desktop-brand strong { display: block; font-size: 19px; white-space: nowrap; }
+        .desktop-brand small { display: block; margin-top: 4px; color: #9eb0cb; font-size: 11px; white-space: nowrap; }
+        .desktop-nav { display: grid; gap: 7px; }
+        .desktop-nav-link {
+            display: flex; align-items: center; gap: 14px;
+            text-decoration: none; color: #bac8de;
+            padding: 13px 14px; border-radius: 11px;
+            font-size: 14px; font-weight: 600;
+            transition: background .15s, color .15s;
+        }
+        .desktop-nav-link:first-letter { font-size: 19px; }
+        .desktop-nav-link:hover { background: #203957; color: #fff; }
+        .desktop-nav-link.active { color: #fff; background: linear-gradient(120deg,#1d55b7,#267af1); }
+        .desktop-sidebar-foot { margin-top: auto; padding: 12px; font-size: 17px; color: #dce8ff; }
+        .desktop-sidebar-foot div { font-size: 12px; margin-top: 9px; color: #91a5c2; }
+        .card {
+            flex: 1 1 0;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(310px, 350px);
+            grid-template-areas:
+                "top top"
+                "calendar pay"
+                "legend history"
+                "bottom bottom"
+                "version version";
+            gap: 18px;
+            width: auto;
+            max-width: none;
+            min-width: 0;
+            padding: 26px;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            text-align: left;
+        }
+        .dashboard-topbar { grid-area: top; display: flex; align-items: center; gap: 16px; min-height: 53px; }
+        .desktop-page-title { display: flex; flex-direction: column; gap: 4px; margin-right: auto; }
+        .desktop-kicker { font-size: 10px; letter-spacing: .14em; font-weight: 800; color: var(--desk-blue); }
+        .desktop-page-title strong { font-size: clamp(19px,2vw,26px); letter-spacing: -.035em; }
+        .dashboard-topbar .theme-toggle {
+            position: static; flex: 0 0 auto; border-radius: 10px;
+            border: 1px solid var(--desk-border); background: var(--desk-panel);
+            padding: 9px 13px; font-size: 15px;
+        }
+        .dashboard-topbar .auth-box { margin: 0; justify-content: flex-end; }
+        .dashboard-topbar .auth-btn { border-color: var(--desk-border); padding: 10px 13px; border-radius: 10px; font-size: 12px; }
+        .dashboard-calendar, .dashboard-pay, .dashboard-legend, .dashboard-history, .dashboard-bottom {
+            background: var(--desk-panel);
+            border: 1px solid var(--desk-border);
+            border-radius: 17px;
+            box-shadow: var(--desk-shadow);
+            min-width: 0;
+        }
+        .dashboard-calendar { grid-area: calendar; padding: 21px; }
+        .dashboard-pay { grid-area: pay; padding: 22px 20px; position: relative; align-self: stretch; }
+        .dashboard-legend { grid-area: legend; padding: 0 5px; }
+        .dashboard-history { grid-area: history; padding: 0 5px; }
+        .dashboard-bottom {
+            grid-area: bottom;
+            padding: 4px 22px 18px;
+            min-width: 0;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+        .desktop-section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+        .desktop-section-heading span { font-weight: 800; font-size: 16px; }
+        .desktop-section-heading small { font-size: 11px; color: var(--desk-muted); text-align: right; }
+        #muszak-naptar { margin-top: 0; }
+        .naptar-cim-sor { grid-template-columns: 43px minmax(0,1fr) 43px; max-width: 460px; margin: 0 auto 20px; }
+        .naptar-cim { font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
+        .naptar-ma-gomb { color: var(--desk-blue); border-color: var(--desk-border); font-size: 11px; margin-top: 6px; }
+        .naptar-nav { background: var(--desk-soft); border-color: var(--desk-border); }
+        .naptar-fejlec, .naptar-napok { gap: 5px; }
+        .naptar-fejlec { font-size: 12px; font-weight: 700; margin-bottom: 7px; }
+        .nap { min-height: clamp(70px, 7.1vw, 106px); font-size: 13px; border-radius: 10px; padding: 8px 3px; border: 1px solid var(--desk-border); }
+        .nap-ures { border-color: transparent; }
+        .nap-jel { font-size: 22px; }
+        .nap-tulora .nap-jel { font-size: 20px; }
+        /* A dátum a naptárcella bal felső sarkában, a műszak ikon középen. */
+        .nap { position: relative; }
+        .nap-szam {
+            position: absolute;
+            top: 8px;
+            left: 10px;
+            margin: 0;
+            font-size: 12px;
+            font-weight: 750;
+            line-height: 1;
+        }
+        .nap-nappal { background: rgba(255,191,62,.13); }
+        .nap-ejszaka { background: rgba(87,133,247,.13); }
+        .nap-szabad { background: var(--desk-soft); }
+        .nap-szabi { background: rgba(245,180,50,.17); }
+        .nap-tsz { background: rgba(142,68,173,.12); }
+        .nap.nap-ma { outline: 3px solid #22c55e; outline-offset: -3px; }
+        /* A szem gomb a fejléc része, így nem takarja a fizetés összege. */
+        .dashboard-pay .desktop-section-heading { align-items: center; }
+        .dashboard-pay .desktop-section-heading small { margin-left: auto; }
+        .dashboard-pay .privacy-toggle {
+            position: static;
+            flex: 0 0 42px;
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            margin-left: 8px;
+            border-color: var(--desk-border);
+            z-index: 2;
+            cursor: pointer;
+        }
+        .dashboard-pay .privacy-toggle svg { pointer-events: none; }
+        #fizu-osszeg { margin: 25px 0 12px; font-size: clamp(30px,2.6vw,43px); letter-spacing: -.04em; }
+        #fizu-status { background: var(--desk-soft); padding: 11px 13px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
+        #fizu-varhato { margin: 18px 0; line-height: 1.65; font-size: 14px; }
+        .progress-container { height: 9px; margin: 17px 0 6px; background: var(--desk-soft); }
+        #progress-bar { background: linear-gradient(90deg,#2b73ed,#4ade80); }
+        .jelmagyarazat, .fizetes-elozmenyek { margin: 0; border: 0; background: transparent; }
+        .jelmagyarazat summary, .fizetes-elozmenyek summary { padding: 17px 16px; font-size: 15px; }
+        .jelmagyarazat-tartalom { grid-template-columns: 1fr 1fr; font-size: 12px; padding: 0 16px 17px; }
+        .fizetes-elozmenyek-lista { padding: 0 16px 17px; }
+        .fizetes-elozmeny-sor { background: var(--desk-soft); }
+        #fizu-info { margin-top: 12px; font-size: 12px; }
+        #ber-debug { max-width: 850px; }
+        /* Nagyobb, jól látható naptárbejegyzés-jelölő desktopon. */
+        .naptar-pont {
+            width: 13px;
+            height: 13px;
+            top: 9px;
+            right: 9px;
+            box-shadow: 0 0 0 2px var(--desk-panel);
+        }
+        /* Kompakt, kétoszlopos desktop műszakválasztó – mobilon az eredeti marad. */
+        .muszak-modal-hatter { padding: 20px; backdrop-filter: blur(3px); }
+        .muszak-modal {
+            width: min(465px, 100%);
+            max-height: min(90vh, 760px);
+            overflow-y: auto;
+            border: 1px solid var(--desk-border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 22px 65px rgba(0, 0, 0, .26);
+        }
+        .muszak-modal h2 { font-size: 17px; margin-bottom: 3px; }
+        .muszak-modal-datum { font-size: 12px; margin-bottom: 15px; }
+        .muszak-opciok {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .muszak-opcio {
+            min-height: 40px;
+            padding: 9px 10px;
+            font-size: 12px;
+            line-height: 1.35;
+            border-radius: 9px;
+            background: var(--desk-soft);
+            border-color: var(--desk-border);
+            transition: border-color .15s, background .15s, transform .15s;
+        }
+        .muszak-opcio:hover {
+            background: var(--card-bg);
+            border-color: var(--desk-blue);
+            transform: translateY(-1px);
+        }
+        .muszak-opcio:focus-visible,
+        .naptar-bejegyzes-gomb:focus-visible,
+        .muszak-modal-bezar:focus-visible {
+            outline: 2px solid var(--desk-blue);
+            outline-offset: 2px;
+        }
+        .muszak-opcio.torles {
+            grid-column: 1 / -1;
+            min-height: 36px;
+            text-align: center;
+            background: transparent;
+            font-size: 12px;
+        }
+        .muszak-modal .naptar-bejegyzes-gomb {
+            margin-top: 10px;
+            padding: 10px 12px;
+            font-size: 12px;
+            text-align: center;
+            border-color: var(--desk-border);
+            border-radius: 9px;
+        }
+        .muszak-modal-bezar {
+            margin-top: 4px;
+            padding: 8px;
+            font-size: 12px;
+        }
+        .muszak-modal .mentes-statusz { margin-top: 8px; font-size: 12px; }
+        .app-verzio { grid-area: version; margin-top: 0; padding-bottom: 6px; font-size: 11px; }
+    }
+    @media (min-width: 1100px) and (max-width: 1350px) {
+        .desktop-sidebar { width: 198px; flex-basis: 198px; }
+        .card { padding: 19px; gap: 13px; grid-template-columns: minmax(0,1fr) 300px; }
+        .dashboard-calendar { padding: 14px; }
+        .dashboard-pay { padding: 18px 14px; }
+        .nap { min-height: 68px; }
+        .desktop-section-heading small { display: none; }
+    }
+
+
+    /* Bal alsó fiókpanel: csak a desktop oldalsávban. */
+    .desktop-sidebar-foot { display: none; }
+    @media (min-width: 1100px) {
+        .desktop-sidebar-foot {
+            display: block;
+            margin-top: auto;
+            padding: 14px 7px 0;
+            border-top: 1px solid rgba(190,210,245,.15);
+            color: #e9f1ff;
+        }
+        .desktop-account-status { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+        .desktop-account-name { font-size: 15px; font-weight: 700; line-height: 1.4; }
+        .desktop-account-role { font-size: 12px; color: #9db0cc; margin-top: 2px; }
+        .desktop-logout, .desktop-login {
+            display: flex; align-items: center; gap: 11px;
+            width: 100%; min-height: 46px; margin-top: 18px;
+            padding: 10px 13px; border-radius: 10px;
+            border: 1px solid #2a405e; background: #1a2b43;
+            color: #dce9ff; font-size: 13px; text-decoration: none;
+            transition: background .15s, border-color .15s;
+        }
+        .desktop-logout:hover, .desktop-login:hover {
+            background: #263f61; border-color: #5378a9;
+        }
+        /* Előre raszterizált ikon: nem változik az SVG vonalak pozíciója scrollnál. */
+        .desktop-logout-icon {
+            display: block;
+            width: 19px;
+            height: 19px;
+            min-width: 19px;
+            flex: 0 0 19px;
+            align-self: center;
+            object-fit: contain;
+            pointer-events: none;
+            user-select: none;
+        }
+        .dashboard-topbar .auth-box { display: none; }
+    }
+
+
+    /* A böngésző egyszerre készít képet a két témáról,
+       majd finoman átúsztatja őket. Nem száz külön elem animálódik. */
+    @view-transition {
+        navigation: none;
+    }
+
+    ::view-transition-old(root) {
+        animation: 500ms ease-in-out both tema-kifutas;
+    }
+    ::view-transition-new(root) {
+        animation: 500ms ease-in-out both tema-beuszas;
+    }
+
+    @keyframes tema-kifutas {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+    @keyframes tema-beuszas {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Régebbi böngészőkön is egységes, visszafogott átmenet. */
+    html.tema-atmenet body,
+    html.tema-atmenet .card,
+    html.tema-atmenet .nap,
+    html.tema-atmenet .dashboard-panel,
+    html.tema-atmenet .dashboard-topbar,
+    html.tema-atmenet .theme-toggle,
+    html.tema-atmenet .naptar-nav,
+    html.tema-atmenet .naptar-ma-gomb,
+    html.tema-atmenet .jelmagyarazat,
+    html.tema-atmenet .fizetes-elozmenyek,
+    html.tema-atmenet .muszak-modal,
+    html.tema-atmenet .naptar-modal {
+        transition: background-color 500ms ease-in-out,
+                    color 500ms ease-in-out,
+                    border-color 500ms ease-in-out,
+                    outline-color 500ms ease-in-out !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+            animation-duration: 0.01ms !important;
+        }
+        html.tema-atmenet body,
+        html.tema-atmenet .card,
+        html.tema-atmenet .nap,
+        html.tema-atmenet .dashboard-panel,
+        html.tema-atmenet .dashboard-topbar,
+        html.tema-atmenet .theme-toggle,
+        html.tema-atmenet .naptar-nav,
+        html.tema-atmenet .naptar-ma-gomb,
+        html.tema-atmenet .jelmagyarazat,
+        html.tema-atmenet .fizetes-elozmenyek,
+        html.tema-atmenet .muszak-modal,
+        html.tema-atmenet .naptar-modal {
+            transition-duration: 0ms !important;
+        }
+    }
+
+
+    /* Mobilon a fizetési panel címsora rejtett volt, így a benne lévő
+       adatvédelmi szemgomb is eltűnt. Csak a gombot mutatjuk bal felül. */
+    @media (max-width: 1099px) {
+        .dashboard-pay .desktop-section-heading {
+            display: block;
+            height: 0;
+            margin: 0;
+            padding: 0;
+        }
+        .dashboard-pay .desktop-section-heading > span,
+        .dashboard-pay .desktop-section-heading > small {
+            display: none;
+        }
+        .dashboard-pay .privacy-toggle {
+            position: absolute;
+            top: 1em;
+            left: 1em;
+            right: auto;
+            z-index: 5;
+        }
+    }
+
+
+
+    /* Indításkor csak a saját ikon látszik; a felület 2 mp után finoman előjön. */
+    #app-start-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: grid;
+        place-items: center;
+        background: var(--bg);
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transition: opacity 900ms cubic-bezier(.22, 1, .36, 1),
+                    visibility 0s linear 0s;
+    }
+
+    #app-start-splash img {
+        display: block;
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        flex: none;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+
+    /* Asztali gépen nagyobb, nagy felbontású ikon; mobilon marad a 192-es. */
+    @media (min-width: 1100px) {
+        #app-start-splash img {
+            width: 256px;
+            height: 256px;
+        }
+    }
+
+    #app-start-splash.is-fading {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 900ms cubic-bezier(.22, 1, .36, 1),
+                    visibility 0s linear 900ms;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #app-start-splash,
+        #app-start-splash.is-fading {
+            transition-duration: 150ms, 0s;
+        }
+    }
+
 </style>
 </head>
 
 <body>
 
+<div id="app-start-splash" aria-hidden="true">
+    <picture>
+        <source media="(min-width: 1100px)" srcset="/icon-512.png">
+        <img src="/icon-192.png" width="104" height="104" alt="" fetchpriority="high" decoding="sync">
+    </picture>
+</div>
+<script>
+(function () {
+    const IKON_MEGJELENES_MS = 1800; // Ennyi ideig maradjon látható az ikon halványulás előtt.
+    const splash = document.getElementById("app-start-splash");
+    if (!splash) return;
+
+    function inditoKepernyoElhalvanyit() {
+        window.setTimeout(function () {
+            splash.classList.add("is-fading");
+            window.setTimeout(function () {
+                splash.remove();
+            }, 950);
+        }, IKON_MEGJELENES_MS);
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", inditoKepernyoElhalvanyit, { once: true });
+    } else {
+        inditoKepernyoElhalvanyit();
+    }
+})();
+</script>
+
+<aside class="desktop-sidebar" aria-label="Asztali navigáció">
+    <div class="desktop-brand">
+        <img class="desktop-brand-icon" src="/icon-192.png" alt="Beo + fizu ikon" width="46" height="46">
+        <div><strong>Beo + fizu</strong></div>
+    </div>
+    <nav class="desktop-nav">
+        <a class="desktop-nav-link active" href="#muszak-naptar">▦ <span>Műszaknaptár</span></a>
+        <a class="desktop-nav-link" href="#desktop-legend">☷ <span>Jelmagyarázat</span></a>
+        <a class="desktop-nav-link" href="#fizetes-elozmenyek">▤ <span>Korábbi fizetések</span></a>
+    </nav>
+    <div class="desktop-sidebar-foot" aria-label="Fiók és kijelentkezés">
+        <div class="desktop-account" id="desktop-account" style="display:none;">
+            <div class="desktop-account-status">Belépve</div>
+            <div class="desktop-account-name" id="desktop-account-name">Filus Tamás</div>
+            <div class="desktop-account-role" id="desktop-account-role">owner</div>
+            <a class="desktop-logout" href="/.auth/logout">
+                <img class="desktop-logout-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEwAAABMCAYAAADHl1ErAAAABmJLR0QA/wD/AP+gvaeTAAAD6klEQVR4nO2cwWsUVxjAf99M1JBQoRhXDQma3Qz11nroUTTxYKleCy209tBCafsX9B9osUdBLy0IHrx460HEQlJtr6V6LJNNAg1rdluhREjRzczXg7aonbfbFfe9b9j5wV7mfR/v48ebN4+dNw8qKioqKioqipHQBTzP2pqO55Ms5jA5tE4yfh8b587cq/LnoKmmhK229HAeswTUPXSXAd+T8/X8IVn+v0mmhK209SrwXoCur0xkfDo9Ldv9AiMf1QzA64H6Pbcdc6PV0ol+gdaE3Q3Y9/HtmEv9gkwJizK+AFYDlvBhek9P9gowNYeBh6ekMi5wCngfiAvar88flDOudHPCfNHs6NuqfMd/pXV1jKlkn2wV5Zm6JX3SqMl14GpB0y7NeMOVN7LCAEQoXH8JHHTljLQwch4WXY5yxlwpoy3sBaiEDYhz6A0TVY2abT5S4aQI65FyoX5A2iFqGZQgwpodLiF8IgAKufLBSkcX52uyEqKeQfB+S/7a0ing42cuCrMoyysdnfddz6B4FyYxeylaYcNMGaR5F5bUWAN+cTSbl+Z/hImowjvAhiPEtLQgy4rkgDTjnOPAuiPErLRg67C5Q7Ie5yxQMmlBF65llBZ8pV82acGFQbmkmRAG5ZFmRhiUQ5opYWBfmjlhYFuaSWFgV1rPv3fS+zojO3ypypsi7PZV1D9kgECksENxrTPk3G129HSjJj/5qMkpLE11j+ywBCQS8GWc9gsQJnJlKU11KkmKX429TNy35F5OAMmwC3gZCOziFT730ZfZOcwqbmFb3AJSf6W8OApdHnDRR1/OOSxJ5GF6XxdDTvoAAmMK07hqVbajiNMND/MXziKekOyTDeCcj0KKWLunR7KIZdx1bhCx0PD48sTsHPaUrCOOkA2EBd9vmkwKsyoLDAqzLAuMCbMuCwwJK4MsMCKsLLLAgLAyyYLAwsomCwIKK6MsCLTdKW1rI4MfgBlHiElZEGCEqaoIXKOEsiCAsLTDHHDM0WxaFoQYYRlbPP73+XnMy4IAwl6blj+Ab5+5qPxWBlkQaNJv1Pis2ebnfzcFw4V6rdoU7EREcuCbJ79SEXylXzYqYQMy2sIixosu5xE77pQRJlcWi64rbLpyRlZYc1PPCrxb0NTNxbktPsxTshfD/oRZYFKUU/r4uIeiT5hvHt0vD1z5poSttvRwFrOEUh/mdo5e+zWiiPO9ck3dknnMV/g5FaUQVS7Xa/JjrxhTI4xwB30gcHtPt/+GFlMjjEAHfahyefcj3pqdlb/6xZo6hsHzYUVdlJtRxPl+t+HTmBIGfo7DimHzkXCn19OwoqKioqKiYlD+BoCYmwVlhHpjAAAAAElFTkSuQmCC" width="19" height="19" alt="" aria-hidden="true" draggable="false">
+                <span>Kijelentkezés</span>
+            </a>
+        </div>
+        <a class="desktop-login" id="desktop-login" href="/.auth/login/aad" style="display:none;">Microsoft belépés</a>
+    </div>
+</aside>
+
 <div class="card">
 
-	<button class="privacy-toggle owner-beradat" id="privacy-btn" onclick="toggleOsszegLathatosag()" title="Összeg megjelenítése"></button>
-
-	<button class="theme-toggle" onclick="toggleTheme()">🌙</button>
-
-	<div class="auth-box" id="auth-box">
+    <header class="dashboard-topbar">
+        <div class="desktop-page-title"><span class="desktop-kicker">ÁTTEKINTÉS</span><strong>Műszakok és fizetés</strong></div>
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Világos/sötét mód váltása">🌙</button>
+        <div class="auth-box" id="auth-box">
 		<a class="auth-btn" id="auth-login-btn" href="/.auth/login/aad">Microsoft belépés</a>
 
 		<div id="auth-logged-in" style="display:none; align-items:center; gap:0.45em;">
@@ -923,10 +1417,15 @@
 			</span>
 			<a class="auth-btn" href="/.auth/logout">Kilépés</a>
 		</div>
-	</div>
+        </div>
+    </header>
 
-
-	<p id="fizu-osszeg" class="owner-beradat">0 Ft</p>
+    <section class="dashboard-pay" id="desktop-pay" aria-label="Fizetés áttekintése">
+        <div class="desktop-section-heading">
+            <span>💰 Fizetés</span><small>Aktuális havi becslés</small>
+            <button class="privacy-toggle owner-beradat" id="privacy-btn" onclick="toggleOsszegLathatosag()" title="Összeg megjelenítése" aria-label="Fizetési összeg elrejtése vagy megjelenítése"></button>
+        </div>
+        <p id="fizu-osszeg" class="owner-beradat">0 Ft</p>
 
 	<p id="fizu-status"></p>
 
@@ -936,10 +1435,16 @@
 		<div id="progress-bar"></div>
 	</div>
 
-	<div id="muszak-naptar"></div>
+    </section>
+
+    <section class="dashboard-calendar" aria-label="Műszaknaptár">
+        <div class="desktop-section-heading"><span>📅 Műszaknaptár</span><small>Kattints egy napra a részletekért</small></div>
+        <div id="muszak-naptar"></div>
+    </section>
 
 
-	<details class="jelmagyarazat">
+    <section class="dashboard-legend" id="desktop-legend" aria-label="Jelmagyarázat">
+    <details class="jelmagyarazat">
 		<summary>Jelmagyarázat</summary>
 
 		<div class="jelmagyarazat-tartalom">
@@ -974,7 +1479,7 @@
 				<span>Túlóra</span>
 			</div>
 
-			<div class="jelmagyarazat-sor">
+			<div class="jelmagyarazat-sor owner-legend-entry">
 				<span class="jelmagyarazat-jel">
 					<span class="jelmagyarazat-pont"></span>
 				</span>
@@ -989,18 +1494,20 @@
 			</div>
 
 		</div>
-	</details>
+    </details>
+    </section>
 
-
-	<details class="fizetes-elozmenyek" id="fizetes-elozmenyek">
+    <section class="dashboard-history" aria-label="Korábbi fizetések">
+    <details class="fizetes-elozmenyek" id="fizetes-elozmenyek">
 		<summary id="fizetes-elozmenyek-summary" onclick="fizetesElozmenyekKattintasTiltas(event)">🔒 Korábbi fizetések</summary>
 		<div class="fizetes-elozmenyek-lista" id="fizetes-elozmenyek-lista">
 			<div class="fizetes-elozmenyek-ures">Még nincs elmentett hónap.</div>
 		</div>
-	</details>
+    </details>
+    </section>
 
-
-	<p id="fizu-info" class="owner-beradat"></p>
+    <section class="dashboard-bottom">
+    <p id="fizu-info" class="owner-beradat"></p>
 
 	<details id="ber-debug" style="margin-top:1em; text-align:left; display:none;">
 		<summary style="cursor:pointer; font-weight:600;">
@@ -1010,28 +1517,68 @@
 		<div id="ber-debug-tartalom"
 			 style="margin-top:0.8em; font-size:0.85em; line-height:1.7;">
 		</div>
-	</details>
+    </details>
+    </section>
 
-	<div class="app-verzio">ver. 1.7</div>
+    <div class="app-verzio">ver. 2.0</div>
 
 </div>
 
 <script>
 
+	let temaAtmenetIdozito;
+	let temaValtasFolyamatban = false;
+
+	function temaGombFrissites() {
+		const sotet = document.documentElement.getAttribute("data-theme") === "dark";
+		const gomb = document.querySelector(".theme-toggle");
+		if (!gomb) return;
+		gomb.textContent = sotet ? "☀️" : "🌙";
+		gomb.title = sotet ? "Váltás világos módra" : "Váltás sötét módra";
+		gomb.setAttribute("aria-label", gomb.title);
+	}
+
 	function toggleTheme() {
-
+		if (temaValtasFolyamatban) return;
 		const root = document.documentElement;
-		const dark = root.getAttribute("data-theme") === "dark";
+		const sotet = root.getAttribute("data-theme") === "dark";
 
-		if (dark) {
-			root.removeAttribute("data-theme");
-			localStorage.setItem("theme", "light");
+		function alkalmazTema() {
+			if (sotet) {
+				root.removeAttribute("data-theme");
+				localStorage.setItem("theme", "light");
+			} else {
+				root.setAttribute("data-theme", "dark");
+				localStorage.setItem("theme", "dark");
+			}
+			temaGombFrissites();
+		}
+
+		const csokkentettMozgas = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		if (typeof document.startViewTransition === "function" && !csokkentettMozgas) {
+			// Az egész oldal egyetlen, szinkronizált átúszással vált.
+			temaValtasFolyamatban = true;
+			try {
+				const atmenet = document.startViewTransition(alkalmazTema);
+				atmenet.finished.catch(function () {}).finally(function () {
+					temaValtasFolyamatban = false;
+				});
+			} catch (hiba) {
+				alkalmazTema();
+				temaValtasFolyamatban = false;
+			}
 		} else {
-			root.setAttribute("data-theme", "dark");
-			localStorage.setItem("theme", "dark");
+			// Tartalék megoldás olyan böngészőkhöz, ahol nincs View Transition API.
+			clearTimeout(temaAtmenetIdozito);
+			if (!csokkentettMozgas) root.classList.add("tema-atmenet");
+			alkalmazTema();
+			temaAtmenetIdozito = setTimeout(function () {
+				root.classList.remove("tema-atmenet");
+			}, 520);
 		}
 	}
 
+	temaGombFrissites();
 
 	/* =========================
 	   ÖSSZEG ELREJTÉSE (adatvédelem)
@@ -2335,6 +2882,18 @@
 			loggedIn.style.display = "none";
 		}
 
+        // Az asztali oldalsáv a meglévő Microsoft / owner állapotot tükrözi.
+        const desktopAccount = document.getElementById("desktop-account");
+        const desktopLogin = document.getElementById("desktop-login");
+        const desktopAccountName = document.getElementById("desktop-account-name");
+        const desktopAccountRole = document.getElementById("desktop-account-role");
+        if (desktopAccount && desktopLogin) {
+            desktopAccount.style.display = bejelentkezve ? "block" : "none";
+            desktopLogin.style.display = bejelentkezve ? "none" : "flex";
+            if (desktopAccountName) desktopAccountName.textContent = isOwner ? "Filus Tamás" : "Bejelentkezett felhasználó";
+            if (desktopAccountRole) desktopAccountRole.textContent = isOwner ? "owner" : "felhasználó";
+        }
+
 		if (!isOwner) {
 			osszegRejtve = true;
 		}
@@ -2366,11 +2925,17 @@
 		}
 
 		frissitPrivacyGomb();
-		fizetesElozmenyekMegjelenitese();
-		frissitFizu();
-	}
+        fizetesElozmenyekMegjelenitese();
+        const privLegend = document.querySelector(".owner-legend-entry");
+        if (privLegend) privLegend.style.display = isOwner ? "flex" : "none";
+        if (window.matchMedia("(min-width: 1100px)").matches) {
+            const history = document.getElementById("fizetes-elozmenyek");
+            if (history) history.open = isOwner;
+        }
+        frissitFizu();
+    }
 
-	function frissitSzerkesztesJog() {
+    function frissitSzerkesztesJog() {
 
 		const ownerResz =
 			document.getElementById("owner-szerkesztes");
@@ -3243,7 +3808,22 @@
 		generalMuszakNaptar();
 	}
 
-	inditas();
+    // Asztali nézetben a kártyák rögtön mutassák a tartalmukat.
+    // Mobilon továbbra is lenyithatók maradnak.
+    const desktopMedia = window.matchMedia("(min-width: 1100px)");
+    function desktopReszletekFrissitese(e) {
+        document.querySelectorAll(".jelmagyarazat, .fizetes-elozmenyek").forEach(function (el) {
+            if (e.matches && (isOwner || !el.classList.contains("fizetes-elozmenyek"))) {
+                el.open = true;
+            } else {
+                el.open = false;
+            }
+        });
+    }
+    desktopMedia.addEventListener("change", desktopReszletekFrissitese);
+    desktopReszletekFrissitese(desktopMedia);
+
+    inditas();
 
 	document.addEventListener("keydown", function(event) {
 		if (event.key === "Escape") {
