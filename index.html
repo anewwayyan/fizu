@@ -1289,10 +1289,77 @@
         }
     }
 
+
+
+    /* Indításkor csak a saját ikon látszik; a felület 2 mp után finoman előjön. */
+    #app-start-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: grid;
+        place-items: center;
+        background: var(--bg);
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transition: opacity 900ms cubic-bezier(.22, 1, .36, 1),
+                    visibility 0s linear 0s;
+    }
+
+    #app-start-splash img {
+        display: block;
+        width: 104px;
+        height: 104px;
+        object-fit: contain;
+        flex: none;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+
+    #app-start-splash.is-fading {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 900ms cubic-bezier(.22, 1, .36, 1),
+                    visibility 0s linear 900ms;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #app-start-splash,
+        #app-start-splash.is-fading {
+            transition-duration: 150ms, 0s;
+        }
+    }
+
 </style>
 </head>
 
 <body>
+
+<div id="app-start-splash" aria-hidden="true">
+    <img src="/icon-192.png" width="104" height="104" alt="" fetchpriority="high" decoding="sync">
+</div>
+<script>
+(function () {
+    const splash = document.getElementById("app-start-splash");
+    if (!splash) return;
+
+    function inditoKepernyoElhalvanyit() {
+        window.setTimeout(function () {
+            splash.classList.add("is-fading");
+            window.setTimeout(function () {
+                splash.remove();
+            }, 950);
+        }, 2000);
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", inditoKepernyoElhalvanyit, { once: true });
+    } else {
+        inditoKepernyoElhalvanyit();
+    }
+})();
+</script>
 
 <aside class="desktop-sidebar" aria-label="Asztali navigáció">
     <div class="desktop-brand">
