@@ -884,7 +884,7 @@
 		color: var(--muted);
 	}
 
-	/* Béradatok csak ownerként láthatók. Alapból rejtve, így betöltéskor sem villannak fel. */
+	/* Béradatok csak hitelesített felhasználónak láthatók. Alapból rejtve maradnak betöltéskor. */
 	.owner-beradat {
 		display: none;
 	}
@@ -1615,7 +1615,7 @@
 		btn.innerHTML = osszegRejtve ? ATHUZOTT_SZEM_IKON : SZEM_IKON;
 
 		if (!isOwner) {
-			btn.title = "Az összeg megjelenítéséhez ownerként kell bejelentkezni";
+			btn.title = "Az összeg megjelenítéséhez jelentkezz be";
 			btn.style.opacity = "0.55";
 			btn.style.cursor = "not-allowed";
 		} else {
