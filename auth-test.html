@@ -17,6 +17,7 @@
   <p class="note"><strong>Fontos:</strong> az itt megjelenő tokenclaim-ek diagnosztikai adatok. A böngészőben látott claim önmagában nem hitelesítés; a backendnek később kriptográfiailag kell ellenőriznie a tokent.</p>
   <button id="login">Belépés e-mailes kóddal</button>
   <button id="token" class="secondary" hidden>API-token lekérése</button>
+  <button id="identity" class="secondary" hidden>Saját azonosítóm lekérése</button>
   <button id="isolation" class="secondary" hidden>Profilizolációs GET-teszt</button>
   <button id="writeIsolation" class="secondary" hidden>Profilizolációs POST-teszt</button>
   <button id="deleteIsolation" class="secondary" hidden>Profilizolációs DELETE-teszt</button>
@@ -36,6 +37,7 @@
     const claimsEl = document.getElementById("claims");
     const loginBtn = document.getElementById("login");
     const tokenBtn = document.getElementById("token");
+    const identityBtn = document.getElementById("identity");
     const logoutBtn = document.getElementById("logout");
     const isolationBtn = document.getElementById("isolation");
     const writeIsolationBtn = document.getElementById("writeIsolation");
@@ -76,6 +78,7 @@
     function showAccount(account) {
       loginBtn.hidden = !!account;
       tokenBtn.hidden = !account;
+      identityBtn.hidden = !account;
       isolationBtn.hidden = !account;
       writeIsolationBtn.hidden = !account;
       deleteIsolationBtn.hidden = !account;
@@ -143,6 +146,40 @@
       statusEl.textContent = backendResponse.ok
         ? "Sikeres tokenlekérés és backend JWT-ellenőrzés."
         : "A token megvan, de a backend ellenőrzése hibát adott (HTTP " + backendResponse.status + ").";
+    }
+
+
+    async function lookupOwnIdentity() {
+      try {
+        identityBtn.disabled = true;
+        statusEl.textContent = "Saját Entra-azonosító ellenőrzése…";
+        const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0];
+        if (!account) throw new Error("Nincs aktív bejelentkezett fiók.");
+        const tokenResult = await msalApp.acquireTokenSilent({ account, scopes: [API_SCOPE] });
+        const response = await fetch("/api/identity-check", {
+          method: "GET",
+          headers: { "X-API-Authorization": "Bearer " + tokenResult.accessToken }
+        });
+        const raw = await response.text();
+        let result;
+        try { result = raw ? JSON.parse(raw) : {}; } catch { result = { responseText: raw }; }
+        if (!response.ok || result.authenticated !== true || !result.oid) {
+          throw new Error(result.hiba || "Az azonosító lekérése sikertelen (HTTP " + response.status + ").");
+        }
+        claimsEl.textContent = JSON.stringify({
+          accountUsername: account.username,
+          verifiedOwnIdentity: true,
+          tenantId: result.tenantId,
+          oid: result.oid,
+          scopes: result.scopes
+        }, null, 2);
+        statusEl.textContent = "Sikeres: a backend ellenőrizte a belépést. Csak a saját OID-d jelenik meg; alkalmazásprofil-hozzárendelés nem történt.";
+      } catch (error) {
+        statusEl.textContent = "Azonosító-lekérési hiba: " + (error && error.message || String(error));
+        console.error(error);
+      } finally {
+        identityBtn.disabled = false;
+      }
     }
 
 
@@ -475,6 +512,7 @@
     loginBtn.addEventListener("click", () => {
       msalApp.loginRedirect({ scopes: [API_SCOPE] });
     });
+    identityBtn.addEventListener("click", lookupOwnIdentity);
     isolationBtn.addEventListener("click", testProfileIsolation);
     writeIsolationBtn.addEventListener("click", testWriteIsolation);
     deleteIsolationBtn.addEventListener("click", testDeleteIsolation);
