@@ -1387,13 +1387,13 @@
         <div class="desktop-account" id="desktop-account" style="display:none;">
             <div class="desktop-account-status">Belépve</div>
             <div class="desktop-account-name" id="desktop-account-name">Filus Tamás</div>
-            <div class="desktop-account-role" id="desktop-account-role">owner</div>
-            <a class="desktop-logout" href="/.auth/logout">
+            <div class="desktop-account-role" id="desktop-account-role">Saját adatok</div>
+            <a class="desktop-logout" href="#">
                 <img class="desktop-logout-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEwAAABMCAYAAADHl1ErAAAABmJLR0QA/wD/AP+gvaeTAAAD6klEQVR4nO2cwWsUVxjAf99M1JBQoRhXDQma3Qz11nroUTTxYKleCy209tBCafsX9B9osUdBLy0IHrx460HEQlJtr6V6LJNNAg1rdluhREjRzczXg7aonbfbFfe9b9j5wV7mfR/v48ebN4+dNw8qKioqKioqipHQBTzP2pqO55Ms5jA5tE4yfh8b587cq/LnoKmmhK229HAeswTUPXSXAd+T8/X8IVn+v0mmhK209SrwXoCur0xkfDo9Ldv9AiMf1QzA64H6Pbcdc6PV0ol+gdaE3Q3Y9/HtmEv9gkwJizK+AFYDlvBhek9P9gowNYeBh6ekMi5wCngfiAvar88flDOudHPCfNHs6NuqfMd/pXV1jKlkn2wV5Zm6JX3SqMl14GpB0y7NeMOVN7LCAEQoXH8JHHTljLQwch4WXY5yxlwpoy3sBaiEDYhz6A0TVY2abT5S4aQI65FyoX5A2iFqGZQgwpodLiF8IgAKufLBSkcX52uyEqKeQfB+S/7a0ing42cuCrMoyysdnfddz6B4FyYxeylaYcNMGaR5F5bUWAN+cTSbl+Z/hImowjvAhiPEtLQgy4rkgDTjnOPAuiPErLRg67C5Q7Ie5yxQMmlBF65llBZ8pV82acGFQbmkmRAG5ZFmRhiUQ5opYWBfmjlhYFuaSWFgV1rPv3fS+zojO3ypypsi7PZV1D9kgECksENxrTPk3G129HSjJj/5qMkpLE11j+ywBCQS8GWc9gsQJnJlKU11KkmKX429TNy35F5OAMmwC3gZCOziFT730ZfZOcwqbmFb3AJSf6W8OApdHnDRR1/OOSxJ5GF6XxdDTvoAAmMK07hqVbajiNMND/MXziKekOyTDeCcj0KKWLunR7KIZdx1bhCx0PD48sTsHPaUrCOOkA2EBd9vmkwKsyoLDAqzLAuMCbMuCwwJK4MsMCKsLLLAgLAyyYLAwsomCwIKK6MsCLTdKW1rI4MfgBlHiElZEGCEqaoIXKOEsiCAsLTDHHDM0WxaFoQYYRlbPP73+XnMy4IAwl6blj+Ab5+5qPxWBlkQaNJv1Pis2ebnfzcFw4V6rdoU7EREcuCbJ79SEXylXzYqYQMy2sIixosu5xE77pQRJlcWi64rbLpyRlZYc1PPCrxb0NTNxbktPsxTshfD/oRZYFKUU/r4uIeiT5hvHt0vD1z5poSttvRwFrOEUh/mdo5e+zWiiPO9ck3dknnMV/g5FaUQVS7Xa/JjrxhTI4xwB30gcHtPt/+GFlMjjEAHfahyefcj3pqdlb/6xZo6hsHzYUVdlJtRxPl+t+HTmBIGfo7DimHzkXCn19OwoqKioqKiYlD+BoCYmwVlhHpjAAAAAElFTkSuQmCC" width="19" height="19" alt="" aria-hidden="true" draggable="false">
                 <span>Kijelentkezés</span>
             </a>
         </div>
-        <a class="desktop-login" id="desktop-login" href="/.auth/login/aad" style="display:none;">Microsoft belépés</a>
+        <a class="desktop-login" id="desktop-login" href="#" style="display:none;">Microsoft belépés</a>
     </div>
 </aside>
 
@@ -1403,7 +1403,7 @@
         <div class="desktop-page-title"><span class="desktop-kicker">ÁTTEKINTÉS</span><strong>Műszakok és fizetés</strong></div>
         <button class="theme-toggle" onclick="toggleTheme()" aria-label="Világos/sötét mód váltása">🌙</button>
         <div class="auth-box" id="auth-box">
-		<a class="auth-btn" id="auth-login-btn" href="/.auth/login/aad">Microsoft belépés</a>
+		<a class="auth-btn" id="auth-login-btn" href="#">Microsoft belépés</a>
 
 		<div id="auth-logged-in" style="display:none; align-items:center; gap:0.45em;">
 			<span class="auth-status" style="display:inline-flex; align-items:center; gap:0.35em;">
@@ -1415,7 +1415,7 @@
 				</span>
 				Belépve
 			</span>
-			<a class="auth-btn" href="/.auth/logout">Kilépés</a>
+			<a class="auth-btn" href="#">Kilépés</a>
 		</div>
         </div>
     </header>
@@ -1523,6 +1523,8 @@
     <div class="app-verzio">ver. 2.1</div>
 
 </div>
+
+<script src="https://alcdn.msauth.net/browser/2.35.0/js/msal-browser.min.js"></script>
 
 <script>
 
@@ -2812,149 +2814,176 @@
 
 
 	/* =========================
-	   AUTH / OWNER ELLENŐRZÉS
+	   ENTRA EXTERNAL ID AUTH
 	   ========================= */
 
-	let isOwner = false;
+	const TENANT_ID = "86781723-aefe-44af-837b-bc1abdaf1a05";
+	const CLIENT_ID = "d36934be-a868-45b7-a097-9c31a2f5505e";
+	const API_SCOPE = "api://6b79a267-32cd-42db-a8c9-5971e5afc4a1/access_as_user";
+	const AUTHORITY = "https://beofizu.ciamlogin.com/" + TENANT_ID;
+
+	const msalApp = new msal.PublicClientApplication({
+		auth: {
+			clientId: CLIENT_ID,
+			authority: AUTHORITY,
+			knownAuthorities: [
+				"beofizu.ciamlogin.com",
+				TENANT_ID + ".ciamlogin.com"
+			],
+			redirectUri: window.location.origin + "/",
+			postLogoutRedirectUri: window.location.origin + "/"
+		},
+		cache: { cacheLocation: "sessionStorage" }
+	});
+
+	let isOwner = false; // A régi UI-kapcsolók most a hitelesített saját profilt jelzik.
 	let bejelentkezve = false;
+	let currentProfile = null;
+	let currentAccount = null;
+
+	function profilMegjelenitese(profile) {
+		const nevek = { tamas: "Filus Tamás", reka: "Réka", eni: "Eni" };
+		return nevek[profile] || "Bejelentkezett felhasználó";
+	}
+
+	async function acquireApiToken() {
+		const account = msalApp.getActiveAccount() || currentAccount || msalApp.getAllAccounts()[0];
+		if (!account) throw new Error("Nincs bejelentkezett Microsoft-fiók.");
+		msalApp.setActiveAccount(account);
+		currentAccount = account;
+		try {
+			const result = await msalApp.acquireTokenSilent({ account, scopes: [API_SCOPE] });
+			return result.accessToken;
+		} catch (error) {
+			const interactionNeeded =
+				error instanceof msal.InteractionRequiredAuthError ||
+				(error && ["interaction_required", "login_required", "consent_required"].includes(error.errorCode));
+			if (interactionNeeded) await msalApp.acquireTokenRedirect({ account, scopes: [API_SCOPE] });
+			throw error;
+		}
+	}
+
+	async function apiFetch(url, options = {}) {
+		const accessToken = await acquireApiToken();
+		const headers = new Headers(options.headers || {});
+		headers.set("X-API-Authorization", "Bearer " + accessToken);
+		return window.fetch(url, { ...options, headers });
+	}
+
+	function bejelentkezesInditasa() {
+		return msalApp.loginRedirect({ scopes: [API_SCOPE] });
+	}
+
+	function kijelentkezesInditasa() {
+		const account = msalApp.getActiveAccount() || currentAccount;
+		return msalApp.logoutRedirect({ account: account || undefined, postLogoutRedirectUri: window.location.origin + "/" });
+	}
 
 	async function authAllapotBetoltese() {
-
 		try {
-
-			const response = await fetch("/.auth/me", {
-				headers: {
-					"Accept": "application/json"
-				}
-			});
-
-			if (!response.ok) {
-				throw new Error("HTTP " + response.status);
-			}
-
-			const adat = await response.json();
-			const principal = adat.clientPrincipal;
-
-			if (principal) {
-
-				bejelentkezve = true;
-
-				const szerepkorok =
-					Array.isArray(principal.userRoles)
-						? principal.userRoles
-						: [];
-
-				isOwner = szerepkorok.includes("owner");
-
-			} else {
-
+			const redirectResult = await msalApp.handleRedirectPromise();
+			if (redirectResult && redirectResult.account) msalApp.setActiveAccount(redirectResult.account);
+			currentAccount = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0] || null;
+			if (!currentAccount) {
 				bejelentkezve = false;
 				isOwner = false;
+				currentProfile = null;
+				frissitAuthFelulet();
+				return false;
 			}
 
+			msalApp.setActiveAccount(currentAccount);
+			const accessToken = await acquireApiToken();
+			const response = await window.fetch("/api/auth-check", {
+				method: "GET",
+				headers: { "X-API-Authorization": "Bearer " + accessToken, "Accept": "application/json" }
+			});
+			const result = await response.json().catch(() => ({}));
+			if (!response.ok || result.authenticated !== true || !result.profile) {
+				throw new Error(result.hiba || "A szerver nem fogadta el a bejelentkezést (HTTP " + response.status + ").");
+			}
+			currentProfile = result.profile;
+			bejelentkezve = true;
+			isOwner = true;
 		} catch (error) {
-
-			console.error(
-				"Nem sikerült lekérni a bejelentkezési állapotot:",
-				error
-			);
-
+			console.error("Nem sikerült ellenőrizni a bejelentkezést:", error);
 			bejelentkezve = false;
 			isOwner = false;
+			currentProfile = null;
+			currentAccount = null;
+			if (error && error.errorCode) {
+				const status = document.getElementById("auth-error");
+				if (status) status.textContent = "Bejelentkezési hiba: " + error.message;
+			}
 		}
-
 		frissitAuthFelulet();
+		return bejelentkezve;
 	}
 
 	function frissitAuthFelulet() {
+		const loginBtn = document.getElementById("auth-login-btn");
+		const loggedIn = document.getElementById("auth-logged-in");
+		const displayName = profilMegjelenitese(currentProfile);
+		if (loginBtn) loginBtn.style.display = bejelentkezve ? "none" : "inline-flex";
+		if (loggedIn) loggedIn.style.display = bejelentkezve ? "flex" : "none";
+		const mobileStatus = loggedIn && loggedIn.querySelector(".auth-status");
+		if (mobileStatus) mobileStatus.textContent = "Belépve: " + displayName;
 
-		const loginBtn =
-			document.getElementById("auth-login-btn");
-
-		const loggedIn =
-			document.getElementById("auth-logged-in");
-
-		if (bejelentkezve) {
-			loginBtn.style.display = "none";
-			loggedIn.style.display = "flex";
-		} else {
-			loginBtn.style.display = "inline-flex";
-			loggedIn.style.display = "none";
+		const desktopAccount = document.getElementById("desktop-account");
+		const desktopLogin = document.getElementById("desktop-login");
+		const desktopAccountName = document.getElementById("desktop-account-name");
+		const desktopAccountRole = document.getElementById("desktop-account-role");
+		if (desktopAccount && desktopLogin) {
+			desktopAccount.style.display = bejelentkezve ? "block" : "none";
+			desktopLogin.style.display = bejelentkezve ? "none" : "flex";
+			if (desktopAccountName) desktopAccountName.textContent = displayName;
+			if (desktopAccountRole) desktopAccountRole.textContent = "Saját adatok";
 		}
 
-        // Az asztali oldalsáv a meglévő Microsoft / owner állapotot tükrözi.
-        const desktopAccount = document.getElementById("desktop-account");
-        const desktopLogin = document.getElementById("desktop-login");
-        const desktopAccountName = document.getElementById("desktop-account-name");
-        const desktopAccountRole = document.getElementById("desktop-account-role");
-        if (desktopAccount && desktopLogin) {
-            desktopAccount.style.display = bejelentkezve ? "block" : "none";
-            desktopLogin.style.display = bejelentkezve ? "none" : "flex";
-            if (desktopAccountName) desktopAccountName.textContent = isOwner ? "Filus Tamás" : "Bejelentkezett felhasználó";
-            if (desktopAccountRole) desktopAccountRole.textContent = isOwner ? "owner" : "felhasználó";
-        }
-
-		if (!isOwner) {
-			osszegRejtve = true;
-		}
-
+		if (!isOwner) osszegRejtve = true;
 		document.querySelectorAll(".owner-beradat").forEach(function (el) {
-			if (!isOwner) {
-				el.style.display = "none";
-				return;
-			}
-
-			// Az owner nézetben visszaadjuk az elem eredeti megjelenési módját.
-			// A CSS-ben az .owner-beradat alapból display:none, ezért az üres
-			// inline display nem elég a visszakapcsoláshoz.
-			if (el.id === "privacy-btn") {
-				el.style.display = "flex";
-			} else {
-				el.style.display = "block";
-			}
+			if (!isOwner) el.style.display = "none";
+			else el.style.display = el.id === "privacy-btn" ? "flex" : "block";
 		});
-
 		const berDebug = document.getElementById("ber-debug");
-
 		if (berDebug) {
 			berDebug.style.display = isOwner ? "block" : "none";
-
-			if (!isOwner) {
-				berDebug.removeAttribute("open");
-			}
+			if (!isOwner) berDebug.removeAttribute("open");
 		}
-
 		frissitPrivacyGomb();
-        fizetesElozmenyekMegjelenitese();
-        const privLegend = document.querySelector(".owner-legend-entry");
-        if (privLegend) privLegend.style.display = isOwner ? "flex" : "none";
-        if (window.matchMedia("(min-width: 1100px)").matches) {
-            const history = document.getElementById("fizetes-elozmenyek");
-            if (history) history.open = isOwner;
-        }
-        frissitFizu();
-    }
-
-    function frissitSzerkesztesJog() {
-
-		const ownerResz =
-			document.getElementById("owner-szerkesztes");
-
-		const nemOwnerUzenet =
-			document.getElementById("nem-owner-uzenet");
-
-		if (!ownerResz || !nemOwnerUzenet) {
-			return;
+		fizetesElozmenyekMegjelenitese();
+		const privLegend = document.querySelector(".owner-legend-entry");
+		if (privLegend) privLegend.style.display = isOwner ? "flex" : "none";
+		if (window.matchMedia("(min-width: 1100px)").matches) {
+			const history = document.getElementById("fizetes-elozmenyek");
+			if (history) history.open = isOwner;
 		}
-
-		if (isOwner) {
-			ownerResz.style.display = "block";
-			nemOwnerUzenet.style.display = "none";
-		} else {
-			ownerResz.style.display = "none";
-			nemOwnerUzenet.style.display = "block";
-		}
+		frissitSzerkesztesJog();
+		frissitFizu();
 	}
+
+	function frissitSzerkesztesJog() {
+		const ownerResz = document.getElementById("owner-szerkesztes");
+		const nemOwnerUzenet = document.getElementById("nem-owner-uzenet");
+		if (!ownerResz || !nemOwnerUzenet) return;
+		ownerResz.style.display = isOwner ? "block" : "none";
+		nemOwnerUzenet.style.display = isOwner ? "none" : "block";
+	}
+
+	document.getElementById("auth-login-btn")?.addEventListener("click", function (event) {
+		event.preventDefault();
+		bejelentkezesInditasa();
+	});
+	document.getElementById("desktop-login")?.addEventListener("click", function (event) {
+		event.preventDefault();
+		bejelentkezesInditasa();
+	});
+	document.querySelectorAll(".desktop-logout, #auth-logged-in a.auth-btn").forEach(function (button) {
+		button.addEventListener("click", function (event) {
+			event.preventDefault();
+			kijelentkezesInditasa();
+		});
+	});
 
 	/* =========================
 	   INTERAKTÍV MŰSZAKMENÜ
@@ -2976,7 +3005,7 @@
 
 		try {
 
-			const response = await fetch("/api/muszakok", {
+			const response = await apiFetch("/api/muszakok", {
 				method: "GET",
 				headers: {
 					"Accept": "application/json"
@@ -3046,7 +3075,7 @@
 	async function muszakBeallit(tipus) {
 
 		if (!isOwner) {
-			alert("A műszakok szerkesztéséhez ownerként kell bejelentkezned.");
+			alert("A műszakok szerkesztéséhez be kell jelentkezned.");
 			return;
 		}
 
@@ -3064,7 +3093,7 @@
 
 		try {
 
-			const response = await fetch("/api/muszakok", {
+			const response = await apiFetch("/api/muszakok", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -3126,7 +3155,7 @@
 	async function muszakTorol() {
 
 		if (!isOwner) {
-			alert("A műszakok szerkesztéséhez ownerként kell bejelentkezned.");
+			alert("A műszakok szerkesztéséhez be kell jelentkezned.");
 			return;
 		}
 
@@ -3144,7 +3173,7 @@
 
 		try {
 
-			const response = await fetch(
+			const response = await apiFetch(
 				"/api/muszakok?datum=" +
 					encodeURIComponent(datum),
 				{
@@ -3214,7 +3243,7 @@
 
 		try {
 
-			const response = await fetch("/api/naptar", {
+			const response = await apiFetch("/api/naptar", {
 				method: "GET",
 				headers: {
 					"Accept": "application/json"
@@ -3312,7 +3341,7 @@
 	async function naptarBejegyzesMent() {
 
 		if (!isOwner) {
-			alert("A naptár szerkesztéséhez ownerként kell bejelentkezned.");
+			alert("A naptár szerkesztéséhez be kell jelentkezned.");
 			return;
 		}
 
@@ -3341,7 +3370,7 @@
 
 		try {
 
-			const response = await fetch("/api/naptar", {
+			const response = await apiFetch("/api/naptar", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -3396,7 +3425,7 @@
 	async function naptarBejegyzesTorol() {
 
 		if (!isOwner) {
-			alert("A naptár szerkesztéséhez ownerként kell bejelentkezned.");
+			alert("A naptár szerkesztéséhez be kell jelentkezned.");
 			return;
 		}
 
@@ -3408,7 +3437,7 @@
 
 		try {
 
-			const response = await fetch(
+			const response = await apiFetch(
 				"/api/naptar?datum=" +
 					encodeURIComponent(datum),
 				{
@@ -3600,7 +3629,7 @@
 			if (summary) {
 				summary.textContent = "🔒 Korábbi fizetések";
 				summary.title = bejelentkezve
-					? "Ehhez owner jogosultság szükséges."
+					? "A saját adataid megtekintéséhez jelentkezz be."
 					: "A megnyitáshoz jelentkezz be.";
 			}
 
@@ -3661,7 +3690,7 @@
 
 		try {
 
-			const response = await fetch("/api/fizetesek", {
+			const response = await apiFetch("/api/fizetesek", {
 				method: "GET",
 				headers: {
 					"Accept": "application/json"
@@ -3735,7 +3764,7 @@
 
 		try {
 
-			const response = await fetch("/api/fizetesek", {
+			const response = await apiFetch("/api/fizetesek", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -3789,21 +3818,25 @@
 		generalMuszakNaptar();
 		frissitPrivacyGomb();
 
-		await Promise.all([
-			muszakModositasokBetoltese(),
-			naptarBejegyzesekBetoltese(),
-			authAllapotBetoltese()
-		]);
+		// Először az Entra redirect és a backend oldali profil-hozzárendelés.
+		const authenticated = await authAllapotBetoltese();
 
-		// Csak a betöltött Azure műszakmódosítások után számoljuk a debug bontást.
-		frissitBerDebug();
-
-		if (isOwner) {
+		if (authenticated) {
+			// Üzleti API-k csak ellenőrzött access tokennel indulhatnak.
+			await Promise.all([
+				muszakModositasokBetoltese(),
+				naptarBejegyzesekBetoltese()
+			]);
+			frissitBerDebug();
 			await fizetesElozmenyekBetoltese();
 			await elozoHonapAutomatikusMentese();
+		} else {
+			muszakModositasok = {};
+			naptarBejegyzesek = {};
+			fizetesElozmenyek = {};
+			fizetesElozmenyekMegjelenitese();
 		}
 
-		fizetesElozmenyekMegjelenitese();
 		frissitFizu();
 		generalMuszakNaptar();
 	}
@@ -3863,7 +3896,7 @@
 			</div>
 
 			<div id="nem-owner-uzenet" style="display:none; color:var(--muted); font-size:0.9em; line-height:1.5; margin-top:0.8em;">
-				A naptár megtekinthető, de szerkeszteni csak bejelentkezett ownerként lehet.
+				A naptár megtekinthető, szerkeszteni bejelentkezés után lehet.
 			</div>
 		<div id="muszak-mentes-statusz" class="mentes-statusz"></div>
 
