@@ -1,29 +1,70 @@
 {
   "routes": [
     {
-      "route": "/api/muszakok*",
-      "methods": ["GET"],
-      "allowedRoles": ["anonymous"]
+      "route": "/api/identity-check",
+      "methods": [
+        "GET"
+      ],
+      "allowedRoles": [
+        "anonymous"
+      ]
+    },
+    {
+      "route": "/api/auth-check",
+      "methods": [
+        "GET"
+      ],
+      "allowedRoles": [
+        "anonymous"
+      ]
     },
     {
       "route": "/api/muszakok*",
-      "methods": ["POST", "DELETE"],
-      "allowedRoles": ["owner"]
+      "methods": [
+        "GET"
+      ],
+      "allowedRoles": [
+        "anonymous"
+      ]
+    },
+    {
+      "route": "/api/muszakok*",
+      "methods": [
+        "POST",
+        "DELETE"
+      ],
+      "allowedRoles": [
+        "anonymous"
+      ]
     },
     {
       "route": "/api/naptar*",
-      "methods": ["GET"],
-      "allowedRoles": ["anonymous"]
+      "methods": [
+        "GET"
+      ],
+      "allowedRoles": [
+        "anonymous"
+      ]
     },
     {
       "route": "/api/naptar*",
-      "methods": ["POST", "DELETE"],
-      "allowedRoles": ["owner"]
+      "methods": [
+        "POST",
+        "DELETE"
+      ],
+      "allowedRoles": [
+        "anonymous"
+      ]
     },
     {
       "route": "/api/fizetesek*",
-      "methods": ["GET", "POST"],
-      "allowedRoles": ["owner"]
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "allowedRoles": [
+        "anonymous"
+      ]
     }
   ]
 }

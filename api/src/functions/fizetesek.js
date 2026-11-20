@@ -4,6 +4,8 @@ const {
     TableServiceClient
 } = require("@azure/data-tables");
 
+const { authenticateRequest } = require("../lib/auth");
+
 const TABLA_NEV = "FizetesElozmenyek";
 
 function getConnectionString() {
@@ -50,7 +52,12 @@ app.http("fizetesekGet", {
     authLevel: "anonymous",
     route: "fizetesek",
 
-    handler: async () => {
+    handler: async (request) => {
+        const auth = await authenticateRequest(request);
+        if (!auth.ok) {
+            return { status: auth.status, jsonBody: { hiba: auth.error } };
+        }
+        const profile = auth.identity.profile;
 
         try {
 
@@ -63,7 +70,7 @@ app.http("fizetesekGet", {
                 const entity of client.listEntities({
                     queryOptions: {
                         filter:
-                            "PartitionKey eq 'fizetes'"
+                            "PartitionKey eq '" + profile + "'"
                     }
                 })
             ) {
@@ -108,6 +115,11 @@ app.http("fizetesekPost", {
     route: "fizetesek",
 
     handler: async (request) => {
+        const auth = await authenticateRequest(request);
+        if (!auth.ok) {
+            return { status: auth.status, jsonBody: { hiba: auth.error } };
+        }
+        const profile = auth.identity.profile;
 
         try {
 
@@ -145,7 +157,7 @@ app.http("fizetesekPost", {
 
                 const letezo =
                     await client.getEntity(
-                        "fizetes",
+                        profile,
                         honap
                     );
 
@@ -180,7 +192,7 @@ app.http("fizetesekPost", {
                 new Date().toISOString();
 
             await client.createEntity({
-                partitionKey: "fizetes",
+                partitionKey: profile,
                 rowKey: honap,
                 kalkulaltNetto:
                     Math.round(kalkulaltNetto),

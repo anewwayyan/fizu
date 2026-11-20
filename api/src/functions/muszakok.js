@@ -1,5 +1,6 @@
 const { app } = require("@azure/functions");
 const { TableClient } = require("@azure/data-tables");
+const { authenticateRequest } = require("../lib/auth");
 
 const TABLA_NEV = "MuszakModositasok";
 
@@ -30,7 +31,12 @@ app.http("muszakokGet", {
     authLevel: "anonymous",
     route: "muszakok",
 
-    handler: async () => {
+    handler: async (request) => {
+        const auth = await authenticateRequest(request);
+        if (!auth.ok) {
+            return { status: auth.status, jsonBody: { hiba: auth.error } };
+        }
+        const profile = auth.identity.profile;
 
         try {
 
@@ -38,7 +44,7 @@ app.http("muszakokGet", {
 
             const modositasok = {};
 
-            for await (const entity of client.listEntities()) {
+            for await (const entity of client.listEntities({ queryOptions: { filter: "PartitionKey eq '" + profile + "'" } })) {
                 modositasok[entity.rowKey] = entity.tipus;
             }
 
@@ -73,6 +79,11 @@ app.http("muszakokPost", {
     route: "muszakok",
 
     handler: async (request) => {
+        const auth = await authenticateRequest(request);
+        if (!auth.ok) {
+            return { status: auth.status, jsonBody: { hiba: auth.error } };
+        }
+        const profile = auth.identity.profile;
 
         try {
 
@@ -117,7 +128,7 @@ app.http("muszakokPost", {
 
             await client.upsertEntity(
                 {
-                    partitionKey: "muszak",
+                    partitionKey: profile,
                     rowKey: datum,
                     tipus: tipus
                 },
@@ -159,6 +170,11 @@ app.http("muszakokDelete", {
     route: "muszakok",
 
     handler: async (request) => {
+        const auth = await authenticateRequest(request);
+        if (!auth.ok) {
+            return { status: auth.status, jsonBody: { hiba: auth.error } };
+        }
+        const profile = auth.identity.profile;
 
         try {
 
@@ -180,7 +196,7 @@ app.http("muszakokDelete", {
             try {
 
                 await client.deleteEntity(
-                    "muszak",
+                    profile,
                     datum
                 );
 
