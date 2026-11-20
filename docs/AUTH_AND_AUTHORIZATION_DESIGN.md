@@ -110,3 +110,29 @@ A jelenlegi SWA Free csomag és az External ID/MSAL együttműködésének ponto
 ## Elkülönített MSAL diagnosztikai oldal\n\nA `/auth-test.html` különálló próbaoldal, amely MSAL Browserrel beléptet és az `access_as_user` scope-ra kér access tokent. Nem hívja a jelenlegi API-végpontokat, nem olvas és nem módosít Table Storage-adatot. A token teljes értékét nem jeleníti meg; csak a dekódolt claim-eket mutatja diagnosztikai céllal.\n\nA teszt előtt az Entra `BeoFizu-Web` alkalmazás SPA Redirect URI listájához hozzá kell adni a preview címet `https://jolly-plant-07e0f0310-1.centralus.5.azurestaticapps.net/auth-test.html`, és később – az élesítés előtt – a `https://www.beoesfizu.nl/auth-test.html` címet is. A diagnosztikai oldal nem helyettesíti a backend tokenellenőrzést.\n\n## Jelen dokumentum hatóköre
 
 Ez tervezési dokumentum. Nem módosítja az alkalmazás futó kódját, az Azure-konfigurációt, a Table Storage tartalmát vagy a hitelesítési beállításokat.
+
+
+## Ellenőrzött tokenadatok és első backend próba
+
+A 2026-11-20-i MSAL diagnosztikai teszt során a tényleges access tokenben az alábbi értékek igazolódtak:
+
+- `ver`: `2.0`
+- `tid`: `86781723-aefe-44af-837b-bc1abdaf1a05`
+- `aud`: `6b79a267-32cd-42db-a8c9-5971e5afc4a1`
+- `iss`: `https://86781723-aefe-44af-837b-bc1abdaf1a05.ciamlogin.com/86781723-aefe-44af-837b-bc1abdaf1a05/v2.0`
+- `scp` tartalmazza az `access_as_user` értéket.
+- `oid`: Tamás jelenlegi tesztfiókjának objektumazonosítója `4405cee3-414b-4987-b559-40ba48cff6d2`.
+
+Az ID token `aud` értéke a SPA Client ID, ez elvárt. A backend kizárólag az API access token `aud` értékét ellenőrzi.
+
+A feature branchen elkészült az első közös JWT-ellenőrző modul: `api/src/lib/auth.js`. A modul `jose` segítségével ellenőrzi az RS256 aláírást a tenant JWKS kulcsaival, a pontos issuert, az API audience-et, a token időbeli érvényességét, a tenant ID-t, a v2 tokenverziót és a szükséges scope-ot. A `tid` + `oid` alapján történő belső profil-hozzárendelés szerveroldali környezeti változókból történik:
+
+- `ENTRA_TAMAS_OID`
+- `ENTRA_REKA_OID`
+- `ENTRA_ENI_OID`
+
+Az azonosítók hiánya vagy ütközése esetén nincs profil-hozzárendelés.
+
+Létrejött a `GET /api/auth-check` diagnosztikai végpont, amely még nem olvas és nem módosít üzleti adatot. Az `auth-test.html` az API-token megszerzése után Bearer tokennel meghívja ezt a végpontot. Ez külön ellenőrzi, hogy a backend is érvényesnek fogadja-e el a tokent. A diagnosztikai végpont nem helyettesíti a későbbi üzleti végpontok profil-allowlist ellenőrzését.
+
+A profilazonosítókat az Azure Static Web Apps API alkalmazásbeállításai között kell konfigurálni; a Tamás-azonosító már ismert, Réka és Eni azonosítója a saját első belépésük után adható hozzá.
