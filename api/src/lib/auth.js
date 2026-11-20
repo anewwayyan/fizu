@@ -38,7 +38,7 @@ function resolveProfile(oid) {
     return matches[0][0];
 }
 
-async function authenticateRequest(request) {
+async function authenticateRequest(request, options = {}) {
     const token = getBearerToken(request);
 
     if (!token) {
@@ -95,9 +95,9 @@ async function authenticateRequest(request) {
 
         const profile = resolveProfile(payload.oid);
 
-        // A valid Entra identity is not automatically an authorized app user.
-        // Reject unknown or ambiguously configured object IDs before any data access.
-        if (!profile) {
+        // Identity discovery may validate an authenticated user's own OID
+        // without granting an application profile or access to business data.
+        if (!profile && options.allowUnmappedProfile !== true) {
             return {
                 ok: false,
                 status: 403,
@@ -111,7 +111,7 @@ async function authenticateRequest(request) {
                 tenantId: payload.tid,
                 oid: payload.oid,
                 subject: typeof payload.sub === "string" ? payload.sub : null,
-                profile,
+                profile: profile || null,
                 scopes: payload.scp.split(" ")
             }
         };
