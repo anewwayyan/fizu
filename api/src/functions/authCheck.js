@@ -16,7 +16,8 @@ app.http("authCheck", {
                     hiba: result.error,
                     diagnosticCode: result.diagnosticCode || null,
                     diagnosticAlgorithm: result.diagnosticAlgorithm || null,
-                    diagnosticKid: result.diagnosticKid || null
+                    diagnosticKid: result.diagnosticKid || null,
+                    diagnosticTokenFingerprint: result.diagnosticTokenFingerprint || null
                 }
             };
         }
