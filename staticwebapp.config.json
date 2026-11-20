@@ -25,7 +25,7 @@
         "DELETE"
       ],
       "allowedRoles": [
-        "owner"
+        "anonymous"
       ]
     },
     {
@@ -44,7 +44,7 @@
         "DELETE"
       ],
       "allowedRoles": [
-        "owner"
+        "anonymous"
       ]
     },
     {
@@ -54,7 +54,7 @@
         "POST"
       ],
       "allowedRoles": [
-        "owner"
+        "anonymous"
       ]
     }
   ]
