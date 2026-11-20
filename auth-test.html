@@ -80,14 +80,29 @@
         scopes: [API_SCOPE]
       });
       const tokenClaims = decodeJwtPayload(result.accessToken);
-      statusEl.textContent = "Sikeres API access token megszerzés. A token tartalmát nem jelenítjük meg.";
+      statusEl.textContent = "API access token megszerezve. Backend ellenőrzése folyamatban…";
+      const backendResponse = await fetch("/api/auth-check", {
+        method: "GET",
+        headers: { Authorization: "Bearer " + result.accessToken }
+      });
+      let backendResult;
+      try {
+        backendResult = await backendResponse.json();
+      } catch {
+        backendResult = { responseText: await backendResponse.text() };
+      }
       claimsEl.textContent = JSON.stringify({
         accountUsername: account.username,
         idTokenClaims: account.idTokenClaims || {},
         accessTokenClaims: tokenClaims,
         requestedScope: API_SCOPE,
-        returnedScopes: result.scopes || []
+        returnedScopes: result.scopes || [],
+        backendStatus: backendResponse.status,
+        backendResult
       }, null, 2);
+      statusEl.textContent = backendResponse.ok
+        ? "Sikeres tokenlekérés és backend JWT-ellenőrzés."
+        : "A token megvan, de a backend ellenőrzése hibát adott (HTTP " + backendResponse.status + ").";
     }
 
     async function start() {
