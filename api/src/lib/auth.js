@@ -93,13 +93,25 @@ async function authenticateRequest(request) {
             };
         }
 
+        const profile = resolveProfile(payload.oid);
+
+        // A valid Entra identity is not automatically an authorized app user.
+        // Reject unknown or ambiguously configured object IDs before any data access.
+        if (!profile) {
+            return {
+                ok: false,
+                status: 403,
+                error: "A hitelesített felhasználóhoz nincs alkalmazásprofil rendelve."
+            };
+        }
+
         return {
             ok: true,
             identity: {
                 tenantId: payload.tid,
                 oid: payload.oid,
                 subject: typeof payload.sub === "string" ? payload.sub : null,
-                profile: resolveProfile(payload.oid),
+                profile,
                 scopes: payload.scp.split(" ")
             }
         };
