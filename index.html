@@ -420,6 +420,40 @@
 	}
 
 
+	.felmondas-visszaszamlalo {
+		display: flex;
+		align-items: center;
+		gap: 0.8em;
+		margin: 0 0 1.1em;
+		padding: 0.85em 1em;
+		border: 1px solid rgba(47, 143, 78, 0.22);
+		border-radius: 12px;
+		background: rgba(47, 143, 78, 0.08);
+		color: var(--text);
+	}
+	.felmondas-visszaszamlalo-ikon { flex: 0 0 auto; font-size: 1.45em; }
+	.felmondas-visszaszamlalo-szoveg {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2em;
+		min-width: 0;
+	}
+	.felmondas-visszaszamlalo-szoveg strong {
+		font-size: 0.92em;
+		font-weight: 750;
+		font-variant-numeric: tabular-nums;
+	}
+	.felmondas-visszaszamlalo-szoveg span { font-size: 0.76em; color: var(--muted); }
+	@media (min-width: 1100px) {
+		.felmondas-visszaszamlalo {
+			max-width: 460px;
+			margin: 0 auto 18px;
+			padding: 12px 15px;
+		}
+		.felmondas-visszaszamlalo-szoveg strong { font-size: 14px; }
+		.felmondas-visszaszamlalo-szoveg span { font-size: 11px; }
+	}
+
 	.naptar-cim-sor {
 		display: grid;
 		grid-template-columns: 42px 1fr 42px;
@@ -1439,6 +1473,13 @@
 
     <section class="dashboard-calendar" aria-label="Műszaknaptár">
         <div class="desktop-section-heading"><span>📅 Műszaknaptár</span><small>Kattints egy napra a részletekért</small></div>
+        <div class="felmondas-visszaszamlalo" id="felmondas-visszaszamlalo" aria-live="polite">
+            <div class="felmondas-visszaszamlalo-ikon" aria-hidden="true">⏳</div>
+            <div class="felmondas-visszaszamlalo-szoveg">
+                <strong id="felmondas-visszaszamlalo-ertek">Visszaszámlálás betöltése…</strong>
+                <span id="felmondas-visszaszamlalo-alcim">Utolsó nap: 2026. december 3.</span>
+            </div>
+        </div>
         <div id="muszak-naptar"></div>
     </section>
 
@@ -1734,6 +1775,51 @@
 
 	return "szabad";
 }
+
+
+	/* =========================
+	   VISSZASZÁMLÁLÁS AZ UTOLSÓ MUNKANAPIG
+	   ========================= */
+
+	function frissitFelmondasiVisszaszamlalo() {
+		const ertekElem = document.getElementById("felmondas-visszaszamlalo-ertek");
+		const alcimElem = document.getElementById("felmondas-visszaszamlalo-alcim");
+		if (!ertekElem || !alcimElem) return;
+
+		const celDatum = new Date(2026, 11, 3);
+		const ma = new Date();
+		ma.setHours(0, 0, 0, 0);
+
+		const napokHatra = Math.max(0, Math.round((celDatum - ma) / 86400000));
+		let muszakokHatra = 0;
+
+		// A mai napot nem számoljuk bele: a visszaszámláló a még előttünk álló műszakokat mutatja.
+		for (let i = 1; i <= napokHatra; i++) {
+			const datum = new Date(ma.getFullYear(), ma.getMonth(), ma.getDate() + i);
+			const tipus = muszakTipus(datum);
+			if ([
+				"nappal", "ejszaka",
+				"nappal_tulora", "ejszaka_tulora",
+				"nappal_tulora_150", "ejszaka_tulora_150"
+			].includes(tipus)) {
+				muszakokHatra++;
+			}
+		}
+
+		ertekElem.textContent = napokHatra + " nap, " + muszakokHatra + " műszak van hátra";
+
+		if (napokHatra === 0) {
+			const maAzUtolsoNap =
+				ma.getFullYear() === celDatum.getFullYear() &&
+				ma.getMonth() === celDatum.getMonth() &&
+				ma.getDate() === celDatum.getDate();
+			alcimElem.textContent = maAzUtolsoNap
+				? "Ma van az utolsó napod."
+				: "Az utolsó napod már elérkezett.";
+		} else {
+			alcimElem.textContent = "Utolsó nap: 2026. december 3.";
+		}
+	}
 
 
 	/* =========================
@@ -2991,6 +3077,7 @@
 
 			frissitFizu();
 			generalMuszakNaptar();
+			frissitFelmondasiVisszaszamlalo();
 
 		} catch (error) {
 
@@ -3003,6 +3090,7 @@
 
 			frissitFizu();
 			generalMuszakNaptar();
+			frissitFelmondasiVisszaszamlalo();
 		}
 	}
 
@@ -3092,6 +3180,7 @@
 			}
 
 			muszakModositasok[datum] = tipus;
+			frissitFelmondasiVisszaszamlalo();
 
 			if (statusz) {
 				statusz.className = "mentes-statusz siker";
@@ -3171,6 +3260,7 @@
 			}
 
 			delete muszakModositasok[datum];
+			frissitFelmondasiVisszaszamlalo();
 
 			if (statusz) {
 				statusz.className = "mentes-statusz siker";
@@ -3836,6 +3926,9 @@
 		frissitFizu,
 		1000
 	);
+
+	// Napváltáskor automatikusan frissüljön a visszaszámláló.
+	setInterval(frissitFelmondasiVisszaszamlalo, 60000);
 
 </script>
 
