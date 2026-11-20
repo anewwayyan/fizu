@@ -23,7 +23,7 @@
   <h2>Tokenclaim-ek (token nélkül)</h2>
   <pre id="claims">Még nincs bejelentkezett felhasználó.</pre>
 
-  <script src="https://alcdn.msauth.net/browser/4.27.0/js/msal-browser.min.js"></script>
+  <script src="https://alcdn.msauth.net/browser/2.35.0/js/msal-browser.min.js"></script>
   <script>
     const TENANT_ID = "86781723-aefe-44af-837b-bc1abdaf1a05";
     const CLIENT_ID = "d36934be-a868-45b7-a097-9c31a2f5505e";
@@ -92,7 +92,6 @@
 
     async function start() {
       try {
-        await msalApp.initialize();
         const result = await msalApp.handleRedirectPromise();
         if (result && result.account) msalApp.setActiveAccount(result.account);
         const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0] || null;
