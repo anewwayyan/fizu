@@ -1,6 +1,15 @@
 {
   "routes": [
     {
+      "route": "/api/identity-check",
+      "methods": [
+        "GET"
+      ],
+      "allowedRoles": [
+        "anonymous"
+      ]
+    },
+    {
       "route": "/api/auth-check",
       "methods": [
         "GET"
