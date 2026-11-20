@@ -100,7 +100,10 @@
       statusEl.textContent = "API access token megszerezve. Backend ellenőrzése folyamatban…";
       const backendResponse = await fetch("/api/auth-check", {
         method: "GET",
-        headers: { Authorization: "Bearer " + result.accessToken }
+        headers: {
+          Authorization: "Bearer " + result.accessToken,
+          "X-Frontend-Token-Fingerprint": frontendTokenFingerprint
+        }
       });
 
       // A Response body csak egyszer olvasható: előbb szövegként olvassuk ki,
