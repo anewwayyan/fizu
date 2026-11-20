@@ -104,7 +104,8 @@ async function authenticateRequest(request) {
         return {
             ok: false,
             status: 401,
-            error: "Érvénytelen vagy lejárt access token."
+            error: "Érvénytelen vagy lejárt access token.",
+            diagnosticCode: error.code || error.name || "UNKNOWN_ERROR"
         };
     }
 }
