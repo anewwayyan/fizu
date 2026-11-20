@@ -94,12 +94,21 @@
         method: "GET",
         headers: { Authorization: "Bearer " + result.accessToken }
       });
+
+      // A Response body csak egyszer olvasható: előbb szövegként olvassuk ki,
+      // majd abból próbálunk JSON-t készíteni.
+      const responseText = await backendResponse.text();
       let backendResult;
-      try {
-        backendResult = await backendResponse.json();
-      } catch {
-        backendResult = { responseText: await backendResponse.text() };
+      if (responseText) {
+        try {
+          backendResult = JSON.parse(responseText);
+        } catch {
+          backendResult = { responseText };
+        }
+      } else {
+        backendResult = {};
       }
+
       claimsEl.textContent = JSON.stringify({
         accountUsername: account.username,
         idTokenClaims: account.idTokenClaims || {},
