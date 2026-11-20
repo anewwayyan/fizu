@@ -15,7 +15,8 @@ app.http("authCheck", {
                     authenticated: false,
                     hiba: result.error,
                     diagnosticCode: result.diagnosticCode || null,
-                    diagnosticAlgorithm: result.diagnosticAlgorithm || null
+                    diagnosticAlgorithm: result.diagnosticAlgorithm || null,
+                    diagnosticKid: result.diagnosticKid || null
                 }
             };
         }
