@@ -262,6 +262,8 @@
     async function testWriteIsolation() {
       const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0];
       let token;
+      let expectedBackendProfile = null;
+      let forgedValues = null;
       let shiftKey;
       let calendarKey;
       let shiftCreated = false;
@@ -286,8 +288,8 @@
         if (!account) throw new Error("Nincs aktív bejelentkezett fiók.");
         const tokenResult = await msalApp.acquireTokenSilent({ account, scopes: [API_SCOPE] });
         token = tokenResult.accessToken;
-        const expectedBackendProfile = await getVerifiedBackendProfile(token);
-        const forgedValues = getForgedProfileValues(expectedBackendProfile);
+        expectedBackendProfile = await getVerifiedBackendProfile(token);
+        forgedValues = getForgedProfileValues(expectedBackendProfile);
         headers["X-API-Authorization"] = "Bearer " + token;
 
         const unique = "AUTH-ISOLATION-" + Date.now();
@@ -377,6 +379,8 @@
     async function testDeleteIsolation() {
       const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0];
       let token;
+      let expectedBackendProfile = null;
+      let forgedValues = null;
       const keys = {
         shiftTarget: "AUTH-DELETE-" + Date.now() + "-SHIFT-TARGET",
         shiftControl: "AUTH-DELETE-" + Date.now() + "-SHIFT-CONTROL",
@@ -405,8 +409,8 @@
         if (!account) throw new Error("Nincs aktív bejelentkezett fiók.");
         const tokenResult = await msalApp.acquireTokenSilent({ account, scopes: [API_SCOPE] });
         token = tokenResult.accessToken;
-        const expectedBackendProfile = await getVerifiedBackendProfile(token);
-        const forgedValues = getForgedProfileValues(expectedBackendProfile);
+        expectedBackendProfile = await getVerifiedBackendProfile(token);
+        forgedValues = getForgedProfileValues(expectedBackendProfile);
         const forgedQuery = new URLSearchParams(forgedValues).toString();
         headers["X-API-Authorization"] = "Bearer " + token;
 
