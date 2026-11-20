@@ -12,7 +12,9 @@ const JWKS_URI =
 const JWKS = createRemoteJWKSet(new URL(JWKS_URI));
 
 function getBearerToken(request) {
-    const authorization = request.headers.get("authorization") || "";
+    // Azure Static Web Apps may reserve or replace Authorization.
+    // The SPA therefore sends its Entra API token in a dedicated custom header.
+    const authorization = request.headers.get("x-api-authorization") || "";
     const match = authorization.match(/^Bearer\s+(.+)$/i);
     return match ? match[1].trim() : null;
 }
