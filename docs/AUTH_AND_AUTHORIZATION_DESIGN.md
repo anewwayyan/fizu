@@ -13,7 +13,7 @@ A Beo + Fizu API minden kérésnél megbízhatóan azonosítsa a bejelentkezett 
 5. Az API közös hitelesítési segédfüggvénye ellenőrzi a tokent, majd a hitelesített identitást belső profilhoz rendeli.
 6. Az adatkezelő végpontok a profilt kizárólag ebből a szerveroldali eredményből veszik.
 
-A konkrét Entra tenant, user flow, issuer, API audience és scope értékek még nincsenek konfigurálva. Ezeket nem szabad kitalálni vagy kódban véglegesíteni a tenant beállítása előtt.
+A tenant és az API-scope már konfigurálva van. A tényleges OIDC metadata alapján rögzített értékek:\n\n- Tenant ID: `86781723-aefe-44af-837b-bc1abdaf1a05`\n- Primary domain: `beofizu.onmicrosoft.com`\n- User flow: `BeoFizu-SignUpSignIn`\n- SPA client ID: `d36934be-a868-45b7-a097-9c31a2f5505e`\n- API client ID / várható audience: `6b79a267-32cd-42db-a8c9-5971e5afc4a1`\n- API scope: `api://6b79a267-32cd-42db-a8c9-5971e5afc4a1/access_as_user`\n- Authority alap: `https://beofizu.ciamlogin.com/`\n- MSAL authority: `https://beofizu.ciamlogin.com/86781723-aefe-44af-837b-bc1abdaf1a05`\n- Issuer (a metadata pontos értéke): `https://86781723-aefe-44af-837b-bc1abdaf1a05.ciamlogin.com/86781723-aefe-44af-837b-bc1abdaf1a05/v2.0`\n- Authorization endpoint: `https://beofizu.ciamlogin.com/86781723-aefe-44af-837b-bc1abdaf1a05/oauth2/v2.0/authorize`\n- Token endpoint: `https://beofizu.ciamlogin.com/86781723-aefe-44af-837b-bc1abdaf1a05/oauth2/v2.0/token`\n- JWKS URI: `https://beofizu.ciamlogin.com/86781723-aefe-44af-837b-bc1abdaf1a05/discovery/v2.0/keys`\n\nAz issuer hostneve eltér az authority hostnevétől. Ezért MSAL `knownAuthorities` listájában mindkét host szerepeljen: `beofizu.ciamlogin.com` és `86781723-aefe-44af-837b-bc1abdaf1a05.ciamlogin.com`. A pontos API audience és a stabil felhasználói claim nevét az első tényleges API access tokenből kell megerősíteni; a client ID önmagában nem bizonyítja a token `aud` értékét.
 
 ## Tokenellenőrzési követelmények
 
@@ -107,6 +107,6 @@ A jelenlegi SWA Free csomag és az External ID/MSAL együttműködésének ponto
 - A SWA Free csomaggal együtt használt hosting/auth megoldás véglegesítése.
 - A bérparaméterek és műszakciklusok tárolása: külön konfigurációs tábla vagy kezdetben szerveroldali konfiguráció.
 
-## Jelen dokumentum hatóköre
+## Elkülönített MSAL diagnosztikai oldal\n\nA `/auth-test.html` különálló próbaoldal, amely MSAL Browserrel beléptet és az `access_as_user` scope-ra kér access tokent. Nem hívja a jelenlegi API-végpontokat, nem olvas és nem módosít Table Storage-adatot. A token teljes értékét nem jeleníti meg; csak a dekódolt claim-eket mutatja diagnosztikai céllal.\n\nA teszt előtt az Entra `BeoFizu-Web` alkalmazás SPA Redirect URI listájához hozzá kell adni a preview címet `https://jolly-plant-07e0f0310-1.centralus.5.azurestaticapps.net/auth-test.html`, és később – az élesítés előtt – a `https://www.beoesfizu.nl/auth-test.html` címet is. A diagnosztikai oldal nem helyettesíti a backend tokenellenőrzést.\n\n## Jelen dokumentum hatóköre
 
 Ez tervezési dokumentum. Nem módosítja az alkalmazás futó kódját, az Azure-konfigurációt, a Table Storage tartalmát vagy a hitelesítési beállításokat.
