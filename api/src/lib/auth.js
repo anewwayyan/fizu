@@ -112,6 +112,13 @@ async function authenticateRequest(request) {
                 } catch {
                     return null;
                 }
+            })(),
+            diagnosticKid: (() => {
+                try {
+                    return decodeProtectedHeader(token).kid || null;
+                } catch {
+                    return null;
+                }
             })()
         };
     }
