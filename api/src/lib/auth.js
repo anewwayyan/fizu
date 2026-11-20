@@ -1,3 +1,4 @@
+const { createHash } = require("node:crypto");
 const { createRemoteJWKSet, decodeProtectedHeader, jwtVerify } = require("jose");
 
 const TENANT_ID = "86781723-aefe-44af-837b-bc1abdaf1a05";
@@ -45,6 +46,8 @@ async function authenticateRequest(request) {
             error: "Hiányzó Bearer access token."
         };
     }
+
+    const tokenFingerprint = createHash("sha256").update(token).digest("hex").slice(0, 16);
 
     try {
         const { payload } = await jwtVerify(token, JWKS, {
@@ -106,6 +109,7 @@ async function authenticateRequest(request) {
             status: 401,
             error: "Érvénytelen vagy lejárt access token.",
             diagnosticCode: error.code || error.name || "UNKNOWN_ERROR",
+            diagnosticTokenFingerprint: tokenFingerprint,
             diagnosticAlgorithm: (() => {
                 try {
                     return decodeProtectedHeader(token).alg || null;
