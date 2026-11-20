@@ -19,6 +19,7 @@
   <button id="token" class="secondary" hidden>API-token lekérése</button>
   <button id="isolation" class="secondary" hidden>Profilizolációs GET-teszt</button>
   <button id="writeIsolation" class="secondary" hidden>Profilizolációs POST-teszt</button>
+  <button id="deleteIsolation" class="secondary" hidden>Profilizolációs DELETE-teszt</button>
   <button id="logout" class="secondary" hidden>Kijelentkezés</button>
   <h2>Állapot</h2>
   <pre id="status">MSAL inicializálása…</pre>
@@ -38,6 +39,7 @@
     const logoutBtn = document.getElementById("logout");
     const isolationBtn = document.getElementById("isolation");
     const writeIsolationBtn = document.getElementById("writeIsolation");
+    const deleteIsolationBtn = document.getElementById("deleteIsolation");
 
     const msalApp = new msal.PublicClientApplication({
       auth: {
@@ -76,6 +78,7 @@
       tokenBtn.hidden = !account;
       isolationBtn.hidden = !account;
       writeIsolationBtn.hidden = !account;
+      deleteIsolationBtn.hidden = !account;
       logoutBtn.hidden = !account;
       if (account) {
         const claims = account.idTokenClaims || {};
@@ -315,6 +318,133 @@
       }
     }
 
+
+    async function testDeleteIsolation() {
+      const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0];
+      let token;
+      const keys = {
+        shiftTarget: "AUTH-DELETE-" + Date.now() + "-SHIFT-TARGET",
+        shiftControl: "AUTH-DELETE-" + Date.now() + "-SHIFT-CONTROL",
+        calendarTarget: "AUTH-DELETE-" + Date.now() + "-CALENDAR-TARGET",
+        calendarControl: "AUTH-DELETE-" + Date.now() + "-CALENDAR-CONTROL"
+      };
+      const created = { shiftTarget: false, shiftControl: false, calendarTarget: false, calendarControl: false };
+      const results = [];
+      const cleanup = [];
+      const headers = { "X-API-Authorization": "" };
+
+      async function requestJson(url, options = {}) {
+        const response = await fetch(url, {
+          ...options,
+          headers: { ...headers, ...(options.headers || {}) }
+        });
+        const raw = await response.text();
+        let body;
+        try { body = raw ? JSON.parse(raw) : {}; } catch { body = raw; }
+        return { status: response.status, body };
+      }
+
+      try {
+        deleteIsolationBtn.disabled = true;
+        statusEl.textContent = "Törlési jogosultsági teszt folyamatban…";
+        if (!account) throw new Error("Nincs aktív bejelentkezett fiók.");
+        const tokenResult = await msalApp.acquireTokenSilent({ account, scopes: [API_SCOPE] });
+        token = tokenResult.accessToken;
+        headers["X-API-Authorization"] = "Bearer " + token;
+
+        const shiftTargetPost = await requestJson("/api/muszakok", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ datum: keys.shiftTarget, tipus: "szabad", profile: "reka", PartitionKey: "eni" })
+        });
+        created.shiftTarget = shiftTargetPost.status === 200 && shiftTargetPost.body?.siker === true;
+        const shiftControlPost = await requestJson("/api/muszakok", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ datum: keys.shiftControl, tipus: "szabi" })
+        });
+        created.shiftControl = shiftControlPost.status === 200 && shiftControlPost.body?.siker === true;
+
+        const calendarTargetPost = await requestJson("/api/naptar", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ datum: keys.calendarTarget, cim: "DELETE izolációs célrekord", profile: "reka", PartitionKey: "eni" })
+        });
+        created.calendarTarget = calendarTargetPost.status === 200 && calendarTargetPost.body?.siker === true;
+        const calendarControlPost = await requestJson("/api/naptar", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ datum: keys.calendarControl, cim: "DELETE izolációs kontrollrekord" })
+        });
+        created.calendarControl = calendarControlPost.status === 200 && calendarControlPost.body?.siker === true;
+
+        const allCreated = Object.values(created).every(Boolean);
+        if (!allCreated) throw new Error("Nem sikerült minden tesztrekordot létrehozni; a létrejött rekordokat a takarítás megpróbálja törölni.");
+
+        const shiftDelete = await requestJson(
+          "/api/muszakok?datum=" + encodeURIComponent(keys.shiftTarget) + "&profile=reka&userId=eni&PartitionKey=eni",
+          { method: "DELETE" }
+        );
+        const shiftAfter = await requestJson("/api/muszakok");
+        const shiftTargetAbsent = shiftAfter.status === 200 && !Object.prototype.hasOwnProperty.call(shiftAfter.body || {}, keys.shiftTarget);
+        const shiftControlPresent = shiftAfter.status === 200 && shiftAfter.body?.[keys.shiftControl] === "szabi";
+        results.push({
+          endpoint: "/api/muszakok",
+          deleteStatus: shiftDelete.status,
+          targetRecordDeleted: shiftTargetAbsent,
+          unrelatedControlRecordPreserved: shiftControlPresent,
+          forgedQuery: { profile: "reka", userId: "eni", PartitionKey: "eni" }
+        });
+
+        const calendarDelete = await requestJson(
+          "/api/naptar?datum=" + encodeURIComponent(keys.calendarTarget) + "&profile=reka&userId=eni&PartitionKey=eni",
+          { method: "DELETE" }
+        );
+        const calendarAfter = await requestJson("/api/naptar");
+        const calendarTargetAbsent = calendarAfter.status === 200 && !Object.prototype.hasOwnProperty.call(calendarAfter.body || {}, keys.calendarTarget);
+        const calendarControlPresent = calendarAfter.status === 200 &&
+          calendarAfter.body?.[keys.calendarControl]?.cim === "DELETE izolációs kontrollrekord";
+        results.push({
+          endpoint: "/api/naptar",
+          deleteStatus: calendarDelete.status,
+          targetRecordDeleted: calendarTargetAbsent,
+          unrelatedControlRecordPreserved: calendarControlPresent,
+          forgedQuery: { profile: "reka", userId: "eni", PartitionKey: "eni" }
+        });
+
+      } catch (error) {
+        results.push({ testError: error && error.message || String(error) });
+      } finally {
+        if (token) {
+          for (const [kind, endpoint, key] of [
+            ["shiftTarget", "/api/muszakok", keys.shiftTarget],
+            ["shiftControl", "/api/muszakok", keys.shiftControl],
+            ["calendarTarget", "/api/naptar", keys.calendarTarget],
+            ["calendarControl", "/api/naptar", keys.calendarControl]
+          ]) {
+            if (!created[kind]) continue;
+            try {
+              const result = await requestJson(endpoint + "?datum=" + encodeURIComponent(key), { method: "DELETE" });
+              cleanup.push({ record: kind, status: result.status, deleted: result.status === 200 });
+            } catch (error) {
+              cleanup.push({ record: kind, deleted: false, error: error && error.message || String(error) });
+            }
+          }
+        }
+        const allPassed = results.length === 2 &&
+          results.every(item => item.deleteStatus === 200 && item.targetRecordDeleted && item.unrelatedControlRecordPreserved) &&
+          cleanup.length === 4 && cleanup.every(item => item.deleted);
+        statusEl.textContent = allPassed
+          ? "SIKERES: a hamisított DELETE-paraméterek nem módosították a profil-hozzárendelést; a célrekordok törlődtek, a kontrollrekordok megmaradtak, majd minden tesztadat takarítva lett."
+          : "A DELETE-teszt nem teljesen sikerült. Nézd meg a részletes eredményt és a takarítás állapotát.";
+        claimsEl.textContent = JSON.stringify({
+          signedInAccount: account && account.username,
+          expectedBackendProfile: "tamas",
+          testType: "temporary DELETE with forged profile query parameters; control records; cleanup",
+          allPassed,
+          results,
+          cleanup
+        }, null, 2);
+        deleteIsolationBtn.disabled = false;
+      }
+    }
+
     async function start() {
       try {
         const result = await msalApp.handleRedirectPromise();
@@ -347,6 +477,7 @@
     });
     isolationBtn.addEventListener("click", testProfileIsolation);
     writeIsolationBtn.addEventListener("click", testWriteIsolation);
+    deleteIsolationBtn.addEventListener("click", testDeleteIsolation);
     tokenBtn.addEventListener("click", async () => {
       try { await acquireApiToken(); }
       catch (error) {
