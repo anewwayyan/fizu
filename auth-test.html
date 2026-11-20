@@ -149,6 +149,22 @@
     }
 
 
+    // A tesztek a backend által ellenőrzött tokenből olvassák ki az aktuális profilt.
+    async function getVerifiedBackendProfile(token) {
+      const response = await fetch("/api/auth-check", { method: "GET", headers: { "X-API-Authorization": "Bearer " + token } });
+      const raw = await response.text();
+      let result;
+      try { result = raw ? JSON.parse(raw) : {}; } catch { result = {}; }
+      if (!response.ok || !["tamas", "reka", "eni"].includes(result.profile)) throw new Error(result.hiba || "A backend nem adott vissza érvényes profilt (HTTP " + response.status + ").");
+      return result.profile;
+    }
+
+    function getForgedProfileValues(expectedBackendProfile) {
+      const forgedProfile = expectedBackendProfile === "tamas" ? "reka" : "tamas";
+      const forgedUserId = expectedBackendProfile === "eni" ? "reka" : "eni";
+      return { profile: forgedProfile, userId: forgedUserId, PartitionKey: forgedProfile };
+    }
+
     async function lookupOwnIdentity() {
       try {
         identityBtn.disabled = true;
@@ -190,6 +206,8 @@
         const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0];
         if (!account) throw new Error("Nincs aktív bejelentkezett fiók.");
         const tokenResult = await msalApp.acquireTokenSilent({ account, scopes: [API_SCOPE] });
+        const expectedBackendProfile = await getVerifiedBackendProfile(tokenResult.accessToken);
+        const forgedValues = getForgedProfileValues(expectedBackendProfile);
         const headers = { "X-API-Authorization": "Bearer " + tokenResult.accessToken };
         const endpoints = ["/api/muszakok", "/api/naptar", "/api/fizetesek"];
         const results = [];
@@ -197,7 +215,7 @@
         for (const endpoint of endpoints) {
           const baselineResponse = await fetch(endpoint, { headers });
           const baselineText = await baselineResponse.text();
-          const attackUrl = endpoint + "?profile=reka&userId=eni&PartitionKey=eni";
+          const attackUrl = endpoint + "?profile=" + encodeURIComponent(forgedValues.profile) + "&userId=" + encodeURIComponent(forgedValues.userId) + "&PartitionKey=" + encodeURIComponent(forgedValues.PartitionKey);
           const spoofedResponse = await fetch(attackUrl, { headers });
           const spoofedText = await spoofedResponse.text();
 
@@ -226,7 +244,8 @@
           : "A teszt eltérést talált. Nézd meg az egyes végpontok eredményét.";
         claimsEl.textContent = JSON.stringify({
           signedInAccount: account.username,
-          expectedBackendProfile: "tamas",
+          expectedBackendProfile,
+          forgedQuery: forgedValues,
           testType: "read-only; profile/userId/PartitionKey query parameter spoofing",
           allPassed,
           results
@@ -267,6 +286,8 @@
         if (!account) throw new Error("Nincs aktív bejelentkezett fiók.");
         const tokenResult = await msalApp.acquireTokenSilent({ account, scopes: [API_SCOPE] });
         token = tokenResult.accessToken;
+        const expectedBackendProfile = await getVerifiedBackendProfile(token);
+        const forgedValues = getForgedProfileValues(expectedBackendProfile);
         headers["X-API-Authorization"] = "Bearer " + token;
 
         const unique = "AUTH-ISOLATION-" + Date.now();
@@ -279,9 +300,7 @@
           body: JSON.stringify({
             datum: shiftKey,
             tipus: "szabad",
-            profile: "reka",
-            userId: "eni",
-            PartitionKey: "eni"
+            ...forgedValues
           })
         });
         shiftCreated = shiftPost.status === 200 && shiftPost.body && shiftPost.body.siker === true;
@@ -293,7 +312,7 @@
           endpoint: "/api/muszakok",
           postStatus: shiftPost.status,
           recordVisibleInAuthenticatedProfile: shiftVisible,
-          forgedBody: { profile: "reka", userId: "eni", PartitionKey: "eni" },
+          forgedBody: forgedValues,
           postResponse: shiftPost.body
         });
 
@@ -305,9 +324,7 @@
             cim: "AUTH izolációs teszt",
             megjegyzes: "Automatikus tesztadat",
             ido: "",
-            profile: "reka",
-            userId: "eni",
-            PartitionKey: "eni"
+            ...forgedValues
           })
         });
         calendarCreated = calendarPost.status === 200 && calendarPost.body && calendarPost.body.siker === true;
@@ -321,7 +338,7 @@
           endpoint: "/api/naptar",
           postStatus: calendarPost.status,
           recordVisibleInAuthenticatedProfile: calendarVisible,
-          forgedBody: { profile: "reka", userId: "eni", PartitionKey: "eni" },
+          forgedBody: forgedValues,
           postResponse: calendarPost.body
         });
 
@@ -345,7 +362,8 @@
           : "A teszt nem teljesen sikerült. Ellenőrizd az eredményeket és a takarítás állapotát.";
         claimsEl.textContent = JSON.stringify({
           signedInAccount: account && account.username,
-          expectedBackendProfile: "tamas",
+          expectedBackendProfile: typeof expectedBackendProfile === "string" ? expectedBackendProfile : null,
+          forgedValues: typeof forgedValues === "object" ? forgedValues : null,
           testType: "temporary write/read/delete; forged profile fields in POST body",
           allPassed,
           results,
@@ -387,11 +405,14 @@
         if (!account) throw new Error("Nincs aktív bejelentkezett fiók.");
         const tokenResult = await msalApp.acquireTokenSilent({ account, scopes: [API_SCOPE] });
         token = tokenResult.accessToken;
+        const expectedBackendProfile = await getVerifiedBackendProfile(token);
+        const forgedValues = getForgedProfileValues(expectedBackendProfile);
+        const forgedQuery = new URLSearchParams(forgedValues).toString();
         headers["X-API-Authorization"] = "Bearer " + token;
 
         const shiftTargetPost = await requestJson("/api/muszakok", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ datum: keys.shiftTarget, tipus: "szabad", profile: "reka", PartitionKey: "eni" })
+          body: JSON.stringify({ datum: keys.shiftTarget, tipus: "szabad", ...forgedValues })
         });
         created.shiftTarget = shiftTargetPost.status === 200 && shiftTargetPost.body?.siker === true;
         const shiftControlPost = await requestJson("/api/muszakok", {
@@ -402,7 +423,7 @@
 
         const calendarTargetPost = await requestJson("/api/naptar", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ datum: keys.calendarTarget, cim: "DELETE izolációs célrekord", profile: "reka", PartitionKey: "eni" })
+          body: JSON.stringify({ datum: keys.calendarTarget, cim: "DELETE izolációs célrekord", ...forgedValues })
         });
         created.calendarTarget = calendarTargetPost.status === 200 && calendarTargetPost.body?.siker === true;
         const calendarControlPost = await requestJson("/api/naptar", {
@@ -415,7 +436,7 @@
         if (!allCreated) throw new Error("Nem sikerült minden tesztrekordot létrehozni; a létrejött rekordokat a takarítás megpróbálja törölni.");
 
         const shiftDelete = await requestJson(
-          "/api/muszakok?datum=" + encodeURIComponent(keys.shiftTarget) + "&profile=reka&userId=eni&PartitionKey=eni",
+          "/api/muszakok?datum=" + encodeURIComponent(keys.shiftTarget) + "&" + forgedQuery,
           { method: "DELETE" }
         );
         const shiftAfter = await requestJson("/api/muszakok");
@@ -426,11 +447,11 @@
           deleteStatus: shiftDelete.status,
           targetRecordDeleted: shiftTargetAbsent,
           unrelatedControlRecordPreserved: shiftControlPresent,
-          forgedQuery: { profile: "reka", userId: "eni", PartitionKey: "eni" }
+          forgedQuery: forgedValues
         });
 
         const calendarDelete = await requestJson(
-          "/api/naptar?datum=" + encodeURIComponent(keys.calendarTarget) + "&profile=reka&userId=eni&PartitionKey=eni",
+          "/api/naptar?datum=" + encodeURIComponent(keys.calendarTarget) + "&" + forgedQuery,
           { method: "DELETE" }
         );
         const calendarAfter = await requestJson("/api/naptar");
@@ -442,7 +463,7 @@
           deleteStatus: calendarDelete.status,
           targetRecordDeleted: calendarTargetAbsent,
           unrelatedControlRecordPreserved: calendarControlPresent,
-          forgedQuery: { profile: "reka", userId: "eni", PartitionKey: "eni" }
+          forgedQuery: forgedValues
         });
 
       } catch (error) {
@@ -472,7 +493,8 @@
           : "A DELETE-teszt nem teljesen sikerült. Nézd meg a részletes eredményt és a takarítás állapotát.";
         claimsEl.textContent = JSON.stringify({
           signedInAccount: account && account.username,
-          expectedBackendProfile: "tamas",
+          expectedBackendProfile: typeof expectedBackendProfile === "string" ? expectedBackendProfile : null,
+          forgedValues: typeof forgedValues === "object" ? forgedValues : null,
           testType: "temporary DELETE with forged profile query parameters; control records; cleanup",
           allPassed,
           results,
