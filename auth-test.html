@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beo + Fizu – Entra External ID teszt</title>
+  <style>
+    body{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 18px;line-height:1.55;color:#202124}
+    button{padding:10px 16px;margin:6px 8px 6px 0;border:0;border-radius:8px;background:#246bce;color:white;cursor:pointer}
+    button.secondary{background:#555} pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f5f7;padding:14px;border-radius:8px}
+    .note{background:#fff7df;padding:12px;border-left:4px solid #d99a00}
+  </style>
+</head>
+<body>
+  <h1>Entra External ID – hitelesítési próba</h1>
+  <p>Ez az elkülönített oldal csak a bejelentkezést és az API access token megszerzését ellenőrzi. Az alkalmazás adatait nem olvassa és nem módosítja.</p>
+  <p class="note"><strong>Fontos:</strong> az itt megjelenő tokenclaim-ek diagnosztikai adatok. A böngészőben látott claim önmagában nem hitelesítés; a backendnek később kriptográfiailag kell ellenőriznie a tokent.</p>
+  <button id="login">Belépés e-mailes kóddal</button>
+  <button id="token" class="secondary" hidden>API-token lekérése</button>
+  <button id="logout" class="secondary" hidden>Kijelentkezés</button>
+  <h2>Állapot</h2>
+  <pre id="status">MSAL inicializálása…</pre>
+  <h2>Tokenclaim-ek (token nélkül)</h2>
+  <pre id="claims">Még nincs bejelentkezett felhasználó.</pre>
+
+  <script src="https://alcdn.msauth.net/browser/4.27.0/js/msal-browser.min.js"></script>
+  <script>
+    const TENANT_ID = "86781723-aefe-44af-837b-bc1abdaf1a05";
+    const CLIENT_ID = "d36934be-a868-45b7-a097-9c31a2f5505e";
+    const API_SCOPE = "api://6b79a267-32cd-42db-a8c9-5971e5afc4a1/access_as_user";
+    const AUTHORITY = "https://beofizu.ciamlogin.com/" + TENANT_ID;
+    const statusEl = document.getElementById("status");
+    const claimsEl = document.getElementById("claims");
+    const loginBtn = document.getElementById("login");
+    const tokenBtn = document.getElementById("token");
+    const logoutBtn = document.getElementById("logout");
+
+    const msalApp = new msal.PublicClientApplication({
+      auth: {
+        clientId: CLIENT_ID,
+        authority: AUTHORITY,
+        knownAuthorities: [
+          "beofizu.ciamlogin.com",
+          TENANT_ID + ".ciamlogin.com"
+        ],
+        redirectUri: window.location.origin + "/auth-test.html",
+        postLogoutRedirectUri: window.location.origin + "/auth-test.html"
+      },
+      cache: { cacheLocation: "sessionStorage" }
+    });
+
+    function decodeJwtPayload(token) {
+      const part = token.split(".")[1];
+      const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
+      return JSON.parse(decodeURIComponent(Array.from(atob(padded), c =>
+        "%" + c.charCodeAt(0).toString(16).padStart(2, "0")
+      ).join("")));
+    }
+
+    function showAccount(account) {
+      loginBtn.hidden = !!account;
+      tokenBtn.hidden = !account;
+      logoutBtn.hidden = !account;
+      if (account) {
+        const claims = account.idTokenClaims || {};
+        claimsEl.textContent = JSON.stringify({
+          accountUsername: account.username,
+          homeAccountId: account.homeAccountId,
+          idTokenClaims: claims
+        }, null, 2);
+      }
+    }
+
+    async function acquireApiToken() {
+      const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0];
+      if (!account) throw new Error("Nincs aktív bejelentkezett fiók.");
+      const result = await msalApp.acquireTokenSilent({
+        account,
+        scopes: [API_SCOPE]
+      });
+      const tokenClaims = decodeJwtPayload(result.accessToken);
+      statusEl.textContent = "Sikeres API access token megszerzés. A token tartalmát nem jelenítjük meg.";
+      claimsEl.textContent = JSON.stringify({
+        accountUsername: account.username,
+        idTokenClaims: account.idTokenClaims || {},
+        accessTokenClaims: tokenClaims,
+        requestedScope: API_SCOPE,
+        returnedScopes: result.scopes || []
+      }, null, 2);
+    }
+
+    async function start() {
+      try {
+        await msalApp.initialize();
+        const result = await msalApp.handleRedirectPromise();
+        if (result && result.account) msalApp.setActiveAccount(result.account);
+        const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0] || null;
+        if (account) msalApp.setActiveAccount(account);
+        showAccount(account);
+        statusEl.textContent = account
+          ? "Bejelentkezve: " + account.username + ". Kérd le az API-tokent."
+          : "Nincs bejelentkezett felhasználó. Indítsd el a belépést.";
+        if (result && result.accessToken) {
+          const claims = decodeJwtPayload(result.accessToken);
+          claimsEl.textContent = JSON.stringify({
+            accountUsername: account && account.username,
+            idTokenClaims: account && account.idTokenClaims || {},
+            accessTokenClaims: claims,
+            requestedScope: API_SCOPE,
+            returnedScopes: result.scopes || []
+          }, null, 2);
+          statusEl.textContent = "Sikeres belépés és API access token megszerzés.";
+        }
+      } catch (error) {
+        statusEl.textContent = "Hiba: " + (error && error.message || String(error));
+        console.error(error);
+      }
+    }
+
+    loginBtn.addEventListener("click", () => {
+      msalApp.loginRedirect({ scopes: [API_SCOPE] });
+    });
+    tokenBtn.addEventListener("click", async () => {
+      try { await acquireApiToken(); }
+      catch (error) {
+        statusEl.textContent = "Tokenlekérési hiba: " + (error && error.message || String(error));
+        console.error(error);
+      }
+    });
+    logoutBtn.addEventListener("click", () => {
+      const account = msalApp.getActiveAccount();
+      msalApp.logoutRedirect({ account });
+    });
+
+    start();
+  </script>
+</body>
+</html>
