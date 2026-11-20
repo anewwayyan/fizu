@@ -6,6 +6,7 @@ app.http("authCheck", {
     authLevel: "anonymous",
     route: "auth-check",
     handler: async (request) => {
+        const frontendTokenFingerprint = request.headers.get("x-frontend-token-fingerprint") || null;
         const result = await authenticateRequest(request);
 
         if (!result.ok) {
@@ -17,7 +18,8 @@ app.http("authCheck", {
                     diagnosticCode: result.diagnosticCode || null,
                     diagnosticAlgorithm: result.diagnosticAlgorithm || null,
                     diagnosticKid: result.diagnosticKid || null,
-                    diagnosticTokenFingerprint: result.diagnosticTokenFingerprint || null
+                    diagnosticTokenFingerprint: result.diagnosticTokenFingerprint || null,
+                    receivedFrontendTokenFingerprint: frontendTokenFingerprint
                 }
             };
         }
@@ -26,6 +28,7 @@ app.http("authCheck", {
             status: 200,
             jsonBody: {
                 authenticated: true,
+                receivedFrontendTokenFingerprint: frontendTokenFingerprint
                 tenantId: result.identity.tenantId,
                 oid: result.identity.oid,
                 profile: result.identity.profile,
