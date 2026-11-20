@@ -17,6 +17,7 @@
   <p class="note"><strong>Fontos:</strong> az itt megjelenő tokenclaim-ek diagnosztikai adatok. A böngészőben látott claim önmagában nem hitelesítés; a backendnek később kriptográfiailag kell ellenőriznie a tokent.</p>
   <button id="login">Belépés e-mailes kóddal</button>
   <button id="token" class="secondary" hidden>API-token lekérése</button>
+  <button id="isolation" class="secondary" hidden>Profilizolációs GET-teszt</button>
   <button id="logout" class="secondary" hidden>Kijelentkezés</button>
   <h2>Állapot</h2>
   <pre id="status">MSAL inicializálása…</pre>
@@ -34,6 +35,7 @@
     const loginBtn = document.getElementById("login");
     const tokenBtn = document.getElementById("token");
     const logoutBtn = document.getElementById("logout");
+    const isolationBtn = document.getElementById("isolation");
 
     const msalApp = new msal.PublicClientApplication({
       auth: {
@@ -70,6 +72,7 @@
     function showAccount(account) {
       loginBtn.hidden = !!account;
       tokenBtn.hidden = !account;
+      isolationBtn.hidden = !account;
       logoutBtn.hidden = !account;
       if (account) {
         const claims = account.idTokenClaims || {};
@@ -136,6 +139,63 @@
         : "A token megvan, de a backend ellenőrzése hibát adott (HTTP " + backendResponse.status + ").";
     }
 
+
+    async function testProfileIsolation() {
+      try {
+        isolationBtn.disabled = true;
+        statusEl.textContent = "Olvasási jogosultsági teszt folyamatban…";
+        const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0];
+        if (!account) throw new Error("Nincs aktív bejelentkezett fiók.");
+        const tokenResult = await msalApp.acquireTokenSilent({ account, scopes: [API_SCOPE] });
+        const headers = { "X-API-Authorization": "Bearer " + tokenResult.accessToken };
+        const endpoints = ["/api/muszakok", "/api/naptar", "/api/fizetesek"];
+        const results = [];
+
+        for (const endpoint of endpoints) {
+          const baselineResponse = await fetch(endpoint, { headers });
+          const baselineText = await baselineResponse.text();
+          const attackUrl = endpoint + "?profile=reka&userId=eni&PartitionKey=eni";
+          const spoofedResponse = await fetch(attackUrl, { headers });
+          const spoofedText = await spoofedResponse.text();
+
+          let baselineJson, spoofedJson;
+          try { baselineJson = JSON.parse(baselineText); } catch { baselineJson = baselineText; }
+          try { spoofedJson = JSON.parse(spoofedText); } catch { spoofedJson = spoofedText; }
+
+          results.push({
+            endpoint,
+            baselineStatus: baselineResponse.status,
+            spoofedStatus: spoofedResponse.status,
+            identicalResults: baselineResponse.status === spoofedResponse.status &&
+              JSON.stringify(baselineJson) === JSON.stringify(spoofedJson),
+            baselineResult: baselineJson,
+            spoofedResult: spoofedJson
+          });
+        }
+
+        const allPassed = results.every(item =>
+          item.baselineStatus === 200 &&
+          item.spoofedStatus === 200 &&
+          item.identicalResults
+        );
+        statusEl.textContent = allPassed
+          ? "SIKERES: a három GET végpont figyelmen kívül hagyta a hamisított profilparamétereket."
+          : "A teszt eltérést talált. Nézd meg az egyes végpontok eredményét.";
+        claimsEl.textContent = JSON.stringify({
+          signedInAccount: account.username,
+          expectedBackendProfile: "tamas",
+          testType: "read-only; profile/userId/PartitionKey query parameter spoofing",
+          allPassed,
+          results
+        }, null, 2);
+      } catch (error) {
+        statusEl.textContent = "Tesztelési hiba: " + (error && error.message || String(error));
+        console.error(error);
+      } finally {
+        isolationBtn.disabled = false;
+      }
+    }
+
     async function start() {
       try {
         const result = await msalApp.handleRedirectPromise();
@@ -166,6 +226,7 @@
     loginBtn.addEventListener("click", () => {
       msalApp.loginRedirect({ scopes: [API_SCOPE] });
     });
+    isolationBtn.addEventListener("click", testProfileIsolation);
     tokenBtn.addEventListener("click", async () => {
       try { await acquireApiToken(); }
       catch (error) {
