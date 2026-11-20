@@ -1,4 +1,4 @@
-const { createRemoteJWKSet, jwtVerify } = require("jose");
+const { createRemoteJWKSet, decodeProtectedHeader, jwtVerify } = require("jose");
 
 const TENANT_ID = "86781723-aefe-44af-837b-bc1abdaf1a05";
 const ISSUER =
@@ -105,7 +105,14 @@ async function authenticateRequest(request) {
             ok: false,
             status: 401,
             error: "Érvénytelen vagy lejárt access token.",
-            diagnosticCode: error.code || error.name || "UNKNOWN_ERROR"
+            diagnosticCode: error.code || error.name || "UNKNOWN_ERROR",
+            diagnosticAlgorithm: (() => {
+                try {
+                    return decodeProtectedHeader(token).alg || null;
+                } catch {
+                    return null;
+                }
+            })()
         };
     }
 }
