@@ -28,7 +28,7 @@ app.http("authCheck", {
             status: 200,
             jsonBody: {
                 authenticated: true,
-                receivedFrontendTokenFingerprint: frontendTokenFingerprint
+                receivedFrontendTokenFingerprint: frontendTokenFingerprint,
                 tenantId: result.identity.tenantId,
                 oid: result.identity.oid,
                 profile: result.identity.profile,
