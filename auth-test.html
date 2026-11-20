@@ -49,6 +49,15 @@
       cache: { cacheLocation: "sessionStorage" }
     });
 
+    function decodeJwtHeader(token) {
+      const part = token.split(".")[0];
+      const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
+      return JSON.parse(decodeURIComponent(Array.from(atob(padded), c =>
+        "%" + c.charCodeAt(0).toString(16).padStart(2, "0")
+      ).join("")));
+    }
+
     function decodeJwtPayload(token) {
       const part = token.split(".")[1];
       const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
@@ -94,6 +103,7 @@
       claimsEl.textContent = JSON.stringify({
         accountUsername: account.username,
         idTokenClaims: account.idTokenClaims || {},
+        accessTokenHeader: decodeJwtHeader(result.accessToken),
         accessTokenClaims: tokenClaims,
         requestedScope: API_SCOPE,
         returnedScopes: result.scopes || [],
