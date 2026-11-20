@@ -1,5 +1,6 @@
 const { app } = require("@azure/functions");
 const { TableClient } = require("@azure/data-tables");
+const { authenticateRequest } = require("../lib/auth");
 
 const TABLA_NEV = "NaptarBejegyzesek";
 
@@ -30,7 +31,12 @@ app.http("naptarGet", {
     authLevel: "anonymous",
     route: "naptar",
 
-    handler: async () => {
+    handler: async (request) => {
+        const auth = await authenticateRequest(request);
+        if (!auth.ok) {
+            return { status: auth.status, jsonBody: { hiba: auth.error } };
+        }
+        const profile = auth.identity.profile;
 
         try {
 
@@ -38,7 +44,7 @@ app.http("naptarGet", {
 
             const bejegyzesek = {};
 
-            for await (const entity of client.listEntities()) {
+            for await (const entity of client.listEntities({ queryOptions: { filter: "PartitionKey eq '" + profile + "'" } })) {
 
                 bejegyzesek[entity.rowKey] = {
                     cim: entity.cim || "",
@@ -78,6 +84,11 @@ app.http("naptarPost", {
     route: "naptar",
 
     handler: async (request) => {
+        const auth = await authenticateRequest(request);
+        if (!auth.ok) {
+            return { status: auth.status, jsonBody: { hiba: auth.error } };
+        }
+        const profile = auth.identity.profile;
 
         try {
 
@@ -102,7 +113,7 @@ app.http("naptarPost", {
 
             await client.upsertEntity(
                 {
-                    partitionKey: "naptar",
+                    partitionKey: profile,
                     rowKey: datum,
                     cim: cim,
                     megjegyzes: megjegyzes,
@@ -148,6 +159,11 @@ app.http("naptarDelete", {
     route: "naptar",
 
     handler: async (request) => {
+        const auth = await authenticateRequest(request);
+        if (!auth.ok) {
+            return { status: auth.status, jsonBody: { hiba: auth.error } };
+        }
+        const profile = auth.identity.profile;
 
         try {
 
@@ -169,7 +185,7 @@ app.http("naptarDelete", {
             try {
 
                 await client.deleteEntity(
-                    "naptar",
+                    profile,
                     datum
                 );
 
