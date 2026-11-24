@@ -420,6 +420,30 @@
 	}
 
 
+	.aktualis-muszak-panel {
+		margin: 0 0 1em;
+		padding: 0.9em 1em;
+		border: 1px solid rgba(90,157,255,.22);
+		border-radius: 12px;
+		background: var(--card-bg);
+		color: var(--text);
+	}
+	.aktualis-muszak-statusz { font-size: .92em; font-weight: 700; }
+	.aktualis-muszak-sav-hatter {
+		height: 9px;
+		margin-top: .7em;
+		border-radius: 99px;
+		background: var(--bg);
+		overflow: hidden;
+	}
+	.aktualis-muszak-sav {
+		height: 100%;
+		width: 0;
+		border-radius: inherit;
+		background: linear-gradient(90deg, #3478e5, #58db9a);
+		transition: width .5s ease;
+	}
+	.aktualis-muszak-ido { margin-top: .45em; color: var(--muted); font-size: .76em; font-variant-numeric: tabular-nums; }
 	.felmondas-visszaszamlalo {
 		display: flex;
 		align-items: center;
@@ -1500,6 +1524,13 @@
 
     <section class="dashboard-calendar" aria-label="Műszaknaptár">
         <div class="desktop-section-heading"><span>📅 Műszaknaptár</span><small>Kattints egy napra a részletekért</small></div>
+        <div class="aktualis-muszak-panel" id="aktualis-muszak-panel" aria-live="polite">
+            <div class="aktualis-muszak-statusz" id="aktualis-muszak-statusz">Műszakadatok betöltése…</div>
+            <div class="aktualis-muszak-sav-hatter" id="aktualis-muszak-sav-hatter" hidden>
+                <div class="aktualis-muszak-sav" id="aktualis-muszak-sav"></div>
+            </div>
+            <div class="aktualis-muszak-ido" id="aktualis-muszak-ido"></div>
+        </div>
         <div class="felmondas-visszaszamlalo" id="felmondas-visszaszamlalo" aria-live="polite" style="display: none;">
             <div class="felmondas-visszaszamlalo-ikon" aria-hidden="true">⏳</div>
             <div class="felmondas-visszaszamlalo-szoveg">
@@ -1904,6 +1935,69 @@
 		return null;
 	}
 
+
+	function frissitAktualisMuszakPanel() {
+		const statuszElem = document.getElementById("aktualis-muszak-statusz");
+		const savHatter = document.getElementById("aktualis-muszak-sav-hatter");
+		const sav = document.getElementById("aktualis-muszak-sav");
+		const idoElem = document.getElementById("aktualis-muszak-ido");
+		if (!statuszElem || !savHatter || !sav || !idoElem) return;
+
+		const most = new Date();
+		let intervallum = null;
+		let tipus = null;
+		const tegnap = new Date(most.getFullYear(), most.getMonth(), most.getDate() - 1);
+		const tegnapi = muszakIdointervallum(tegnap);
+		if (tegnapi && most >= tegnapi[0] && most < tegnapi[1]) {
+			intervallum = tegnapi;
+			tipus = muszakTipus(tegnap);
+		}
+		if (!intervallum) {
+			const mai = muszakIdointervallum(most);
+			if (mai && most >= mai[0] && most < mai[1]) {
+				intervallum = mai;
+				tipus = muszakTipus(most);
+			}
+		}
+
+		if (!intervallum) {
+			const maiTipus = muszakTipus(most);
+			const uzenetek = {
+				ures: "📅 Még nincs beosztás",
+				szabad: "😴 Ma szabadnap van",
+				szabi: "🅂 Ma szabadságon vagy",
+				tsz: "TSZ Többlet szabadság – ma nem dolgozol",
+				 nyitas: "🌅 Nyitás – az időpont még nincs megadva",
+				zaras: "🌇 Ma zárásod lesz",
+				szombat: "😖🎭🦺 Szombati műszak"
+			};
+			statuszElem.textContent = uzenetek[maiTipus] || "⏸️ Most nincs műszak";
+			savHatter.hidden = true;
+			idoElem.textContent = "";
+			return;
+		}
+
+		const nevek = {
+			nappal: "🌞 Nappalos műszak",
+			ejszaka: "🌙 Éjszakás műszak",
+			nappal_tulora: "🌞⚡ Nappalos túlóra (200%)",
+			ejszaka_tulora: "🌙⚡ Éjszakás túlóra (200%)",
+			nappal_tulora_150: "🌞⚡ Nappalos túlóra (150%)",
+			ejszaka_tulora_150: "🌙⚡ Éjszakás túlóra (150%)",
+			zaras: "🌇 Zárás",
+			szombat: "😖🎭🦺 Szombati műszak"
+		};
+		const kezdes = intervallum[0];
+		const vege = intervallum[1];
+		const teljes = vege - kezdes;
+		const eltelt = Math.max(0, Math.min(teljes, most - kezdes));
+		const szazalek = teljes > 0 ? (eltelt / teljes) * 100 : 0;
+		const oraPerc = d => d.toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" });
+		statuszElem.textContent = (nevek[tipus] || "Műszak") + " – folyamatban";
+		savHatter.hidden = false;
+		sav.style.width = szazalek.toFixed(1) + "%";
+		idoElem.textContent = oraPerc(kezdes) + " – " + oraPerc(vege) + " · " + Math.floor(eltelt / 60000) + " perc eltelt, " + Math.ceil((teljes - eltelt) / 60000) + " perc van hátra";
+	}
 
 	/* =========================
 	   BÉRSZÁMÍTÁS
@@ -2425,6 +2519,8 @@
 	   ========================= */
 
 	function frissitFizu() {
+
+		frissitAktualisMuszakPanel();
 
 		if (selectedProfile === "reka" || selectedProfile === "eni") {
 			const statusz = document.getElementById("fizu-status");
