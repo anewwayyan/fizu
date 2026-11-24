@@ -1999,6 +1999,50 @@
 		idoElem.textContent = oraPerc(kezdes) + " – " + oraPerc(vege) + " · " + Math.floor(eltelt / 60000) + " perc eltelt, " + Math.ceil((teljes - eltelt) / 60000) + " perc van hátra";
 	}
 
+	function frissitJelmagyarazat() {
+		const tartalom = document.querySelector(".jelmagyarazat-tartalom");
+		if (!tartalom) return;
+
+		const kozos = [
+			["<span class=\"jelmagyarazat-jel\"><span class=\"jelmagyarazat-pont\"></span></span>", "Naptárbejegyzés"],
+			["<span class=\"jelmagyarazat-jel\"><span class=\"jelmagyarazat-ma\"></span></span>", "Mai nap"]
+		];
+		const profilElemek = {
+			tamas: [
+				["🌞", "Nappalos műszak"],
+				["🌙", "Éjszakás műszak"],
+				["😴", "Szabadnap"],
+				["SZ", "Fizetett szabadság"],
+				["TSZ", "Többlet szabadság"],
+				["⚡", "Túlóra"]
+			],
+			reka: [
+				["🌅", "Nyitás (08:00–16:00)"],
+				["🌇", "Zárás (11:00–19:00)"],
+				["😖🎭🦺", "Szombati műszak (10:00–18:00)"],
+				["😴", "Szabadnap"],
+				["SZ", "Fizetett szabadság"],
+				["TSZ", "Többlet szabadság"]
+			],
+			eni: [
+				["🌇", "Zárás (16:30–20:30)"],
+				["🌅", "Nyitás (időpont nincs megadva)"],
+				["😴", "Szabadnap"],
+				["SZ", "Fizetett szabadság"],
+				["TSZ", "Többlet szabadság"]
+			]
+		};
+		const elemek = (profilElemek[selectedProfile] || profilElemek.tamas)
+			.map(function (elem) {
+				return '<div class="jelmagyarazat-sor"><span class="jelmagyarazat-jel">' +
+					elem[0] + '</span><span>' + elem[1] + '</span></div>';
+			});
+		const kozosHtml = kozos.map(function (elem) {
+			return '<div class="jelmagyarazat-sor">' + elem[0] + '<span>' + elem[1] + '</span></div>';
+		}).join("");
+		tartalom.innerHTML = elemek.join("") + kozosHtml;
+	}
+
 	/* =========================
 	   BÉRSZÁMÍTÁS
 	   ========================= */
@@ -2519,6 +2563,8 @@
 	   ========================= */
 
 	function frissitFizu() {
+
+		frissitJelmagyarazat();
 
 		frissitAktualisMuszakPanel();
 
