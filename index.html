@@ -667,6 +667,25 @@
 		white-space: nowrap;
 	}
 
+	.profile-switcher {
+		display: none;
+		align-items: center;
+		gap: 0.45em;
+		margin: 0.2em auto 0.8em;
+		font-size: 0.82em;
+		color: var(--muted);
+	}
+
+	.profile-switcher select {
+		max-width: 190px;
+		border: 1px solid rgba(128,128,128,0.4);
+		border-radius: 9px;
+		padding: 0.45em 0.65em;
+		background: var(--card-bg);
+		color: var(--text);
+		font: inherit;
+	}
+
 	.auth-dot {
 		width: 8px;
 		height: 8px;
@@ -1417,6 +1436,14 @@
 			</span>
 			<a class="auth-btn" href="#">Kilépés</a>
 		</div>
+        </div>
+        <div class="profile-switcher" id="profile-switcher">
+            <label for="profile-select">Megtekintett profil:</label>
+            <select id="profile-select" aria-label="Megtekintett profil">
+                <option value="tamas">Filus Tamás</option>
+                <option value="reka">Laudon Réka</option>
+                <option value="eni">Filus Enikő</option>
+            </select>
         </div>
     </header>
 
@@ -2836,10 +2863,16 @@
 		cache: { cacheLocation: "sessionStorage" }
 	});
 
-	let isOwner = false; // A régi UI-kapcsolók most a hitelesített saját profilt jelzik.
+	let isOwner = false; // Csak a belépett felhasználó saját profilja szerkeszthető.
 	let bejelentkezve = false;
 	let currentProfile = null;
+	let selectedProfile = null;
 	let currentAccount = null;
+
+	function apiReadUrl(path) {
+		if (!selectedProfile || selectedProfile === currentProfile) return path;
+		return path + (path.includes("?") ? "&" : "?") + "profile=" + encodeURIComponent(selectedProfile);
+	}
 
 	function profilMegjelenitese(profile) {
 		const nevek = {
@@ -2907,13 +2940,15 @@
 				throw new Error(result.hiba || "A szerver nem fogadta el a bejelentkezést (HTTP " + response.status + ").");
 			}
 			currentProfile = result.profile;
+			selectedProfile = currentProfile;
 			bejelentkezve = true;
-			isOwner = true;
+			isOwner = selectedProfile === currentProfile;
 		} catch (error) {
 			console.error("Nem sikerült ellenőrizni a bejelentkezést:", error);
 			bejelentkezve = false;
 			isOwner = false;
 			currentProfile = null;
+			selectedProfile = null;
 			currentAccount = null;
 			if (error && error.errorCode) {
 				const status = document.getElementById("auth-error");
@@ -2928,6 +2963,11 @@
 		const loginBtn = document.getElementById("auth-login-btn");
 		const loggedIn = document.getElementById("auth-logged-in");
 		const displayName = profilMegjelenitese(currentProfile);
+		const viewedName = profilMegjelenitese(selectedProfile || currentProfile);
+		const switcher = document.getElementById("profile-switcher");
+		const profileSelect = document.getElementById("profile-select");
+		if (switcher) switcher.style.display = bejelentkezve && currentProfile === "tamas" ? "flex" : "none";
+		if (profileSelect && selectedProfile) profileSelect.value = selectedProfile;
 		if (loginBtn) loginBtn.style.display = bejelentkezve ? "none" : "inline-flex";
 		if (loggedIn) loggedIn.style.display = bejelentkezve ? "flex" : "none";
 		const mobileStatus = loggedIn && loggedIn.querySelector(".auth-status");
@@ -2941,7 +2981,10 @@
 			desktopAccount.style.display = bejelentkezve ? "block" : "none";
 			desktopLogin.style.display = bejelentkezve ? "none" : "flex";
 			if (desktopAccountName) desktopAccountName.textContent = displayName;
-			if (desktopAccountRole) desktopAccountRole.textContent = "Saját adatok";
+			if (desktopAccountRole) desktopAccountRole.textContent =
+				selectedProfile && selectedProfile !== currentProfile
+					? "Megtekintés: " + viewedName
+					: "Saját adatok";
 		}
 
 		if (!isOwner) osszegRejtve = true;
@@ -2960,7 +3003,7 @@
 		if (privLegend) privLegend.style.display = isOwner ? "flex" : "none";
 		if (window.matchMedia("(min-width: 1100px)").matches) {
 			const history = document.getElementById("fizetes-elozmenyek");
-			if (history) history.open = isOwner;
+			if (history) history.open = bejelentkezve;
 		}
 		frissitSzerkesztesJog();
 		frissitFizu();
@@ -2973,6 +3016,33 @@
 		ownerResz.style.display = isOwner ? "block" : "none";
 		nemOwnerUzenet.style.display = isOwner ? "none" : "block";
 	}
+
+	async function profilValtas(profile) {
+		if (currentProfile !== "tamas" || !["tamas", "reka", "eni"].includes(profile)) return;
+		if (profile === selectedProfile) return;
+
+		selectedProfile = profile;
+		isOwner = selectedProfile === currentProfile;
+		muszakModositasok = {};
+		naptarBejegyzesek = {};
+		fizetesElozmenyek = {};
+
+		frissitAuthFelulet();
+		frissitFizu();
+		generalMuszakNaptar();
+
+		await Promise.all([
+			muszakModositasokBetoltese(),
+			naptarBejegyzesekBetoltese(),
+			fizetesElozmenyekBetoltese()
+		]);
+		frissitFizu();
+		generalMuszakNaptar();
+	}
+
+	document.getElementById("profile-select")?.addEventListener("change", function (event) {
+		profilValtas(event.target.value);
+	});
 
 	document.getElementById("auth-login-btn")?.addEventListener("click", function (event) {
 		event.preventDefault();
@@ -3009,7 +3079,7 @@
 
 		try {
 
-			const response = await apiFetch("/api/muszakok", {
+			const response = await apiFetch(apiReadUrl("/api/muszakok"), {
 				method: "GET",
 				headers: {
 					"Accept": "application/json"
@@ -3247,7 +3317,7 @@
 
 		try {
 
-			const response = await apiFetch("/api/naptar", {
+			const response = await apiFetch(apiReadUrl("/api/naptar"), {
 				method: "GET",
 				headers: {
 					"Accept": "application/json"
@@ -3604,7 +3674,7 @@
 	function fizetesElozmenyekKattintasTiltas(event) {
 		const doboz = document.getElementById("fizetes-elozmenyek");
 
-		if (!isOwner && doboz) {
+		if (!bejelentkezve && doboz) {
 			event.preventDefault();
 			doboz.removeAttribute("open");
 		}
@@ -3625,7 +3695,7 @@
 		const summary =
 			document.getElementById("fizetes-elozmenyek-summary");
 
-		if (!isOwner) {
+		if (!bejelentkezve) {
 			doboz.style.display = "block";
 			doboz.classList.add("zarolt");
 			doboz.removeAttribute("open");
@@ -3686,7 +3756,7 @@
 
 	async function fizetesElozmenyekBetoltese() {
 
-		if (!isOwner) {
+		if (!bejelentkezve || !selectedProfile) {
 			fizetesElozmenyek = {};
 			fizetesElozmenyekMegjelenitese();
 			return;
@@ -3694,7 +3764,7 @@
 
 		try {
 
-			const response = await apiFetch("/api/fizetesek", {
+			const response = await apiFetch(apiReadUrl("/api/fizetesek"), {
 				method: "GET",
 				headers: {
 					"Accept": "application/json"
