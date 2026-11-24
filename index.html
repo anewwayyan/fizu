@@ -3213,6 +3213,7 @@
 
 			frissitFizu();
 			generalMuszakNaptar();
+			frissitFelmondasiVisszaszamlalo();
 		}
 	}
 
@@ -3302,6 +3303,7 @@
 			}
 
 			muszakModositasok[datum] = tipus;
+			frissitFelmondasiVisszaszamlalo();
 
 			if (statusz) {
 				statusz.className = "mentes-statusz siker";
@@ -3381,6 +3383,7 @@
 			}
 
 			delete muszakModositasok[datum];
+			frissitFelmondasiVisszaszamlalo();
 
 			if (statusz) {
 				statusz.className = "mentes-statusz siker";
@@ -4064,6 +4067,9 @@
 		frissitFizu,
 		1000
 	);
+
+	// Napváltáskor automatikusan frissüljön a visszaszámláló.
+	setInterval(frissitFelmondasiVisszaszamlalo, 60000);
 
 </script>
 
