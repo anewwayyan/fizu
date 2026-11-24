@@ -1809,6 +1809,11 @@
 		nap.getDate()
 	);
 
+	// Tamás utolsó napja: rövidített, 7:00–15:00 közötti nappalos műszak.
+	if (selectedProfile === "tamas" && napKezdet.getFullYear() === 2026 && napKezdet.getMonth() === 11 && napKezdet.getDate() === 3) {
+		return "nappal";
+	}
+
 	// Felhasználói módosítás elsőbbséget élvez.
 	const datumKulcs =
 		napKezdet.getFullYear() + "-" +
@@ -1897,6 +1902,11 @@
 		const honap = nap.getMonth();
 		const napSzam = nap.getDate();
 
+		// 2026. december 3.: az utolsó munkanap csak 7:00–15:00.
+		if (selectedProfile === "tamas" && ev === 2026 && honap === 11 && napSzam === 3) {
+			return [new Date(ev, honap, napSzam, 7, 0, 0), new Date(ev, honap, napSzam, 15, 0, 0)];
+		}
+
 		if (
 			tipus === "nappal" ||
 			tipus === "nappal_tulora" ||
@@ -1944,32 +1954,34 @@
 		if (!statuszElem || !savHatter || !sav || !idoElem) return;
 
 		const most = new Date();
+		const ma = new Date(most.getFullYear(), most.getMonth(), most.getDate());
+		const tegnap = new Date(ma.getFullYear(), ma.getMonth(), ma.getDate() - 1);
 		let intervallum = null;
 		let tipus = null;
-		const tegnap = new Date(most.getFullYear(), most.getMonth(), most.getDate() - 1);
-		const tegnapi = muszakIdointervallum(tegnap);
-		if (tegnapi && most >= tegnapi[0] && most < tegnapi[1]) {
-			intervallum = tegnapi;
+		let maiMuszak = false;
+
+		// Először a tegnap kezdődött, éjszakába nyúló műszakot keressük.
+		const tegnapiIntervallum = muszakIdointervallum(tegnap);
+		if (tegnapiIntervallum && most >= tegnapiIntervallum[0] && most < tegnapiIntervallum[1]) {
+			intervallum = tegnapiIntervallum;
 			tipus = muszakTipus(tegnap);
-		}
-		if (!intervallum) {
-			const mai = muszakIdointervallum(most);
-			if (mai && most >= mai[0] && most < mai[1]) {
-				intervallum = mai;
-				tipus = muszakTipus(most);
+		} else {
+			const maiIntervallum = muszakIdointervallum(ma);
+			if (maiIntervallum) {
+				intervallum = maiIntervallum;
+				tipus = muszakTipus(ma);
+				maiMuszak = true;
 			}
 		}
 
 		if (!intervallum) {
-			const maiTipus = muszakTipus(most);
+			const maiTipus = muszakTipus(ma);
 			const uzenetek = {
 				ures: "📅 Még nincs beosztás",
 				szabad: "😴 Ma szabadnap van",
 				szabi: "🅂 Ma szabadságon vagy",
 				tsz: "TSZ Többlet szabadság – ma nem dolgozol",
-				 nyitas: "🌅 Nyitás – az időpont még nincs megadva",
-				zaras: "🌇 Ma zárásod lesz",
-				szombat: "😖🎭🦺 Szombati műszak"
+				 nyitas: "🌅 Nyitás – az időpont még nincs megadva"
 			};
 			statuszElem.textContent = uzenetek[maiTipus] || "⏸️ Most nincs műszak";
 			savHatter.hidden = true;
@@ -1984,19 +1996,35 @@
 			ejszaka_tulora: "🌙⚡ Éjszakás túlóra (200%)",
 			nappal_tulora_150: "🌞⚡ Nappalos túlóra (150%)",
 			ejszaka_tulora_150: "🌙⚡ Éjszakás túlóra (150%)",
+			nyitas: "🌅 Nyitás",
 			zaras: "🌇 Zárás",
 			szombat: "😖🎭🦺 Szombati műszak"
 		};
 		const kezdes = intervallum[0];
 		const vege = intervallum[1];
 		const teljes = vege - kezdes;
-		const eltelt = Math.max(0, Math.min(teljes, most - kezdes));
-		const szazalek = teljes > 0 ? (eltelt / teljes) * 100 : 0;
+		const elsoPerc = Math.max(0, Math.min(teljes, most - kezdes));
+		const szazalek = teljes > 0 ? (elsoPerc / teljes) * 100 : 100;
 		const oraPerc = d => d.toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" });
-		statuszElem.textContent = (nevek[tipus] || "Műszak") + " – folyamatban";
+		let hatra = 0;
+
+		if (most < kezdes) {
+			statuszElem.textContent = (nevek[tipus] || "Műszak") + " – még nem kezdődött el";
+			hatra = teljes;
+		} else if (most >= vege) {
+			statuszElem.textContent = (nevek[tipus] || "Műszak") + " – a mai műszak már véget ért";
+			hatra = 0;
+		} else {
+			statuszElem.textContent = (nevek[tipus] || "Műszak") + " – folyamatban";
+			hatra = vege - most;
+		}
+
 		savHatter.hidden = false;
 		sav.style.width = szazalek.toFixed(1) + "%";
-		idoElem.textContent = oraPerc(kezdes) + " – " + oraPerc(vege) + " · " + Math.floor(eltelt / 60000) + " perc eltelt, " + Math.ceil((teljes - eltelt) / 60000) + " perc van hátra";
+		const hatraPerc = Math.ceil(hatra / 60000);
+		const hatraOra = Math.floor(hatraPerc / 60);
+		const maradekPerc = hatraPerc % 60;
+		idoElem.textContent = oraPerc(kezdes) + "–" + oraPerc(vege) + " · " + hatraOra + " óra " + maradekPerc + " perc van hátra";
 	}
 
 	function frissitJelmagyarazat() {
