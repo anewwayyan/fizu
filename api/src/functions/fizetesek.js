@@ -67,6 +67,9 @@ app.http("fizetesekGet", {
             return { status: auth.status, jsonBody: { hiba: auth.error } };
         }
         const profile = auth.identity.profile;
+        if (profile !== "tamas") {
+            return { status: 403, jsonBody: { hiba: "A bérszámítás ezen a profilon nincs bekapcsolva." } };
+        }
         const requestedProfile = request.query.get("profile");
         if (requestedProfile && requestedProfile !== profile) {
             return {
@@ -136,6 +139,9 @@ app.http("fizetesekPost", {
             return { status: auth.status, jsonBody: { hiba: auth.error } };
         }
         const profile = auth.identity.profile;
+        if (profile !== "tamas") {
+            return { status: 403, jsonBody: { hiba: "A bérszámítás ezen a profilon nincs bekapcsolva." } };
+        }
 
         try {
 
