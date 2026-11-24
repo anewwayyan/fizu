@@ -223,30 +223,36 @@
           try { baselineJson = JSON.parse(baselineText); } catch { baselineJson = baselineText; }
           try { spoofedJson = JSON.parse(spoofedText); } catch { spoofedJson = spoofedText; }
 
+          const payEndpointForTamás = expectedBackendProfile === "tamas" && endpoint === "/api/fizetesek";
+          const passed = payEndpointForTamás
+            ? baselineResponse.status === 200 && spoofedResponse.status === 403 &&
+              spoofedJson && spoofedJson.hiba === "Másik profil fizetési adatai nem tekinthetők meg."
+            : baselineResponse.status === 200 && spoofedResponse.status === 200 &&
+              JSON.stringify(baselineJson) === JSON.stringify(spoofedJson);
+
           results.push({
             endpoint,
+            expectedBehavior: payEndpointForTamás
+              ? "Tamás másik profil fizetési adataira 403 tiltás"
+              : "A hamisított profilparaméterek nem módosíthatják a saját adatok eredményét",
             baselineStatus: baselineResponse.status,
             spoofedStatus: spoofedResponse.status,
-            identicalResults: baselineResponse.status === spoofedResponse.status &&
-              JSON.stringify(baselineJson) === JSON.stringify(spoofedJson),
+            identicalResults: JSON.stringify(baselineJson) === JSON.stringify(spoofedJson),
+            passed,
             baselineResult: baselineJson,
             spoofedResult: spoofedJson
           });
         }
 
-        const allPassed = results.every(item =>
-          item.baselineStatus === 200 &&
-          item.spoofedStatus === 200 &&
-          item.identicalResults
-        );
+        const allPassed = results.every(item => item.passed);
         statusEl.textContent = allPassed
-          ? "SIKERES: a három GET végpont figyelmen kívül hagyta a hamisított profilparamétereket."
+          ? "SIKERES: a profilok olvasási jogosultságai a várt módon működnek."
           : "A teszt eltérést talált. Nézd meg az egyes végpontok eredményét.";
         claimsEl.textContent = JSON.stringify({
           signedInAccount: account.username,
           expectedBackendProfile,
           forgedQuery: forgedValues,
-          testType: "read-only; profile/userId/PartitionKey query parameter spoofing",
+          testType: "read-only; profile/userId/PartitionKey spoofing plus pay-data privacy",
           allPassed,
           results
         }, null, 2);
@@ -259,7 +265,7 @@
     }
 
 
-    async function testWriteIsolation() {
+        async function testWriteIsolation() {
       const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0];
       let token;
       let expectedBackendProfile = null;
