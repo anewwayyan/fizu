@@ -1,5 +1,4 @@
-const { createHash } = require("node:crypto");
-const { createRemoteJWKSet, decodeProtectedHeader, jwtVerify } = require("jose");
+const { createRemoteJWKSet, jwtVerify } = require("jose");
 
 const TENANT_ID = "86781723-aefe-44af-837b-bc1abdaf1a05";
 const ISSUER =
@@ -48,8 +47,6 @@ async function authenticateRequest(request, options = {}) {
             error: "Hiányzó Bearer access token."
         };
     }
-
-    const tokenFingerprint = createHash("sha256").update(token).digest("hex").slice(0, 16);
 
     try {
         const { payload } = await jwtVerify(token, JWKS, {
@@ -116,28 +113,12 @@ async function authenticateRequest(request, options = {}) {
             }
         };
     } catch (error) {
-        // Do not return token contents or cryptographic details to the client.
-        console.warn("API token validation failed:", error.code || error.name);
+        // Keep token-validation details in server logs, never in the API response.
+        console.warn("API token validation failed:", error.code || error.name || "UNKNOWN_ERROR");
         return {
             ok: false,
             status: 401,
-            error: "Érvénytelen vagy lejárt access token.",
-            diagnosticCode: error.code || error.name || "UNKNOWN_ERROR",
-            diagnosticTokenFingerprint: tokenFingerprint,
-            diagnosticAlgorithm: (() => {
-                try {
-                    return decodeProtectedHeader(token).alg || null;
-                } catch {
-                    return null;
-                }
-            })(),
-            diagnosticKid: (() => {
-                try {
-                    return decodeProtectedHeader(token).kid || null;
-                } catch {
-                    return null;
-                }
-            })()
+            error: "Érvénytelen vagy lejárt access token."
         };
     }
 }
