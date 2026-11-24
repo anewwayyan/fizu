@@ -162,7 +162,7 @@ app.http("muszakokPost", {
                     "nappal_tulora_150", "ejszaka_tulora_150",
                     "nappal_tulora", "ejszaka_tulora"
                 ],
-                reka: ["nyitas", "zaras", "szombat", "szabad", "szabi"],
+                reka: ["nyitas", "zaras", "nyitas_kalvin", "zaras_kalvin", "nyitas_moricz", "zaras_moricz", "nyitas_blaha", "zaras_blaha", "nyitas_budafok", "zaras_budafok", "szombat", "szabad", "szabi"],
                 eni: ["nyitas", "zaras", "szabad", "szabi"]
             };
             const engedelyezettTipusok = engedelyezettTipusokProfilonkent[profile] || [];
