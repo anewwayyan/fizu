@@ -2010,20 +2010,23 @@
 
 		if (most < kezdes) {
 			statuszElem.textContent = (nevek[tipus] || "Műszak") + " – még nem kezdődött el";
-			hatra = teljes;
+			savHatter.hidden = true;
+			idoElem.textContent = "";
+			return;
 		} else if (most >= vege) {
 			statuszElem.textContent = (nevek[tipus] || "Műszak") + " – a mai műszak már véget ért";
-			hatra = 0;
-		} else {
-			statuszElem.textContent = (nevek[tipus] || "Műszak") + " – folyamatban";
-			hatra = vege - most;
+			savHatter.hidden = true;
+			idoElem.textContent = "";
+			return;
 		}
 
+		hatra = vege - most;
 		savHatter.hidden = false;
 		sav.style.width = szazalek.toFixed(1) + "%";
 		const hatraPerc = Math.ceil(hatra / 60000);
 		const hatraOra = Math.floor(hatraPerc / 60);
 		const maradekPerc = hatraPerc % 60;
+		statuszElem.textContent = (nevek[tipus] || "Műszak") + " – folyamatban";
 		idoElem.textContent = oraPerc(kezdes) + "–" + oraPerc(vege) + " · " + hatraOra + " óra " + maradekPerc + " perc van hátra";
 	}
 
