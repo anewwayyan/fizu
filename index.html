@@ -2965,6 +2965,18 @@
 		const loggedIn = document.getElementById("auth-logged-in");
 		const displayName = profilMegjelenitese(currentProfile);
 		const viewedName = profilMegjelenitese(selectedProfile || currentProfile);
+		const ownProfileSelected = bejelentkezve && selectedProfile === currentProfile;
+		const payPanel = document.getElementById("desktop-pay");
+		const payHistory = document.querySelector(".dashboard-history");
+		const payDebug = document.getElementById("ber-debug");
+		if (payPanel) payPanel.style.display = ownProfileSelected ? "" : "none";
+		if (payHistory) payHistory.style.display = ownProfileSelected ? "" : "none";
+		if (payDebug) {
+			payDebug.style.display = ownProfileSelected ? "block" : "none";
+			if (!ownProfileSelected) payDebug.removeAttribute("open");
+		}
+		const payInfo = document.getElementById("fizu-info");
+		if (payInfo) payInfo.style.display = ownProfileSelected ? "" : "none";
 		const switcher = document.getElementById("profile-switcher");
 		const profileSelect = document.getElementById("profile-select");
 		if (switcher) switcher.style.display = bejelentkezve && currentProfile === "tamas" ? "flex" : "none";
@@ -3757,7 +3769,7 @@
 
 	async function fizetesElozmenyekBetoltese() {
 
-		if (!bejelentkezve || !selectedProfile) {
+		if (!bejelentkezve || !selectedProfile || selectedProfile !== currentProfile) {
 			fizetesElozmenyek = {};
 			fizetesElozmenyekMegjelenitese();
 			return;
