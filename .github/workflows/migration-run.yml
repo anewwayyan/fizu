@@ -1,0 +1,40 @@
+name: Run data migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: "Branch containing the migration script"
+        required: true
+        type: choice
+        options:
+          - feature/multi-user-prep
+
+permissions:
+  contents: read
+
+concurrency:
+  group: azure-table-data-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout selected branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target_branch }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Azure Tables SDK
+        run: npm install --no-save @azure/data-tables
+
+      - name: Copy and verify data (source records are retained)
+        env:
+          MuszakModositasokStorage: ${{ secrets.MuszakModositasokStorage }}
+        run: node scripts/migrate-data.js
