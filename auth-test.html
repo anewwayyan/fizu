@@ -223,21 +223,47 @@
           try { baselineJson = JSON.parse(baselineText); } catch { baselineJson = baselineText; }
           try { spoofedJson = JSON.parse(spoofedText); } catch { spoofedJson = spoofedText; }
 
-          const payEndpointForTamás = expectedBackendProfile === "tamas" && endpoint === "/api/fizetesek";
-          const passed = payEndpointForTamás
-            ? baselineResponse.status === 200 && spoofedResponse.status === 403 &&
-              spoofedJson && spoofedJson.hiba === "Másik profil fizetési adatai nem tekinthetők meg."
-            : baselineResponse.status === 200 && spoofedResponse.status === 200 &&
-              JSON.stringify(baselineJson) === JSON.stringify(spoofedJson);
+          const isPayEndpoint = endpoint === "/api/fizetesek";
+          const tamasCanReadOtherProfile = expectedBackendProfile === "tamas" && !isPayEndpoint;
+          let passed = false;
+          let expectedBehavior = "";
 
+          if (tamasCanReadOtherProfile) {
+            // Tamásnak engedélyezett másik profil műszak- és naptárolvasása.
+            // A hamis userId/PartitionKey nem változtathatja meg a profile alapján kiválasztott eredményt.
+            const cleanTargetResponse = await fetch(endpoint + "?profile=" + encodeURIComponent(forgedValues.profile), { headers });
+            const cleanTargetText = await cleanTargetResponse.text();
+            let cleanTargetJson;
+            try { cleanTargetJson = JSON.parse(cleanTargetText); } catch { cleanTargetJson = cleanTargetText; }
+            passed = baselineResponse.status === 200 &&
+              spoofedResponse.status === 200 &&
+              cleanTargetResponse.status === 200 &&
+              JSON.stringify(spoofedJson) === JSON.stringify(cleanTargetJson);
+            expectedBehavior = "Tamás olvashatja a kiválasztott másik profil adatait; a userId és PartitionKey paraméter nem írhatja felül a profile paramétert";
+            results.push({
+              endpoint,
+              expectedBehavior,
+              baselineStatus: baselineResponse.status,
+              targetProfileStatus: cleanTargetResponse.status,
+              spoofedStatus: spoofedResponse.status,
+              spoofedMatchesCleanTarget: JSON.stringify(spoofedJson) === JSON.stringify(cleanTargetJson),
+              passed,
+              baselineResult: baselineJson,
+              cleanTargetResult: cleanTargetJson,
+              spoofedResult: spoofedJson
+            });
+            continue;
+          }
+
+          // Más felhasználó nem olvashat idegen profilt; a fizetési végpontnál ez Tamásra is igaz.
+          passed = baselineResponse.status === 200 &&
+            spoofedResponse.status === 403;
+          expectedBehavior = "Másik profil lekérése 403 tiltást ad";
           results.push({
             endpoint,
-            expectedBehavior: payEndpointForTamás
-              ? "Tamás másik profil fizetési adataira 403 tiltás"
-              : "A hamisított profilparaméterek nem módosíthatják a saját adatok eredményét",
+            expectedBehavior,
             baselineStatus: baselineResponse.status,
             spoofedStatus: spoofedResponse.status,
-            identicalResults: JSON.stringify(baselineJson) === JSON.stringify(spoofedJson),
             passed,
             baselineResult: baselineJson,
             spoofedResult: spoofedJson
@@ -252,7 +278,7 @@
           signedInAccount: account.username,
           expectedBackendProfile,
           forgedQuery: forgedValues,
-          testType: "read-only; profile/userId/PartitionKey spoofing plus pay-data privacy",
+          testType: "read-only; authorized cross-profile shift/calendar reads, query spoofing and pay-data privacy",
           allPassed,
           results
         }, null, 2);
@@ -263,7 +289,6 @@
         isolationBtn.disabled = false;
       }
     }
-
 
         async function testWriteIsolation() {
       const account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0];
