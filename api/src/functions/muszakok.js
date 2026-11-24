@@ -156,17 +156,16 @@ app.http("muszakokPost", {
                 };
             }
 
-            const engedelyezettTipusok = [
-                "nappal",
-                "ejszaka",
-                "szabad",
-                "szabi",
-                "tsz",
-                "nappal_tulora_150",
-                "ejszaka_tulora_150",
-                "nappal_tulora",
-                "ejszaka_tulora"
-            ];
+            const engedelyezettTipusokProfilonkent = {
+                tamas: [
+                    "nappal", "ejszaka", "szabad", "szabi", "tsz",
+                    "nappal_tulora_150", "ejszaka_tulora_150",
+                    "nappal_tulora", "ejszaka_tulora"
+                ],
+                reka: ["nyitas", "zaras", "szombat"],
+                eni: ["nyitas", "zaras"]
+            };
+            const engedelyezettTipusok = engedelyezettTipusokProfilonkent[profile] || [];
 
             if (!engedelyezettTipusok.includes(tipus)) {
 
