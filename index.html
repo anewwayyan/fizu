@@ -185,6 +185,19 @@
 		background: rgba(230, 126, 34, 0.18);
 	}
 
+	/* Réka helyszínei és szabadsága */
+	.nap-reka-szabi { background: rgba(34, 197, 94, 0.24); }
+	.nap-reka-szabi .nap-jel { color: #16a34a; }
+	.nap-helyszin-kalvin { background: rgba(242, 140, 40, 0.30); }
+	.nap-helyszin-moricz { background: rgba(139, 92, 246, 0.28); }
+	.nap-helyszin-blaha { background: rgba(94, 42, 71, 0.30); }
+	.nap-helyszin-blaha .nap-jel, .nap-helyszin-blaha .nap-szam { color: #5e2a47; }
+	.nap-helyszin-budafok { background: rgba(230, 217, 31, 0.34); }
+	.nap-helyszin-kalvin .nap-jel, .nap-helyszin-moricz .nap-jel,
+	.nap-helyszin-blaha .nap-jel, .nap-helyszin-budafok .nap-jel {
+		font-size: 0.78em; font-weight: 800; line-height: 1.1;
+	}
+
 	.nap-tsz {
 		background: rgba(142, 68, 173, 0.16);
 		box-shadow: inset 0 0 0 2px rgba(142, 68, 173, 0.55);
@@ -1619,7 +1632,7 @@
     </details>
     </section>
 
-    <div class="app-verzio">ver. 2.1</div>
+    <div class="app-verzio">Ver. 3.0</div>
 
 </div>
 
@@ -1931,11 +1944,12 @@
 			];
 		}
 
+		const muszakAlapTipus = tipus.startsWith("nyitas_") ? "nyitas" : tipus.startsWith("zaras_") ? "zaras" : tipus;
 		const profilMuszakok = {
 			reka: { nyitas: ["08:00", "16:00"], zaras: ["11:00", "19:00"], szombat: ["10:00", "18:00"] },
 			eni: { nyitas: null, zaras: ["16:30", "20:30"] }
 		};
-		const idopont = profilMuszakok[selectedProfile]?.[tipus];
+		const idopont = profilMuszakok[selectedProfile]?.[muszakAlapTipus];
 		if (idopont) {
 			const [kezdes, befejezes] = idopont;
 			const [kezdesOra, kezdesPerc] = kezdes.split(":").map(Number);
@@ -1998,6 +2012,10 @@
 			ejszaka_tulora_150: "🌙⚡ Éjszakás túlóra (150%)",
 			nyitas: "🌅 Nyitás",
 			zaras: "🌇 Zárás",
+			nyitas_kalvin: "🌅 Nyitás · Kálvin", zaras_kalvin: "🌇 Zárás · Kálvin",
+			nyitas_moricz: "🌅 Nyitás · Móricz", zaras_moricz: "🌇 Zárás · Móricz",
+			nyitas_blaha: "🌅 Nyitás · Blaha", zaras_blaha: "🌇 Zárás · Blaha",
+			nyitas_budafok: "🌅 Nyitás · Budafok", zaras_budafok: "🌇 Zárás · Budafok",
 			szombat: "😖🎭🦺 Szombati műszak"
 		};
 		const kezdes = intervallum[0];
@@ -2051,8 +2069,12 @@
 				["🌅", "Nyitás (08:00–16:00)"],
 				["🌇", "Zárás (11:00–19:00)"],
 				["😖🎭🦺", "Szombati műszak (10:00–18:00)"],
+				["<span style='display:inline-block;width:14px;height:14px;border-radius:4px;background:#f28c28'></span>", "Kálvin"],
+				["<span style='display:inline-block;width:14px;height:14px;border-radius:4px;background:#8b5cf6'></span>", "Móricz"],
+				["<span style='display:inline-block;width:14px;height:14px;border-radius:4px;background:#5e2a47'></span>", "Blaha"],
+				["<span style='display:inline-block;width:14px;height:14px;border-radius:4px;background:#e6d91f'></span>", "Budafok"],
 				["😴", "Szabadnap"],
-				["SZ", "Fizetett szabadság"],
+				["<span style='display:inline-block;width:14px;height:14px;border-radius:4px;background:#22c55e'></span>", "Szabadság"],
 				["TSZ", "Többlet szabadság"]
 			],
 			eni: [
@@ -3033,6 +3055,11 @@
 			if (tipus === "ures") {
 				osztaly += "nap-ures";
 				jel = "";
+			} else if (/^(nyitas|zaras)_(kalvin|moricz|blaha|budafok)$/.test(tipus)) {
+				const helyszin = tipus.split("_")[1];
+				const helyszinNevek = { kalvin: "Kálvin", moricz: "Móricz", blaha: "Blaha", budafok: "Budafok" };
+				osztaly += "nap-helyszin-" + helyszin;
+				jel = helyszinNevek[helyszin];
 			} else if (tipus === "nyitas") {
 				osztaly += "nap-nappal";
 				jel = "🌅";
@@ -3075,7 +3102,7 @@
 
 			} else if (tipus === "szabi") {
 
-				osztaly += "nap-szabi";
+				osztaly += selectedProfile === "reka" ? "nap-reka-szabi" : "nap-szabi";
 				jel = "SZ";
 
 			} else if (tipus === "tsz") {
@@ -4324,6 +4351,16 @@
 				<button class="muszak-opcio torles" data-profiles="reka,eni" onclick="muszakTorol()">↩ Műszak törlése</button>
 				<button class="muszak-opcio" data-profiles="reka,eni" onclick="muszakBeallit('nyitas')">🌅 Nyitás</button>
 				<button class="muszak-opcio" data-profiles="reka,eni" onclick="muszakBeallit('zaras')">🌇 Zárás</button>
+				<div data-profiles="reka" style="margin-top:0.35em;font-size:0.82em;font-weight:700;color:var(--muted)">Helyszín · Nyitás</div>
+				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('nyitas_kalvin')">🟠 Kálvin</button>
+				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('nyitas_moricz')">🟣 Móricz</button>
+				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('nyitas_blaha')">🍷 Blaha</button>
+				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('nyitas_budafok')">🟡 Budafok</button>
+				<div data-profiles="reka" style="margin-top:0.35em;font-size:0.82em;font-weight:700;color:var(--muted)">Helyszín · Zárás</div>
+				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('zaras_kalvin')">🟠 Kálvin</button>
+				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('zaras_moricz')">🟣 Móricz</button>
+				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('zaras_blaha')">🍷 Blaha</button>
+				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('zaras_budafok')">🟡 Budafok</button>
 				<button class="muszak-opcio" data-profiles="reka,eni" onclick="muszakBeallit('szabad')">😴 Pihenő</button>
 				<button class="muszak-opcio" data-profiles="reka,eni" onclick="muszakBeallit('szabi')">🅂 Szabadság</button>
 				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('szombat')">😖🎭🦺 Szombat (10:00–18:00)</button>
