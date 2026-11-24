@@ -1,7 +1,49 @@
 const { app } = require("@azure/functions");
 const { TableClient } = require("@azure/data-tables");
+const { authenticateRequest } = require("../lib/auth");
 
 const TABLA_NEV = "NaptarBejegyzesek";
+
+function resolveReadProfile(request, ownProfile) {
+    const requestedProfile = request.query.get("profile");
+
+    if (!requestedProfile || requestedProfile === ownProfile) {
+        return { ok: true, profile: ownProfile };
+    }
+
+    // Only Tamás may read another profile. The identity comes from the
+    // verified Entra token, never from a client-supplied role.
+    if (ownProfile !== "tamas") {
+        return {
+            ok: false,
+            status: 403,
+            error: "Nincs jogosultság másik profil adatainak megtekintéséhez."
+        };
+    }
+
+    if (!["tamas", "reka", "eni"].includes(requestedProfile)) {
+        return {
+            ok: false,
+            status: 400,
+            error: "Érvénytelen profil."
+        };
+    }
+
+    return { ok: true, profile: requestedProfile };
+}
+
+function isValidDateKey(value) {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return false;
+    }
+
+    const [year, month, day] = value.split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+
+    return date.getUTCFullYear() === year &&
+        date.getUTCMonth() === month - 1 &&
+        date.getUTCDate() === day;
+}
 
 function getTableClient() {
     const connectionString =
@@ -30,7 +72,16 @@ app.http("naptarGet", {
     authLevel: "anonymous",
     route: "naptar",
 
-    handler: async () => {
+    handler: async (request) => {
+        const auth = await authenticateRequest(request);
+        if (!auth.ok) {
+            return { status: auth.status, jsonBody: { hiba: auth.error } };
+        }
+        const readAccess = resolveReadProfile(request, auth.identity.profile);
+        if (!readAccess.ok) {
+            return { status: readAccess.status, jsonBody: { hiba: readAccess.error } };
+        }
+        const profile = readAccess.profile;
 
         try {
 
@@ -38,7 +89,7 @@ app.http("naptarGet", {
 
             const bejegyzesek = {};
 
-            for await (const entity of client.listEntities()) {
+            for await (const entity of client.listEntities({ queryOptions: { filter: "PartitionKey eq '" + profile + "'" } })) {
 
                 bejegyzesek[entity.rowKey] = {
                     cim: entity.cim || "",
@@ -78,17 +129,40 @@ app.http("naptarPost", {
     route: "naptar",
 
     handler: async (request) => {
+        const auth = await authenticateRequest(request);
+        if (!auth.ok) {
+            return { status: auth.status, jsonBody: { hiba: auth.error } };
+        }
+        const profile = auth.identity.profile;
 
         try {
 
-            const body = await request.json();
+            let body;
+            try {
+                body = await request.json();
+            } catch (_) {
+                return { status: 400, jsonBody: { hiba: "Hibás JSON-kérés." } };
+            }
+
+            if (!body || typeof body !== "object" || Array.isArray(body)) {
+                return { status: 400, jsonBody: { hiba: "Érvénytelen kérésadat." } };
+            }
 
             const datum = body.datum;
             const cim = body.cim;
-            const megjegyzes = body.megjegyzes || "";
-            const ido = body.ido || "";
+            const megjegyzes = body.megjegyzes === undefined ? "" : body.megjegyzes;
+            const ido = body.ido === undefined ? "" : body.ido;
 
-            if (!datum || !cim) {
+            if (
+                !isValidDateKey(datum) ||
+                typeof cim !== "string" ||
+                !cim.trim() ||
+                cim.length > 150 ||
+                typeof megjegyzes !== "string" ||
+                megjegyzes.length > 2000 ||
+                typeof ido !== "string" ||
+                (ido !== "" && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(ido))
+            ) {
 
                 return {
                     status: 400,
@@ -102,7 +176,7 @@ app.http("naptarPost", {
 
             await client.upsertEntity(
                 {
-                    partitionKey: "naptar",
+                    partitionKey: profile,
                     rowKey: datum,
                     cim: cim,
                     megjegyzes: megjegyzes,
@@ -148,13 +222,18 @@ app.http("naptarDelete", {
     route: "naptar",
 
     handler: async (request) => {
+        const auth = await authenticateRequest(request);
+        if (!auth.ok) {
+            return { status: auth.status, jsonBody: { hiba: auth.error } };
+        }
+        const profile = auth.identity.profile;
 
         try {
 
             const datum =
                 request.query.get("datum");
 
-            if (!datum) {
+            if (!isValidDateKey(datum)) {
 
                 return {
                     status: 400,
@@ -169,7 +248,7 @@ app.http("naptarDelete", {
             try {
 
                 await client.deleteEntity(
-                    "naptar",
+                    profile,
                     datum
                 );
 

@@ -701,6 +701,25 @@
 		white-space: nowrap;
 	}
 
+	.profile-switcher {
+		display: none;
+		align-items: center;
+		gap: 0.45em;
+		margin: 0.2em auto 0.8em;
+		font-size: 0.82em;
+		color: var(--muted);
+	}
+
+	.profile-switcher select {
+		max-width: 190px;
+		border: 1px solid rgba(128,128,128,0.4);
+		border-radius: 9px;
+		padding: 0.45em 0.65em;
+		background: var(--card-bg);
+		color: var(--text);
+		font: inherit;
+	}
+
 	.auth-dot {
 		width: 8px;
 		height: 8px;
@@ -918,7 +937,7 @@
 		color: var(--muted);
 	}
 
-	/* Béradatok csak ownerként láthatók. Alapból rejtve, így betöltéskor sem villannak fel. */
+	/* Béradatok csak hitelesített felhasználónak láthatók. Alapból rejtve maradnak betöltéskor. */
 	.owner-beradat {
 		display: none;
 	}
@@ -1421,13 +1440,13 @@
         <div class="desktop-account" id="desktop-account" style="display:none;">
             <div class="desktop-account-status">Belépve</div>
             <div class="desktop-account-name" id="desktop-account-name">Filus Tamás</div>
-            <div class="desktop-account-role" id="desktop-account-role">owner</div>
-            <a class="desktop-logout" href="/.auth/logout">
+            <div class="desktop-account-role" id="desktop-account-role">Saját adatok</div>
+            <a class="desktop-logout" href="#">
                 <img class="desktop-logout-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEwAAABMCAYAAADHl1ErAAAABmJLR0QA/wD/AP+gvaeTAAAD6klEQVR4nO2cwWsUVxjAf99M1JBQoRhXDQma3Qz11nroUTTxYKleCy209tBCafsX9B9osUdBLy0IHrx460HEQlJtr6V6LJNNAg1rdluhREjRzczXg7aonbfbFfe9b9j5wV7mfR/v48ebN4+dNw8qKioqKioqipHQBTzP2pqO55Ms5jA5tE4yfh8b587cq/LnoKmmhK229HAeswTUPXSXAd+T8/X8IVn+v0mmhK209SrwXoCur0xkfDo9Ldv9AiMf1QzA64H6Pbcdc6PV0ol+gdaE3Q3Y9/HtmEv9gkwJizK+AFYDlvBhek9P9gowNYeBh6ekMi5wCngfiAvar88flDOudHPCfNHs6NuqfMd/pXV1jKlkn2wV5Zm6JX3SqMl14GpB0y7NeMOVN7LCAEQoXH8JHHTljLQwch4WXY5yxlwpoy3sBaiEDYhz6A0TVY2abT5S4aQI65FyoX5A2iFqGZQgwpodLiF8IgAKufLBSkcX52uyEqKeQfB+S/7a0ing42cuCrMoyysdnfddz6B4FyYxeylaYcNMGaR5F5bUWAN+cTSbl+Z/hImowjvAhiPEtLQgy4rkgDTjnOPAuiPErLRg67C5Q7Ie5yxQMmlBF65llBZ8pV82acGFQbmkmRAG5ZFmRhiUQ5opYWBfmjlhYFuaSWFgV1rPv3fS+zojO3ypypsi7PZV1D9kgECksENxrTPk3G129HSjJj/5qMkpLE11j+ywBCQS8GWc9gsQJnJlKU11KkmKX429TNy35F5OAMmwC3gZCOziFT730ZfZOcwqbmFb3AJSf6W8OApdHnDRR1/OOSxJ5GF6XxdDTvoAAmMK07hqVbajiNMND/MXziKekOyTDeCcj0KKWLunR7KIZdx1bhCx0PD48sTsHPaUrCOOkA2EBd9vmkwKsyoLDAqzLAuMCbMuCwwJK4MsMCKsLLLAgLAyyYLAwsomCwIKK6MsCLTdKW1rI4MfgBlHiElZEGCEqaoIXKOEsiCAsLTDHHDM0WxaFoQYYRlbPP73+XnMy4IAwl6blj+Ab5+5qPxWBlkQaNJv1Pis2ebnfzcFw4V6rdoU7EREcuCbJ79SEXylXzYqYQMy2sIixosu5xE77pQRJlcWi64rbLpyRlZYc1PPCrxb0NTNxbktPsxTshfD/oRZYFKUU/r4uIeiT5hvHt0vD1z5poSttvRwFrOEUh/mdo5e+zWiiPO9ck3dknnMV/g5FaUQVS7Xa/JjrxhTI4xwB30gcHtPt/+GFlMjjEAHfahyefcj3pqdlb/6xZo6hsHzYUVdlJtRxPl+t+HTmBIGfo7DimHzkXCn19OwoqKioqKiYlD+BoCYmwVlhHpjAAAAAElFTkSuQmCC" width="19" height="19" alt="" aria-hidden="true" draggable="false">
                 <span>Kijelentkezés</span>
             </a>
         </div>
-        <a class="desktop-login" id="desktop-login" href="/.auth/login/aad" style="display:none;">Microsoft belépés</a>
+        <a class="desktop-login" id="desktop-login" href="#" style="display:none;">Microsoft belépés</a>
     </div>
 </aside>
 
@@ -1437,7 +1456,7 @@
         <div class="desktop-page-title"><strong>Műszakok és fizetés</strong></div>
         <button class="theme-toggle" onclick="toggleTheme()" aria-label="Világos/sötét mód váltása">🌙</button>
         <div class="auth-box" id="auth-box">
-		<a class="auth-btn" id="auth-login-btn" href="/.auth/login/aad">Microsoft belépés</a>
+		<a class="auth-btn" id="auth-login-btn" href="#">Microsoft belépés</a>
 
 		<div id="auth-logged-in" style="display:none; align-items:center; gap:0.45em;">
 			<span class="auth-status" style="display:inline-flex; align-items:center; gap:0.35em;">
@@ -1449,8 +1468,16 @@
 				</span>
 				Belépve
 			</span>
-			<a class="auth-btn" href="/.auth/logout">Kilépés</a>
+			<a class="auth-btn" href="#">Kilépés</a>
 		</div>
+        </div>
+        <div class="profile-switcher" id="profile-switcher">
+            <label for="profile-select">Megtekintett profil:</label>
+            <select id="profile-select" aria-label="Megtekintett profil">
+                <option value="tamas">Filus Tamás</option>
+                <option value="reka">Laudon Réka</option>
+                <option value="eni">Filus Enikő</option>
+            </select>
         </div>
     </header>
 
@@ -1473,7 +1500,7 @@
 
     <section class="dashboard-calendar" aria-label="Műszaknaptár">
         <div class="desktop-section-heading"><span>📅 Műszaknaptár</span><small>Kattints egy napra a részletekért</small></div>
-        <div class="felmondas-visszaszamlalo" id="felmondas-visszaszamlalo" aria-live="polite">
+        <div class="felmondas-visszaszamlalo" id="felmondas-visszaszamlalo" aria-live="polite" style="display: none;">
             <div class="felmondas-visszaszamlalo-ikon" aria-hidden="true">⏳</div>
             <div class="felmondas-visszaszamlalo-szoveg">
                 <strong id="felmondas-visszaszamlalo-ertek">Visszaszámlálás betöltése…</strong>
@@ -1565,6 +1592,8 @@
 
 </div>
 
+<script src="https://alcdn.msauth.net/browser/2.35.0/js/msal-browser.min.js"></script>
+
 <script>
 
 	let temaAtmenetIdozito;
@@ -1654,7 +1683,7 @@
 		btn.innerHTML = osszegRejtve ? ATHUZOTT_SZEM_IKON : SZEM_IKON;
 
 		if (!isOwner) {
-			btn.title = "Az összeg megjelenítéséhez ownerként kell bejelentkezni";
+			btn.title = "Az összeg megjelenítéséhez jelentkezz be";
 			btn.style.opacity = "0.55";
 			btn.style.cursor = "not-allowed";
 		} else {
@@ -1759,6 +1788,9 @@
 		return muszakModositasok[datumKulcs];
 	}
 
+	// Réka és Eni üres beosztással indulnak; nincs automatikus ciklusuk.
+	if (selectedProfile === "reka" || selectedProfile === "eni") return "ures";
+
 	const napokKulonbseg =
 		Math.round((napKezdet - HORGONY) / 86400000);
 
@@ -1858,6 +1890,17 @@
 			];
 		}
 
+		const profilMuszakok = {
+			reka: { nyitas: ["08:00", "16:00"], zaras: ["11:00", "19:00"], szombat: ["10:00", "18:00"] },
+			eni: { nyitas: null, zaras: ["16:30", "20:30"] }
+		};
+		const idopont = profilMuszakok[selectedProfile]?.[tipus];
+		if (idopont) {
+			const [kezdes, befejezes] = idopont;
+			const [kezdesOra, kezdesPerc] = kezdes.split(":").map(Number);
+			const [veOra, vePerc] = befejezes.split(":").map(Number);
+			return [new Date(ev, honap, napSzam, kezdesOra, kezdesPerc), new Date(ev, honap, napSzam, veOra, vePerc)];
+		}
 		return null;
 	}
 
@@ -2383,6 +2426,12 @@
 
 	function frissitFizu() {
 
+		if (selectedProfile === "reka" || selectedProfile === "eni") {
+			const statusz = document.getElementById("fizu-status");
+			if (statusz) statusz.textContent = "A bérszámítás jelenleg nincs bekapcsolva.";
+			return;
+		}
+
 		const most = new Date();
 
 
@@ -2551,7 +2600,13 @@
 
 			let muszakNev;
 
-			if (aktivTipus === "nappal") {
+			if (aktivTipus === "nyitas") {
+				muszakNev = "🌅 Nyitás";
+			} else if (aktivTipus === "zaras") {
+				muszakNev = "🌇 Zárás";
+			} else if (aktivTipus === "szombat") {
+				muszakNev = "🛍️ Szombati műszak";
+			} else if (aktivTipus === "nappal") {
 
 				muszakNev =
 					"🌞 Nappalos műszak";
@@ -2582,16 +2637,28 @@
 					"🌙 Éjszakás műszak";
 			}
 
-			statusSzoveg = isOwner
-				? muszakNev + " – megy a számláló!"
-				: muszakNev;
+			if (selectedProfile === "tamas" && isOwner) {
+				statusSzoveg = muszakNev + " – megy a számláló!";
+			} else {
+				const kezdes = aktivIntervallum[0].toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" });
+				const vege = aktivIntervallum[1].toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" });
+				statusSzoveg = muszakNev + " (" + kezdes + "–" + vege + ")";
+			}
 
 		} else {
 
 			const maiTipus =
 				muszakTipus(most);
 
-			if (maiTipus === "szabad") {
+			if (maiTipus === "ures") {
+				statusSzoveg = "📅 Még nincs beosztás";
+			} else if (maiTipus === "nyitas") {
+				statusSzoveg = "🌅 Nyitás – az időpont még nincs megadva.";
+			} else if (maiTipus === "zaras") {
+				statusSzoveg = "🌇 Zárás";
+			} else if (maiTipus === "szombat") {
+				statusSzoveg = "🛍️ Szombati műszak";
+			} else if (maiTipus === "szabad") {
 
 				statusSzoveg = isOwner
 					? "😴 Ma szabadnap van, a számláló most nem nő."
@@ -2790,7 +2857,19 @@
 			let jel = "";
 
 
-			if (tipus === "nappal") {
+			if (tipus === "ures") {
+				osztaly += "nap-ures";
+				jel = "";
+			} else if (tipus === "nyitas") {
+				osztaly += "nap-nappal";
+				jel = "🌅";
+			} else if (tipus === "zaras") {
+				osztaly += "nap-ejszaka";
+				jel = "🌇";
+			} else if (tipus === "szombat") {
+				osztaly += "nap-nappal";
+				jel = "🛍️";
+			} else if (tipus === "nappal") {
 
 				osztaly += "nap-nappal";
 				jel = "🌞";
@@ -2898,149 +2977,242 @@
 
 
 	/* =========================
-	   AUTH / OWNER ELLENŐRZÉS
+	   ENTRA EXTERNAL ID AUTH
 	   ========================= */
 
-	let isOwner = false;
+	const TENANT_ID = "86781723-aefe-44af-837b-bc1abdaf1a05";
+	const CLIENT_ID = "d36934be-a868-45b7-a097-9c31a2f5505e";
+	const API_SCOPE = "api://6b79a267-32cd-42db-a8c9-5971e5afc4a1/access_as_user";
+	const AUTHORITY = "https://beofizu.ciamlogin.com/" + TENANT_ID;
+
+	const msalApp = new msal.PublicClientApplication({
+		auth: {
+			clientId: CLIENT_ID,
+			authority: AUTHORITY,
+			knownAuthorities: [
+				"beofizu.ciamlogin.com",
+				TENANT_ID + ".ciamlogin.com"
+			],
+			redirectUri: window.location.origin + "/",
+			postLogoutRedirectUri: window.location.origin + "/"
+		},
+		cache: { cacheLocation: "sessionStorage" }
+	});
+
+	let isOwner = false; // Csak a belépett felhasználó saját profilja szerkeszthető.
 	let bejelentkezve = false;
+	let currentProfile = null;
+	let selectedProfile = null;
+	let currentAccount = null;
+
+	function apiReadUrl(path) {
+		if (!selectedProfile || selectedProfile === currentProfile) return path;
+		return path + (path.includes("?") ? "&" : "?") + "profile=" + encodeURIComponent(selectedProfile);
+	}
+
+	function profilMegjelenitese(profile) {
+		const nevek = {
+			tamas: "Filus Tamás",
+			reka: "Laudon Réka",
+			eni: "Filus Enikő"
+		};
+		return nevek[profile] || "Bejelentkezett felhasználó";
+	}
+
+	async function acquireApiToken() {
+		const account = msalApp.getActiveAccount() || currentAccount || msalApp.getAllAccounts()[0];
+		if (!account) throw new Error("Nincs bejelentkezett Microsoft-fiók.");
+		msalApp.setActiveAccount(account);
+		currentAccount = account;
+		try {
+			const result = await msalApp.acquireTokenSilent({ account, scopes: [API_SCOPE] });
+			return result.accessToken;
+		} catch (error) {
+			const interactionNeeded =
+				error instanceof msal.InteractionRequiredAuthError ||
+				(error && ["interaction_required", "login_required", "consent_required"].includes(error.errorCode));
+			if (interactionNeeded) await msalApp.acquireTokenRedirect({ account, scopes: [API_SCOPE] });
+			throw error;
+		}
+	}
+
+	async function apiFetch(url, options = {}) {
+		const accessToken = await acquireApiToken();
+		const headers = new Headers(options.headers || {});
+		headers.set("X-API-Authorization", "Bearer " + accessToken);
+		return window.fetch(url, { ...options, headers });
+	}
+
+	function bejelentkezesInditasa() {
+		return msalApp.loginRedirect({ scopes: [API_SCOPE] });
+	}
+
+	function kijelentkezesInditasa() {
+		const account = msalApp.getActiveAccount() || currentAccount;
+		return msalApp.logoutRedirect({ account: account || undefined, postLogoutRedirectUri: window.location.origin + "/" });
+	}
 
 	async function authAllapotBetoltese() {
-
 		try {
-
-			const response = await fetch("/.auth/me", {
-				headers: {
-					"Accept": "application/json"
-				}
-			});
-
-			if (!response.ok) {
-				throw new Error("HTTP " + response.status);
-			}
-
-			const adat = await response.json();
-			const principal = adat.clientPrincipal;
-
-			if (principal) {
-
-				bejelentkezve = true;
-
-				const szerepkorok =
-					Array.isArray(principal.userRoles)
-						? principal.userRoles
-						: [];
-
-				isOwner = szerepkorok.includes("owner");
-
-			} else {
-
+			const redirectResult = await msalApp.handleRedirectPromise();
+			if (redirectResult && redirectResult.account) msalApp.setActiveAccount(redirectResult.account);
+			currentAccount = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0] || null;
+			if (!currentAccount) {
 				bejelentkezve = false;
 				isOwner = false;
+				currentProfile = null;
+				selectedProfile = null;
+				frissitAuthFelulet();
+				return false;
 			}
 
+			msalApp.setActiveAccount(currentAccount);
+			const accessToken = await acquireApiToken();
+			const response = await window.fetch("/api/auth-check", {
+				method: "GET",
+				headers: { "X-API-Authorization": "Bearer " + accessToken, "Accept": "application/json" }
+			});
+			const result = await response.json().catch(() => ({}));
+			if (!response.ok || result.authenticated !== true || !result.profile) {
+				throw new Error(result.hiba || "A szerver nem fogadta el a bejelentkezést (HTTP " + response.status + ").");
+			}
+			currentProfile = result.profile;
+			selectedProfile = currentProfile;
+			bejelentkezve = true;
+			isOwner = selectedProfile === currentProfile;
 		} catch (error) {
-
-			console.error(
-				"Nem sikerült lekérni a bejelentkezési állapotot:",
-				error
-			);
-
+			console.error("Nem sikerült ellenőrizni a bejelentkezést:", error);
 			bejelentkezve = false;
 			isOwner = false;
+			currentProfile = null;
+			selectedProfile = null;
+			currentAccount = null;
+			if (error && error.errorCode) {
+				const status = document.getElementById("auth-error");
+				if (status) status.textContent = "Bejelentkezési hiba: " + error.message;
+			}
 		}
-
 		frissitAuthFelulet();
+		return bejelentkezve;
 	}
 
 	function frissitAuthFelulet() {
+		const loginBtn = document.getElementById("auth-login-btn");
+		const loggedIn = document.getElementById("auth-logged-in");
+		const displayName = profilMegjelenitese(currentProfile);
+		const viewedName = profilMegjelenitese(selectedProfile || currentProfile);
+		const ownProfileSelected = bejelentkezve && selectedProfile === currentProfile;
+		const payEnabled = selectedProfile === "tamas";
+		const payPanel = document.getElementById("desktop-pay");
+		const payHistory = document.querySelector(".dashboard-history");
+		const payDebug = document.getElementById("ber-debug");
+		if (payPanel) payPanel.style.display = ownProfileSelected && payEnabled ? "" : "none";
+		if (payHistory) payHistory.style.display = ownProfileSelected && payEnabled ? "" : "none";
+		if (payDebug) {
+			payDebug.style.display = ownProfileSelected && payEnabled ? "block" : "none";
+			if (!ownProfileSelected) payDebug.removeAttribute("open");
+		}
+		const payInfo = document.getElementById("fizu-info");
+		if (payInfo) payInfo.style.display = ownProfileSelected && payEnabled ? "" : "none";
+		const switcher = document.getElementById("profile-switcher");
+		const profileSelect = document.getElementById("profile-select");
+		if (switcher) switcher.style.display = bejelentkezve && currentProfile === "tamas" ? "flex" : "none";
+		if (profileSelect && selectedProfile) profileSelect.value = selectedProfile;
+		if (loginBtn) loginBtn.style.display = bejelentkezve ? "none" : "inline-flex";
+		if (loggedIn) loggedIn.style.display = bejelentkezve ? "flex" : "none";
+		const mobileStatus = loggedIn && loggedIn.querySelector(".auth-status");
+		if (mobileStatus) mobileStatus.textContent = "Belépve: " + displayName;
 
-		const loginBtn =
-			document.getElementById("auth-login-btn");
-
-		const loggedIn =
-			document.getElementById("auth-logged-in");
-
-		if (bejelentkezve) {
-			loginBtn.style.display = "none";
-			loggedIn.style.display = "flex";
-		} else {
-			loginBtn.style.display = "inline-flex";
-			loggedIn.style.display = "none";
+		const desktopAccount = document.getElementById("desktop-account");
+		const desktopLogin = document.getElementById("desktop-login");
+		const desktopAccountName = document.getElementById("desktop-account-name");
+		const desktopAccountRole = document.getElementById("desktop-account-role");
+		if (desktopAccount && desktopLogin) {
+			desktopAccount.style.display = bejelentkezve ? "block" : "none";
+			desktopLogin.style.display = bejelentkezve ? "none" : "flex";
+			if (desktopAccountName) desktopAccountName.textContent = displayName;
+			if (desktopAccountRole) desktopAccountRole.textContent =
+				selectedProfile && selectedProfile !== currentProfile
+					? "Megtekintés: " + viewedName
+					: "Saját adatok";
 		}
 
-        // Az asztali oldalsáv a meglévő Microsoft / owner állapotot tükrözi.
-        const desktopAccount = document.getElementById("desktop-account");
-        const desktopLogin = document.getElementById("desktop-login");
-        const desktopAccountName = document.getElementById("desktop-account-name");
-        const desktopAccountRole = document.getElementById("desktop-account-role");
-        if (desktopAccount && desktopLogin) {
-            desktopAccount.style.display = bejelentkezve ? "block" : "none";
-            desktopLogin.style.display = bejelentkezve ? "none" : "flex";
-            if (desktopAccountName) desktopAccountName.textContent = isOwner ? "Filus Tamás" : "Bejelentkezett felhasználó";
-            if (desktopAccountRole) desktopAccountRole.textContent = isOwner ? "owner" : "felhasználó";
-        }
-
-		if (!isOwner) {
-			osszegRejtve = true;
-		}
-
+		if (!isOwner) osszegRejtve = true;
 		document.querySelectorAll(".owner-beradat").forEach(function (el) {
-			if (!isOwner) {
-				el.style.display = "none";
-				return;
-			}
-
-			// Az owner nézetben visszaadjuk az elem eredeti megjelenési módját.
-			// A CSS-ben az .owner-beradat alapból display:none, ezért az üres
-			// inline display nem elég a visszakapcsoláshoz.
-			if (el.id === "privacy-btn") {
-				el.style.display = "flex";
-			} else {
-				el.style.display = "block";
-			}
+			if (!isOwner || !payEnabled) el.style.display = "none";
+			else el.style.display = el.id === "privacy-btn" ? "flex" : "block";
 		});
-
 		const berDebug = document.getElementById("ber-debug");
-
 		if (berDebug) {
-			berDebug.style.display = isOwner ? "block" : "none";
-
-			if (!isOwner) {
-				berDebug.removeAttribute("open");
-			}
+			berDebug.style.display = isOwner && payEnabled ? "block" : "none";
+			if (!isOwner || !payEnabled) berDebug.removeAttribute("open");
 		}
-
 		frissitPrivacyGomb();
-        fizetesElozmenyekMegjelenitese();
-        const privLegend = document.querySelector(".owner-legend-entry");
-        if (privLegend) privLegend.style.display = isOwner ? "flex" : "none";
-        if (window.matchMedia("(min-width: 1100px)").matches) {
-            const history = document.getElementById("fizetes-elozmenyek");
-            if (history) history.open = isOwner;
-        }
-        frissitFizu();
-    }
-
-    function frissitSzerkesztesJog() {
-
-		const ownerResz =
-			document.getElementById("owner-szerkesztes");
-
-		const nemOwnerUzenet =
-			document.getElementById("nem-owner-uzenet");
-
-		if (!ownerResz || !nemOwnerUzenet) {
-			return;
+		fizetesElozmenyekMegjelenitese();
+		const privLegend = document.querySelector(".owner-legend-entry");
+		if (privLegend) privLegend.style.display = isOwner && payEnabled ? "flex" : "none";
+		if (window.matchMedia("(min-width: 1100px)").matches) {
+			const history = document.getElementById("fizetes-elozmenyek");
+			if (history) history.open = bejelentkezve && payEnabled;
 		}
-
-		if (isOwner) {
-			ownerResz.style.display = "block";
-			nemOwnerUzenet.style.display = "none";
-		} else {
-			ownerResz.style.display = "none";
-			nemOwnerUzenet.style.display = "block";
-		}
+		const countdown = document.getElementById("felmondas-visszaszamlalo");
+		if (countdown) countdown.style.display = selectedProfile === "tamas" ? "" : "none";
+		frissitSzerkesztesJog();
+		frissitFizu();
 	}
+
+	function frissitSzerkesztesJog() {
+		const ownerResz = document.getElementById("owner-szerkesztes");
+		const nemOwnerUzenet = document.getElementById("nem-owner-uzenet");
+		if (!ownerResz || !nemOwnerUzenet) return;
+		ownerResz.style.display = isOwner ? "block" : "none";
+		nemOwnerUzenet.style.display = isOwner ? "none" : "block";
+		ownerResz.querySelectorAll("[data-profiles]").forEach(function (gomb) {
+			gomb.style.display = gomb.dataset.profiles.split(",").includes(selectedProfile) ? "" : "none";
+		});
+	}
+
+	async function profilValtas(profile) {
+		if (currentProfile !== "tamas" || !["tamas", "reka", "eni"].includes(profile)) return;
+		if (profile === selectedProfile) return;
+
+		selectedProfile = profile;
+		isOwner = selectedProfile === currentProfile;
+		muszakModositasok = {};
+		naptarBejegyzesek = {};
+		fizetesElozmenyek = {};
+
+		frissitAuthFelulet();
+		frissitFizu();
+		generalMuszakNaptar();
+
+		await Promise.all([
+			muszakModositasokBetoltese(),
+			naptarBejegyzesekBetoltese(),
+			fizetesElozmenyekBetoltese()
+		]);
+		frissitFizu();
+		generalMuszakNaptar();
+	}
+
+	document.getElementById("profile-select")?.addEventListener("change", function (event) {
+		profilValtas(event.target.value);
+	});
+
+	document.getElementById("auth-login-btn")?.addEventListener("click", function (event) {
+		event.preventDefault();
+		bejelentkezesInditasa();
+	});
+	document.getElementById("desktop-login")?.addEventListener("click", function (event) {
+		event.preventDefault();
+		bejelentkezesInditasa();
+	});
+	document.querySelectorAll(".desktop-logout, #auth-logged-in a.auth-btn").forEach(function (button) {
+		button.addEventListener("click", function (event) {
+			event.preventDefault();
+			kijelentkezesInditasa();
+		});
+	});
 
 	/* =========================
 	   INTERAKTÍV MŰSZAKMENÜ
@@ -3060,9 +3232,11 @@
 
 	async function muszakModositasokBetoltese() {
 
+		const requestedProfile = selectedProfile;
+
 		try {
 
-			const response = await fetch("/api/muszakok", {
+			const response = await apiFetch(apiReadUrl("/api/muszakok"), {
 				method: "GET",
 				headers: {
 					"Accept": "application/json"
@@ -3073,13 +3247,18 @@
 				throw new Error("HTTP " + response.status);
 			}
 
-			muszakModositasok = await response.json();
+			const adatok = await response.json();
+			if (selectedProfile !== requestedProfile) return;
+
+			muszakModositasok = adatok;
 
 			frissitFizu();
 			generalMuszakNaptar();
 			frissitFelmondasiVisszaszamlalo();
 
 		} catch (error) {
+
+			if (selectedProfile !== requestedProfile) return;
 
 			console.error(
 				"Nem sikerült betölteni a műszakmódosításokat:",
@@ -3134,7 +3313,7 @@
 	async function muszakBeallit(tipus) {
 
 		if (!isOwner) {
-			alert("A műszakok szerkesztéséhez ownerként kell bejelentkezned.");
+			alert("A műszakok szerkesztéséhez be kell jelentkezned.");
 			return;
 		}
 
@@ -3152,7 +3331,7 @@
 
 		try {
 
-			const response = await fetch("/api/muszakok", {
+			const response = await apiFetch("/api/muszakok", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -3215,7 +3394,7 @@
 	async function muszakTorol() {
 
 		if (!isOwner) {
-			alert("A műszakok szerkesztéséhez ownerként kell bejelentkezned.");
+			alert("A műszakok szerkesztéséhez be kell jelentkezned.");
 			return;
 		}
 
@@ -3233,7 +3412,7 @@
 
 		try {
 
-			const response = await fetch(
+			const response = await apiFetch(
 				"/api/muszakok?datum=" +
 					encodeURIComponent(datum),
 				{
@@ -3302,9 +3481,11 @@
 
 	async function naptarBejegyzesekBetoltese() {
 
+		const requestedProfile = selectedProfile;
+
 		try {
 
-			const response = await fetch("/api/naptar", {
+			const response = await apiFetch(apiReadUrl("/api/naptar"), {
 				method: "GET",
 				headers: {
 					"Accept": "application/json"
@@ -3315,11 +3496,16 @@
 				throw new Error("HTTP " + response.status);
 			}
 
-			naptarBejegyzesek = await response.json();
+			const adatok = await response.json();
+			if (selectedProfile !== requestedProfile) return;
+
+			naptarBejegyzesek = adatok;
 
 			generalMuszakNaptar();
 
 		} catch (error) {
+
+			if (selectedProfile !== requestedProfile) return;
 
 			console.error(
 				"Nem sikerült betölteni a naptárbejegyzéseket:",
@@ -3402,7 +3588,7 @@
 	async function naptarBejegyzesMent() {
 
 		if (!isOwner) {
-			alert("A naptár szerkesztéséhez ownerként kell bejelentkezned.");
+			alert("A naptár szerkesztéséhez be kell jelentkezned.");
 			return;
 		}
 
@@ -3431,7 +3617,7 @@
 
 		try {
 
-			const response = await fetch("/api/naptar", {
+			const response = await apiFetch("/api/naptar", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -3486,7 +3672,7 @@
 	async function naptarBejegyzesTorol() {
 
 		if (!isOwner) {
-			alert("A naptár szerkesztéséhez ownerként kell bejelentkezned.");
+			alert("A naptár szerkesztéséhez be kell jelentkezned.");
 			return;
 		}
 
@@ -3498,7 +3684,7 @@
 
 		try {
 
-			const response = await fetch(
+			const response = await apiFetch(
 				"/api/naptar?datum=" +
 					encodeURIComponent(datum),
 				{
@@ -3553,6 +3739,7 @@
 
 	function frissitBerDebug() {
 
+		if (selectedProfile !== "tamas") return;
 		const debugDoboz =
 			document.getElementById("ber-debug-tartalom");
 
@@ -3661,7 +3848,7 @@
 	function fizetesElozmenyekKattintasTiltas(event) {
 		const doboz = document.getElementById("fizetes-elozmenyek");
 
-		if (!isOwner && doboz) {
+		if (!bejelentkezve && doboz) {
 			event.preventDefault();
 			doboz.removeAttribute("open");
 		}
@@ -3682,7 +3869,7 @@
 		const summary =
 			document.getElementById("fizetes-elozmenyek-summary");
 
-		if (!isOwner) {
+		if (!bejelentkezve) {
 			doboz.style.display = "block";
 			doboz.classList.add("zarolt");
 			doboz.removeAttribute("open");
@@ -3690,7 +3877,7 @@
 			if (summary) {
 				summary.textContent = "🔒 Korábbi fizetések";
 				summary.title = bejelentkezve
-					? "Ehhez owner jogosultság szükséges."
+					? "A saját adataid megtekintéséhez jelentkezz be."
 					: "A megnyitáshoz jelentkezz be.";
 			}
 
@@ -3743,7 +3930,9 @@
 
 	async function fizetesElozmenyekBetoltese() {
 
-		if (!isOwner) {
+		const requestedProfile = selectedProfile;
+
+		if (selectedProfile !== "tamas" || !bejelentkezve || !selectedProfile || selectedProfile !== currentProfile) {
 			fizetesElozmenyek = {};
 			fizetesElozmenyekMegjelenitese();
 			return;
@@ -3751,7 +3940,7 @@
 
 		try {
 
-			const response = await fetch("/api/fizetesek", {
+			const response = await apiFetch(apiReadUrl("/api/fizetesek"), {
 				method: "GET",
 				headers: {
 					"Accept": "application/json"
@@ -3762,10 +3951,15 @@
 				throw new Error("HTTP " + response.status);
 			}
 
-			fizetesElozmenyek = await response.json();
+			const adatok = await response.json();
+			if (selectedProfile !== requestedProfile) return;
+
+			fizetesElozmenyek = adatok;
 			fizetesElozmenyekMegjelenitese();
 
 		} catch (error) {
+
+			if (selectedProfile !== requestedProfile) return;
 
 			console.error(
 				"Nem sikerült betölteni a fizetéselőzményeket:",
@@ -3779,7 +3973,7 @@
 
 	async function elozoHonapAutomatikusMentese() {
 
-		if (!isOwner) {
+		if (!isOwner || selectedProfile !== "tamas") {
 			return;
 		}
 
@@ -3825,7 +4019,7 @@
 
 		try {
 
-			const response = await fetch("/api/fizetesek", {
+			const response = await apiFetch("/api/fizetesek", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -3879,21 +4073,25 @@
 		generalMuszakNaptar();
 		frissitPrivacyGomb();
 
-		await Promise.all([
-			muszakModositasokBetoltese(),
-			naptarBejegyzesekBetoltese(),
-			authAllapotBetoltese()
-		]);
+		// Először az Entra redirect és a backend oldali profil-hozzárendelés.
+		const authenticated = await authAllapotBetoltese();
 
-		// Csak a betöltött Azure műszakmódosítások után számoljuk a debug bontást.
-		frissitBerDebug();
-
-		if (isOwner) {
+		if (authenticated) {
+			// Üzleti API-k csak ellenőrzött access tokennel indulhatnak.
+			await Promise.all([
+				muszakModositasokBetoltese(),
+				naptarBejegyzesekBetoltese()
+			]);
+			frissitBerDebug();
 			await fizetesElozmenyekBetoltese();
 			await elozoHonapAutomatikusMentese();
+		} else {
+			muszakModositasok = {};
+			naptarBejegyzesek = {};
+			fizetesElozmenyek = {};
+			fizetesElozmenyekMegjelenitese();
 		}
 
-		fizetesElozmenyekMegjelenitese();
 		frissitFizu();
 		generalMuszakNaptar();
 	}
@@ -3940,23 +4138,29 @@
 
 			<div id="owner-szerkesztes" style="display:none;">
 			<div class="muszak-opciok">
-				<button class="muszak-opcio" onclick="muszakBeallit('nappal')">🌞 Nappalos</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka')">🌙 Éjszakás</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('szabad')">😴 Szabadnap</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('szabi')">🅂 Szabadság</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('tsz')">TSZ Többlet szabadság</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora_150')">🌞⚡ Nappalos túlóra (150%)</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora_150')">🌙⚡ Éjszakás túlóra (150%)</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('nappal_tulora')">🌞⚡ P-Nappalos túlóra (200%)</button>
-				<button class="muszak-opcio" onclick="muszakBeallit('ejszaka_tulora')">🌙⚡ P-Éjszakás túlóra (200%)</button>
-				<button class="muszak-opcio torles" onclick="muszakTorol()">↩ Alapbeosztás visszaállítása</button>
+				<button class="muszak-opcio" data-profiles="tamas" onclick="muszakBeallit('nappal')">🌞 Nappalos</button>
+				<button class="muszak-opcio" data-profiles="tamas" onclick="muszakBeallit('ejszaka')">🌙 Éjszakás</button>
+				<button class="muszak-opcio" data-profiles="tamas" onclick="muszakBeallit('szabad')">😴 Szabadnap</button>
+				<button class="muszak-opcio" data-profiles="tamas" onclick="muszakBeallit('szabi')">🅂 Szabadság</button>
+				<button class="muszak-opcio" data-profiles="tamas" onclick="muszakBeallit('tsz')">TSZ Többlet szabadság</button>
+				<button class="muszak-opcio" data-profiles="tamas" onclick="muszakBeallit('nappal_tulora_150')">🌞⚡ Nappalos túlóra (150%)</button>
+				<button class="muszak-opcio" data-profiles="tamas" onclick="muszakBeallit('ejszaka_tulora_150')">🌙⚡ Éjszakás túlóra (150%)</button>
+				<button class="muszak-opcio" data-profiles="tamas" onclick="muszakBeallit('nappal_tulora')">🌞⚡ P-Nappalos túlóra (200%)</button>
+				<button class="muszak-opcio" data-profiles="tamas" onclick="muszakBeallit('ejszaka_tulora')">🌙⚡ P-Éjszakás túlóra (200%)</button>
+				<button class="muszak-opcio torles" data-profiles="tamas" onclick="muszakTorol()">↩ Alapbeosztás visszaállítása</button>
+				<button class="muszak-opcio torles" data-profiles="reka,eni" onclick="muszakTorol()">↩ Műszak törlése</button>
+				<button class="muszak-opcio" data-profiles="reka,eni" onclick="muszakBeallit('nyitas')">🌅 Nyitás</button>
+				<button class="muszak-opcio" data-profiles="reka,eni" onclick="muszakBeallit('zaras')">🌇 Zárás</button>
+				<button class="muszak-opcio" data-profiles="reka,eni" onclick="muszakBeallit('szabad')">😴 Pihenő</button>
+				<button class="muszak-opcio" data-profiles="reka,eni" onclick="muszakBeallit('szabi')">🅂 Szabadság</button>
+				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('szombat')">🛍️ Szombat (10:00–18:00)</button>
 			</div>
 
 			<button class="naptar-bejegyzes-gomb" onclick="naptarModalMegnyitKivalasztottNapra()">🔴 Naptárbejegyzés</button>
 			</div>
 
 			<div id="nem-owner-uzenet" style="display:none; color:var(--muted); font-size:0.9em; line-height:1.5; margin-top:0.8em;">
-				A naptár megtekinthető, de szerkeszteni csak bejelentkezett ownerként lehet.
+				A naptár megtekinthető, szerkeszteni bejelentkezés után lehet.
 			</div>
 		<div id="muszak-mentes-statusz" class="mentes-statusz"></div>
 

@@ -4,7 +4,18 @@ const {
     TableServiceClient
 } = require("@azure/data-tables");
 
+const { authenticateRequest } = require("../lib/auth");
+
 const TABLA_NEV = "FizetesElozmenyek";
+
+
+function isValidMonthKey(value) {
+    if (typeof value !== "string" || !/^\d{4}-(?:0[1-9]|1[0-2])$/.test(value)) {
+        return false;
+    }
+    const year = Number(value.slice(0, 4));
+    return year >= 1;
+}
 
 function getConnectionString() {
 
@@ -50,7 +61,22 @@ app.http("fizetesekGet", {
     authLevel: "anonymous",
     route: "fizetesek",
 
-    handler: async () => {
+    handler: async (request) => {
+        const auth = await authenticateRequest(request);
+        if (!auth.ok) {
+            return { status: auth.status, jsonBody: { hiba: auth.error } };
+        }
+        const profile = auth.identity.profile;
+        if (profile !== "tamas") {
+            return { status: 403, jsonBody: { hiba: "A bérszámítás ezen a profilon nincs bekapcsolva." } };
+        }
+        const requestedProfile = request.query.get("profile");
+        if (requestedProfile && requestedProfile !== profile) {
+            return {
+                status: 403,
+                jsonBody: { hiba: "Másik profil fizetési adatai nem tekinthetők meg." }
+            };
+        }
 
         try {
 
@@ -63,7 +89,7 @@ app.http("fizetesekGet", {
                 const entity of client.listEntities({
                     queryOptions: {
                         filter:
-                            "PartitionKey eq 'fizetes'"
+                            "PartitionKey eq '" + profile + "'"
                     }
                 })
             ) {
@@ -108,11 +134,27 @@ app.http("fizetesekPost", {
     route: "fizetesek",
 
     handler: async (request) => {
+        const auth = await authenticateRequest(request);
+        if (!auth.ok) {
+            return { status: auth.status, jsonBody: { hiba: auth.error } };
+        }
+        const profile = auth.identity.profile;
+        if (profile !== "tamas") {
+            return { status: 403, jsonBody: { hiba: "A bérszámítás ezen a profilon nincs bekapcsolva." } };
+        }
 
         try {
 
-            const body =
-                await request.json();
+            let body;
+            try {
+                body = await request.json();
+            } catch (_) {
+                return { status: 400, jsonBody: { hiba: "Hibás JSON-kérés." } };
+            }
+
+            if (!body || typeof body !== "object" || Array.isArray(body)) {
+                return { status: 400, jsonBody: { hiba: "Érvénytelen kérésadat." } };
+            }
 
             const honap =
                 String(body.honap || "");
@@ -124,9 +166,13 @@ app.http("fizetesekPost", {
                 Number(body.ledolgozottOra);
 
             if (
-                !/^\d{4}-\d{2}$/.test(honap) ||
+                !isValidMonthKey(honap) ||
                 !Number.isFinite(kalkulaltNetto) ||
-                !Number.isFinite(ledolgozottOra)
+                kalkulaltNetto < 0 ||
+                kalkulaltNetto > 10000000 ||
+                !Number.isFinite(ledolgozottOra) ||
+                ledolgozottOra < 0 ||
+                ledolgozottOra > 744
             ) {
                 return {
                     status: 400,
@@ -145,7 +191,7 @@ app.http("fizetesekPost", {
 
                 const letezo =
                     await client.getEntity(
-                        "fizetes",
+                        profile,
                         honap
                     );
 
@@ -180,7 +226,7 @@ app.http("fizetesekPost", {
                 new Date().toISOString();
 
             await client.createEntity({
-                partitionKey: "fizetes",
+                partitionKey: profile,
                 rowKey: honap,
                 kalkulaltNetto:
                     Math.round(kalkulaltNetto),
