@@ -4,6 +4,19 @@ const { authenticateRequest } = require("../lib/auth");
 
 const TABLA_NEV = "MuszakModositasok";
 
+function isValidDateKey(value) {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return false;
+    }
+
+    const [year, month, day] = value.split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+
+    return date.getUTCFullYear() === year &&
+        date.getUTCMonth() === month - 1 &&
+        date.getUTCDate() === day;
+}
+
 function resolveReadProfile(request, ownProfile) {
     const requestedProfile = request.query.get("profile");
 
@@ -119,12 +132,21 @@ app.http("muszakokPost", {
 
         try {
 
-            const body = await request.json();
+            let body;
+            try {
+                body = await request.json();
+            } catch (_) {
+                return { status: 400, jsonBody: { hiba: "Hibás JSON-kérés." } };
+            }
+
+            if (!body || typeof body !== "object" || Array.isArray(body)) {
+                return { status: 400, jsonBody: { hiba: "Érvénytelen kérésadat." } };
+            }
 
             const datum = body.datum;
             const tipus = body.tipus;
 
-            if (!datum || !tipus) {
+            if (!isValidDateKey(datum) || !tipus) {
 
                 return {
                     status: 400,
@@ -213,7 +235,7 @@ app.http("muszakokDelete", {
             const datum =
                 request.query.get("datum");
 
-            if (!datum) {
+            if (!isValidDateKey(datum)) {
 
                 return {
                     status: 400,
