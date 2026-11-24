@@ -3090,6 +3090,8 @@
 
 	async function muszakModositasokBetoltese() {
 
+		const requestedProfile = selectedProfile;
+
 		try {
 
 			const response = await apiFetch(apiReadUrl("/api/muszakok"), {
@@ -3103,12 +3105,17 @@
 				throw new Error("HTTP " + response.status);
 			}
 
-			muszakModositasok = await response.json();
+			const adatok = await response.json();
+			if (selectedProfile !== requestedProfile) return;
+
+			muszakModositasok = adatok;
 
 			frissitFizu();
 			generalMuszakNaptar();
 
 		} catch (error) {
+
+			if (selectedProfile !== requestedProfile) return;
 
 			console.error(
 				"Nem sikerült betölteni a műszakmódosításokat:",
@@ -3328,6 +3335,8 @@
 
 	async function naptarBejegyzesekBetoltese() {
 
+		const requestedProfile = selectedProfile;
+
 		try {
 
 			const response = await apiFetch(apiReadUrl("/api/naptar"), {
@@ -3341,11 +3350,16 @@
 				throw new Error("HTTP " + response.status);
 			}
 
-			naptarBejegyzesek = await response.json();
+			const adatok = await response.json();
+			if (selectedProfile !== requestedProfile) return;
+
+			naptarBejegyzesek = adatok;
 
 			generalMuszakNaptar();
 
 		} catch (error) {
+
+			if (selectedProfile !== requestedProfile) return;
 
 			console.error(
 				"Nem sikerült betölteni a naptárbejegyzéseket:",
@@ -3769,6 +3783,8 @@
 
 	async function fizetesElozmenyekBetoltese() {
 
+		const requestedProfile = selectedProfile;
+
 		if (!bejelentkezve || !selectedProfile || selectedProfile !== currentProfile) {
 			fizetesElozmenyek = {};
 			fizetesElozmenyekMegjelenitese();
@@ -3788,10 +3804,15 @@
 				throw new Error("HTTP " + response.status);
 			}
 
-			fizetesElozmenyek = await response.json();
+			const adatok = await response.json();
+			if (selectedProfile !== requestedProfile) return;
+
+			fizetesElozmenyek = adatok;
 			fizetesElozmenyekMegjelenitese();
 
 		} catch (error) {
+
+			if (selectedProfile !== requestedProfile) return;
 
 			console.error(
 				"Nem sikerült betölteni a fizetéselőzményeket:",
