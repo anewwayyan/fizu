@@ -6,7 +6,6 @@ app.http("authCheck", {
     authLevel: "anonymous",
     route: "auth-check",
     handler: async (request) => {
-        const frontendTokenFingerprint = request.headers.get("x-frontend-token-fingerprint") || null;
         const result = await authenticateRequest(request);
 
         if (!result.ok) {
@@ -14,25 +13,18 @@ app.http("authCheck", {
                 status: result.status,
                 jsonBody: {
                     authenticated: false,
-                    hiba: result.error,
-                    diagnosticCode: result.diagnosticCode || null,
-                    diagnosticAlgorithm: result.diagnosticAlgorithm || null,
-                    diagnosticKid: result.diagnosticKid || null,
-                    diagnosticTokenFingerprint: result.diagnosticTokenFingerprint || null,
-                    receivedFrontendTokenFingerprint: frontendTokenFingerprint
+                    hiba: result.error
                 }
             };
         }
 
+        // The SPA only needs the verified profile to initialize its own session.
+        // Do not expose tenant, object ID, scopes, or token diagnostics to the browser.
         return {
             status: 200,
             jsonBody: {
                 authenticated: true,
-                receivedFrontendTokenFingerprint: frontendTokenFingerprint,
-                tenantId: result.identity.tenantId,
-                oid: result.identity.oid,
-                profile: result.identity.profile,
-                scopes: result.identity.scopes
+                profile: result.identity.profile
             }
         };
     }
