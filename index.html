@@ -2150,6 +2150,11 @@
 			return true;
 		}
 
+		// December 24 is a public holiday from 2026 onward.
+		if (ev >= 2026 && honap === 12 && nap === 24) {
+			return true;
+		}
+
 		const husvet = husvetVasarnap(ev);
 
 		const mozgoUnnepek = [
