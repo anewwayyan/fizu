@@ -2611,9 +2611,13 @@
 					"🌙 Éjszakás műszak";
 			}
 
-			statusSzoveg = isOwner
-				? muszakNev + " – megy a számláló!"
-				: muszakNev;
+			if (selectedProfile === "tamas" && isOwner) {
+				statusSzoveg = muszakNev + " – megy a számláló!";
+			} else {
+				const kezdes = aktivIntervallum[0].toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" });
+				const vege = aktivIntervallum[1].toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" });
+				statusSzoveg = muszakNev + " (" + kezdes + "–" + vege + ")";
+			}
 
 		} else {
 
