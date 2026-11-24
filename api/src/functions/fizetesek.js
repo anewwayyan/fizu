@@ -9,6 +9,14 @@ const { authenticateRequest } = require("../lib/auth");
 const TABLA_NEV = "FizetesElozmenyek";
 
 
+function isValidMonthKey(value) {
+    if (typeof value !== "string" || !/^\d{4}-(?:0[1-9]|1[0-2])$/.test(value)) {
+        return false;
+    }
+    const year = Number(value.slice(0, 4));
+    return year >= 1;
+}
+
 function getConnectionString() {
 
     const connectionString =
@@ -131,8 +139,16 @@ app.http("fizetesekPost", {
 
         try {
 
-            const body =
-                await request.json();
+            let body;
+            try {
+                body = await request.json();
+            } catch (_) {
+                return { status: 400, jsonBody: { hiba: "Hibás JSON-kérés." } };
+            }
+
+            if (!body || typeof body !== "object" || Array.isArray(body)) {
+                return { status: 400, jsonBody: { hiba: "Érvénytelen kérésadat." } };
+            }
 
             const honap =
                 String(body.honap || "");
@@ -144,9 +160,13 @@ app.http("fizetesekPost", {
                 Number(body.ledolgozottOra);
 
             if (
-                !/^\d{4}-\d{2}$/.test(honap) ||
+                !isValidMonthKey(honap) ||
                 !Number.isFinite(kalkulaltNetto) ||
-                !Number.isFinite(ledolgozottOra)
+                kalkulaltNetto < 0 ||
+                kalkulaltNetto > 10000000 ||
+                !Number.isFinite(ledolgozottOra) ||
+                ledolgozottOra < 0 ||
+                ledolgozottOra > 744
             ) {
                 return {
                     status: 400,
