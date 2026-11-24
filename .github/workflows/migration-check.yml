@@ -1,0 +1,27 @@
+name: Migration check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migration-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Azure Tables SDK
+        run: npm install --no-save @azure/data-tables
+
+      - name: Run read-only migration check
+        env:
+          MuszakModositasokStorage: ${{ secrets.MuszakModositasokStorage }}
+        run: node scripts/migration-check.js
