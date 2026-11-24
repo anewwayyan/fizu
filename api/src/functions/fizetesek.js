@@ -8,6 +8,34 @@ const { authenticateRequest } = require("../lib/auth");
 
 const TABLA_NEV = "FizetesElozmenyek";
 
+function resolveReadProfile(request, ownProfile) {
+    const requestedProfile = request.query.get("profile");
+
+    if (!requestedProfile || requestedProfile === ownProfile) {
+        return { ok: true, profile: ownProfile };
+    }
+
+    // Only Tamás may read another profile. The identity comes from the
+    // verified Entra token, never from a client-supplied role.
+    if (ownProfile !== "tamas") {
+        return {
+            ok: false,
+            status: 403,
+            error: "Nincs jogosultság másik profil adatainak megtekintéséhez."
+        };
+    }
+
+    if (!["tamas", "reka", "eni"].includes(requestedProfile)) {
+        return {
+            ok: false,
+            status: 400,
+            error: "Érvénytelen profil."
+        };
+    }
+
+    return { ok: true, profile: requestedProfile };
+}
+
 function getConnectionString() {
 
     const connectionString =
@@ -57,7 +85,11 @@ app.http("fizetesekGet", {
         if (!auth.ok) {
             return { status: auth.status, jsonBody: { hiba: auth.error } };
         }
-        const profile = auth.identity.profile;
+        const readAccess = resolveReadProfile(request, auth.identity.profile);
+        if (!readAccess.ok) {
+            return { status: readAccess.status, jsonBody: { hiba: readAccess.error } };
+        }
+        const profile = readAccess.profile;
 
         try {
 
