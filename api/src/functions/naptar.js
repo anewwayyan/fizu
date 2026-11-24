@@ -32,6 +32,19 @@ function resolveReadProfile(request, ownProfile) {
     return { ok: true, profile: requestedProfile };
 }
 
+function isValidDateKey(value) {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return false;
+    }
+
+    const [year, month, day] = value.split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+
+    return date.getUTCFullYear() === year &&
+        date.getUTCMonth() === month - 1 &&
+        date.getUTCDate() === day;
+}
+
 function getTableClient() {
     const connectionString =
         process.env.MuszakModositasokStorage;
@@ -124,14 +137,32 @@ app.http("naptarPost", {
 
         try {
 
-            const body = await request.json();
+            let body;
+            try {
+                body = await request.json();
+            } catch (_) {
+                return { status: 400, jsonBody: { hiba: "Hibás JSON-kérés." } };
+            }
+
+            if (!body || typeof body !== "object" || Array.isArray(body)) {
+                return { status: 400, jsonBody: { hiba: "Érvénytelen kérésadat." } };
+            }
 
             const datum = body.datum;
             const cim = body.cim;
-            const megjegyzes = body.megjegyzes || "";
-            const ido = body.ido || "";
+            const megjegyzes = body.megjegyzes === undefined ? "" : body.megjegyzes;
+            const ido = body.ido === undefined ? "" : body.ido;
 
-            if (!datum || !cim) {
+            if (
+                !isValidDateKey(datum) ||
+                typeof cim !== "string" ||
+                !cim.trim() ||
+                cim.length > 150 ||
+                typeof megjegyzes !== "string" ||
+                megjegyzes.length > 2000 ||
+                typeof ido !== "string" ||
+                (ido !== "" && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(ido))
+            ) {
 
                 return {
                     status: 400,
@@ -202,7 +233,7 @@ app.http("naptarDelete", {
             const datum =
                 request.query.get("datum");
 
-            if (!datum) {
+            if (!isValidDateKey(datum)) {
 
                 return {
                     status: 400,
