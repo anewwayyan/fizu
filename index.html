@@ -1947,7 +1947,13 @@
 		const muszakAlapTipus = tipus.startsWith("nyitas_") ? "nyitas" : tipus.startsWith("zaras_") ? "zaras" : tipus;
 		const profilMuszakok = {
 			reka: { nyitas: ["08:00", "16:00"], zaras: ["11:00", "19:00"], szombat: ["10:00", "18:00"] },
-			eni: { nyitas: null, zaras: ["16:30", "20:30"] }
+			eni: {
+				eni_0730_1330: ["07:30", "13:30"], eni_1030_1530: ["10:30", "15:30"],
+				eni_1530_2030: ["15:30", "20:30"], eni_1630_2030: ["16:30", "20:30"],
+				eni_0800_1500: ["08:00", "15:00"], eni_0900_1300: ["09:00", "13:00"],
+				eni_1000_1500: ["10:00", "15:00"], eni_1100_1600: ["11:00", "16:00"],
+				eni_1300_2030: ["13:00", "20:30"], eni_1500_2030: ["15:00", "20:30"]
+			}
 		};
 		const idopont = profilMuszakok[selectedProfile]?.[muszakAlapTipus];
 		if (idopont) {
@@ -2012,6 +2018,11 @@
 			ejszaka_tulora_150: "🌙⚡ Éjszakás túlóra (150%)",
 			nyitas: "🌅 Nyitás",
 			zaras: "🌇 Zárás",
+			eni_0730_1330: "Eni · 7:30–13:30", eni_1030_1530: "Eni · 10:30–15:30",
+			eni_1530_2030: "Eni · 15:30–20:30", eni_1630_2030: "Eni · 16:30–20:30",
+			eni_0800_1500: "Eni · 8:00–15:00", eni_0900_1300: "Eni · 9:00–13:00",
+			eni_1000_1500: "Eni · 10:00–15:00", eni_1100_1600: "Eni · 11:00–16:00",
+			eni_1300_2030: "Eni · 13:00–20:30", eni_1500_2030: "Eni · 15:00–20:30",
 			nyitas_kalvin: "🌅 Nyitás · Kálvin", zaras_kalvin: "🌇 Zárás · Kálvin",
 			nyitas_moricz: "🌅 Nyitás · Móricz", zaras_moricz: "🌇 Zárás · Móricz",
 			nyitas_blaha: "🌅 Nyitás · Blaha", zaras_blaha: "🌇 Zárás · Blaha",
@@ -2077,11 +2088,18 @@
 				["<span style='display:inline-block;width:14px;height:14px;border-radius:4px;background:#22c55e'></span>", "Szabadság"]
 			],
 			eni: [
-				["🌇", "Zárás (16:30–20:30)"],
-				["🌅", "Nyitás (időpont nincs megadva)"],
+				["🕢", "Hétköznap: 7:30–13:30"],
+				["🕥", "Hétköznap: 10:30–15:30"],
+				["🕞", "Hétköznap: 15:30–20:30"],
+				["🕟", "Hétköznap: 16:30–20:30"],
+				["🕗", "Hétvége: 8:00–15:00"],
+				["🕘", "Hétvége: 9:00–13:00"],
+				["🕙", "Hétvége: 10:00–15:00"],
+				["🕚", "Hétvége: 11:00–16:00"],
+				["🕐", "Hétvége: 13:00–20:30"],
+				["🕒", "Hétvége: 15:00–20:30"],
 				["😴", "Szabadnap"],
-				["SZ", "Fizetett szabadság"],
-				["TSZ", "Többlet szabadság"]
+				["SZ", "Fizetett szabadság"]
 			]
 		};
 		const elemek = (profilElemek[selectedProfile] || profilElemek.tamas)
@@ -4353,8 +4371,20 @@
 				<button class="muszak-opcio" data-profiles="tamas" onclick="muszakBeallit('ejszaka_tulora')">🌙⚡ P-Éjszakás túlóra (200%)</button>
 				<button class="muszak-opcio torles" data-profiles="tamas" onclick="muszakTorol()">↩ Alapbeosztás visszaállítása</button>
 				<button class="muszak-opcio torles" data-profiles="reka,eni" onclick="muszakTorol()">↩ Műszak törlése</button>
-				<button class="muszak-opcio" data-profiles="reka,eni" onclick="muszakBeallit('nyitas')">🌅 Nyitás</button>
-				<button class="muszak-opcio" data-profiles="reka,eni" onclick="muszakBeallit('zaras')">🌇 Zárás</button>
+				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('nyitas')">🌅 Nyitás</button>
+				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('zaras')">🌇 Zárás</button>
+				<div data-profiles="eni" style="margin-top:0.35em;font-size:0.82em;font-weight:700;color:var(--muted)">Hétköznap</div>
+				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_0730_1330')">7:30–13:30</button>
+				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1030_1530')">10:30–15:30</button>
+				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1530_2030')">15:30–20:30</button>
+				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1630_2030')">16:30–20:30</button>
+				<div data-profiles="eni" style="margin-top:0.35em;font-size:0.82em;font-weight:700;color:var(--muted)">Hétvége</div>
+				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_0800_1500')">8:00–15:00</button>
+				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_0900_1300')">9:00–13:00</button>
+				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1000_1500')">10:00–15:00</button>
+				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1100_1600')">11:00–16:00</button>
+				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1300_2030')">13:00–20:30</button>
+				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1500_2030')">15:00–20:30</button>
 				<div data-profiles="reka" style="margin-top:0.35em;font-size:0.82em;font-weight:700;color:var(--muted)">Helyszín · Nyitás</div>
 				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('nyitas_kalvin')">🟠 Kálvin</button>
 				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('nyitas_moricz')">🟣 Móricz</button>
