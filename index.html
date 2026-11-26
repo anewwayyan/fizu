@@ -3561,7 +3561,7 @@
 	function eniValasztasFrissit() {
 		const allapot = document.getElementById("eni-valasztas-allapot");
 		if (allapot) {
-			const muszak = eniKivalasztottMuszak ? eniKivalasztottMuszak.replace("_", "–").replace("_", "–") : "nincs kiválasztva";
+			const muszak = eniKivalasztottMuszak ? eniMuszakCim("eni_" + eniKivalasztottMuszak) : "nincs kiválasztva";
 			const helyszin = eniKivalasztottHelyszin ? (eniKivalasztottHelyszin === "itis" ? "Itis" : "Tripla") : "nincs kiválasztva";
 			allapot.textContent = "Műszak: " + muszak + " · Helyszín: " + helyszin;
 		}
