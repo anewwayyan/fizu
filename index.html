@@ -331,6 +331,16 @@
 		gap: 0.55em;
 	}
 
+	.eni-valasztas-cim { margin-top: 0.45em; font-size: 0.82em; font-weight: 700; color: var(--muted); }
+	.eni-valasztasok { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45em; }
+	.eni-valasztasok .muszak-opcio { padding: 0.65em 0.5em; text-align: center; }
+	.muszak-opcio.kivalasztott { border-color: var(--accent); background: rgba(47,143,78,0.14); box-shadow: inset 0 0 0 1px var(--accent); }
+	.eni-valasztas-allapot { font-size: 0.82em; color: var(--muted); padding: 0.3em 0; }
+	.nap-helyszin-itis { background: #2A9D8F; color: #fff; }
+	.nap-helyszin-tripla { background: #3B82F6; color: #fff; }
+	.nap-helyszin-itis .nap-jel, .nap-helyszin-itis .nap-szam,
+	.nap-helyszin-tripla .nap-jel, .nap-helyszin-tripla .nap-szam { color: #fff; }
+
 	.muszak-opcio {
 		width: 100%;
 		border: 1px solid rgba(128,128,128,0.35);
@@ -1945,7 +1955,8 @@
 			];
 		}
 
-		const muszakAlapTipus = tipus.startsWith("nyitas_") ? "nyitas" : tipus.startsWith("zaras_") ? "zaras" : tipus;
+		const eniReszek = selectedProfile === "eni" ? eniMuszakReszek(tipus) : null;
+		const muszakAlapTipus = eniReszek ? eniReszek.muszak : (tipus.startsWith("nyitas_") ? "nyitas" : tipus.startsWith("zaras_") ? "zaras" : tipus);
 		const profilMuszakok = {
 			reka: { nyitas: ["08:00", "16:00"], zaras: ["11:00", "19:00"], szombat: ["10:00", "18:00"] },
 			eni: {
@@ -2030,6 +2041,7 @@
 			nyitas_budafok: "🌅 Nyitás", zaras_budafok: "🌇 Zárás",
 			szombat: "😖🎭🦺 Szombati műszak"
 		};
+		const megjelenitesiNev = selectedProfile === "eni" ? eniMuszakCim(tipus) : null;
 		const kezdes = intervallum[0];
 		const vege = intervallum[1];
 		const teljes = vege - kezdes;
@@ -2039,12 +2051,12 @@
 		let hatra = 0;
 
 		if (most < kezdes) {
-			statuszElem.textContent = (nevek[tipus] || "Műszak") + " – még nem kezdődött el";
+			statuszElem.textContent = (megjelenitesiNev || nevek[tipus] || "Műszak") + " – még nem kezdődött el";
 			savHatter.hidden = true;
 			idoElem.textContent = "";
 			return;
 		} else if (most >= vege) {
-			statuszElem.textContent = (nevek[tipus] || "Műszak") + " – a mai műszak már véget ért";
+			statuszElem.textContent = (megjelenitesiNev || nevek[tipus] || "Műszak") + " – a mai műszak már véget ért";
 			savHatter.hidden = true;
 			idoElem.textContent = "";
 			return;
@@ -2056,7 +2068,7 @@
 		const hatraPerc = Math.ceil(hatra / 60000);
 		const hatraOra = Math.floor(hatraPerc / 60);
 		const maradekPerc = hatraPerc % 60;
-		statuszElem.textContent = (nevek[tipus] || "Műszak") + " – folyamatban";
+		statuszElem.textContent = (megjelenitesiNev || nevek[tipus] || "Műszak") + " – folyamatban";
 		idoElem.textContent = oraPerc(kezdes) + "–" + oraPerc(vege) + " · " + hatraOra + " óra " + maradekPerc + " perc van hátra";
 	}
 
@@ -2099,6 +2111,8 @@
 				["🕚", "Hétvége: 11:00–16:00"],
 				["🕐", "Hétvége: 13:00–20:30"],
 				["🕒", "Hétvége: 15:00–20:30"],
+				["<span style='display:inline-block;width:14px;height:14px;border-radius:4px;background:#2A9D8F'></span>", "Itis"],
+				["<span style='display:inline-block;width:14px;height:14px;border-radius:4px;background:#3B82F6'></span>", "Tripla"],
 				["😴", "Szabadnap"],
 				["SZ", "Fizetett szabadság"]
 			]
@@ -3078,6 +3092,10 @@
 			if (tipus === "ures") {
 				osztaly += "nap-ures";
 				jel = "";
+			} else if (selectedProfile === "eni" && eniMuszakReszek(tipus)) {
+				const reszek = eniMuszakReszek(tipus);
+				osztaly += "nap-helyszin-" + reszek.helyszin;
+				jel = eniMuszakCim(tipus);
 			} else if (/^(nyitas|zaras)_(kalvin|moricz|blaha|budafok)$/.test(tipus)) {
 				const helyszin = tipus.split("_")[1];
 				const helyszinNevek = { kalvin: "Kálvin", moricz: "Móricz", blaha: "Blaha", budafok: "Budafok" };
@@ -3497,6 +3515,9 @@
 	}
 
 	function muszakModalMegnyit(ev, honap, nap) {
+		eniKivalasztottMuszak = null;
+		eniKivalasztottHelyszin = null;
+		eniValasztasFrissit();
 
 		kivalasztottDatum = datumKulcs(ev, honap, nap);
 
@@ -3531,6 +3552,55 @@
 		if (event.target.id === "muszak-modal-hatter") {
 			muszakModalBezar();
 		}
+	}
+
+	
+	let eniKivalasztottMuszak = null;
+	let eniKivalasztottHelyszin = null;
+
+	function eniValasztasFrissit() {
+		const allapot = document.getElementById("eni-valasztas-allapot");
+		if (allapot) {
+			const muszak = eniKivalasztottMuszak ? eniKivalasztottMuszak.replace("_", "–").replace("_", "–") : "nincs kiválasztva";
+			const helyszin = eniKivalasztottHelyszin ? (eniKivalasztottHelyszin === "itis" ? "Itis" : "Tripla") : "nincs kiválasztva";
+			allapot.textContent = "Műszak: " + muszak + " · Helyszín: " + helyszin;
+		}
+		document.querySelectorAll("[data-eni-shift]").forEach(function (gomb) {
+			gomb.classList.toggle("kivalasztott", gomb.dataset.eniShift === eniKivalasztottMuszak);
+		});
+		document.querySelectorAll("[data-eni-location]").forEach(function (gomb) {
+			gomb.classList.toggle("kivalasztott", gomb.dataset.eniLocation === eniKivalasztottHelyszin);
+		});
+	}
+
+	function eniMuszakValaszt(muszak) {
+		eniKivalasztottMuszak = muszak;
+		eniValasztasFrissit();
+	}
+
+	function eniHelyszinValaszt(helyszin) {
+		eniKivalasztottHelyszin = helyszin;
+		eniValasztasFrissit();
+	}
+
+	function eniBeosztasMent() {
+		if (!eniKivalasztottMuszak || !eniKivalasztottHelyszin) {
+			alert("Válassz ki egy műszakot és egy helyszínt is.");
+			return;
+		}
+		muszakBeallit("eni_" + eniKivalasztottMuszak + "_" + eniKivalasztottHelyszin);
+	}
+
+	function eniMuszakReszek(tipus) {
+		const match = /^eni_(\\d{4}_\\d{4})_(itis|tripla)$/.exec(tipus || "");
+		return match ? { muszak: "eni_" + match[1], helyszin: match[2] } : null;
+	}
+
+	function eniMuszakCim(tipus) {
+		const reszek = eniMuszakReszek(tipus);
+		if (!reszek) return null;
+		const cimkek = { "eni_0730_1330": "7:30–13:30", "eni_1030_1530": "10:30–15:30", "eni_1530_2030": "15:30–20:30", "eni_1630_2030": "16:30–20:30", "eni_0800_1500": "8:00–15:00", "eni_0900_1300": "9:00–13:00", "eni_1000_1500": "10:00–15:00", "eni_1100_1600": "11:00–16:00", "eni_1300_2030": "13:00–20:30", "eni_1500_2030": "15:00–20:30" };
+		return cimkek[reszek.muszak] || "Műszak";
 	}
 
 	async function muszakBeallit(tipus) {
@@ -4374,18 +4444,26 @@
 				<button class="muszak-opcio torles" data-profiles="reka,eni" onclick="muszakTorol()">↩ Műszak törlése</button>
 				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('nyitas')">🌅 Nyitás</button>
 				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('zaras')">🌇 Zárás</button>
-				<div data-profiles="eni" style="margin-top:0.35em;font-size:0.82em;font-weight:700;color:var(--muted)">Hétköznap</div>
-				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_0730_1330')">7:30–13:30</button>
-				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1030_1530')">10:30–15:30</button>
-				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1530_2030')">15:30–20:30</button>
-				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1630_2030')">16:30–20:30</button>
-				<div data-profiles="eni" style="margin-top:0.35em;font-size:0.82em;font-weight:700;color:var(--muted)">Hétvége</div>
-				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_0800_1500')">8:00–15:00</button>
-				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_0900_1300')">9:00–13:00</button>
-				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1000_1500')">10:00–15:00</button>
-				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1100_1600')">11:00–16:00</button>
-				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1300_2030')">13:00–20:30</button>
-				<button class="muszak-opcio" data-profiles="eni" onclick="muszakBeallit('eni_1500_2030')">15:00–20:30</button>
+				<div data-profiles="eni" class="eni-valasztas-cim">Műszak</div>
+				<div data-profiles="eni" class="eni-valasztasok">
+					<button class="muszak-opcio" data-eni-shift="0730_1330" onclick="eniMuszakValaszt('0730_1330')">7:30–13:30</button>
+					<button class="muszak-opcio" data-eni-shift="1030_1530" onclick="eniMuszakValaszt('1030_1530')">10:30–15:30</button>
+					<button class="muszak-opcio" data-eni-shift="1530_2030" onclick="eniMuszakValaszt('1530_2030')">15:30–20:30</button>
+					<button class="muszak-opcio" data-eni-shift="1630_2030" onclick="eniMuszakValaszt('1630_2030')">16:30–20:30</button>
+					<button class="muszak-opcio" data-eni-shift="0800_1500" onclick="eniMuszakValaszt('0800_1500')">8:00–15:00</button>
+					<button class="muszak-opcio" data-eni-shift="0900_1300" onclick="eniMuszakValaszt('0900_1300')">9:00–13:00</button>
+					<button class="muszak-opcio" data-eni-shift="1000_1500" onclick="eniMuszakValaszt('1000_1500')">10:00–15:00</button>
+					<button class="muszak-opcio" data-eni-shift="1100_1600" onclick="eniMuszakValaszt('1100_1600')">11:00–16:00</button>
+					<button class="muszak-opcio" data-eni-shift="1300_2030" onclick="eniMuszakValaszt('1300_2030')">13:00–20:30</button>
+					<button class="muszak-opcio" data-eni-shift="1500_2030" onclick="eniMuszakValaszt('1500_2030')">15:00–20:30</button>
+				</div>
+				<div data-profiles="eni" class="eni-valasztas-cim">Helyszín</div>
+				<div data-profiles="eni" class="eni-valasztasok">
+					<button class="muszak-opcio" data-eni-location="itis" onclick="eniHelyszinValaszt('itis')">Itis</button>
+					<button class="muszak-opcio" data-eni-location="tripla" onclick="eniHelyszinValaszt('tripla')">Tripla</button>
+				</div>
+				<div data-profiles="eni" class="eni-valasztas-allapot" id="eni-valasztas-allapot">Válassz műszakot és helyszínt.</div>
+				<button class="muszak-opcio" data-profiles="eni" onclick="eniBeosztasMent()">Beosztás mentése</button>
 				<div data-profiles="reka" style="margin-top:0.35em;font-size:0.82em;font-weight:700;color:var(--muted)">Helyszín · Nyitás</div>
 				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('nyitas_kalvin')">🟠 Kálvin</button>
 				<button class="muszak-opcio" data-profiles="reka" onclick="muszakBeallit('nyitas_moricz')">🟣 Móricz</button>
