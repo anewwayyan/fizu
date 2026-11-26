@@ -3094,7 +3094,7 @@
 				jel = "";
 			} else if (selectedProfile === "eni" && eniMuszakReszek(tipus)) {
 				const reszek = eniMuszakReszek(tipus);
-				osztaly += "nap-helyszin-" + reszek.helyszin;
+				osztaly += reszek.helyszin ? "nap-helyszin-" + reszek.helyszin : "nap-nappal";
 				jel = eniMuszakCim(tipus);
 			} else if (/^(nyitas|zaras)_(kalvin|moricz|blaha|budafok)$/.test(tipus)) {
 				const helyszin = tipus.split("_")[1];
@@ -3592,8 +3592,8 @@
 	}
 
 	function eniMuszakReszek(tipus) {
-		const match = /^eni_(\\d{4}_\\d{4})_(itis|tripla)$/.exec(tipus || "");
-		return match ? { muszak: "eni_" + match[1], helyszin: match[2] } : null;
+		const match = /^eni_(\\d{4}_\\d{4})(?:_(itis|tripla))?$/.exec(tipus || "");
+		return match ? { muszak: "eni_" + match[1], helyszin: match[2] || null } : null;
 	}
 
 	function eniMuszakCim(tipus) {
