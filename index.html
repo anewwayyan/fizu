@@ -3099,9 +3099,8 @@
 				jel = eniMuszakCim(tipus);
 			} else if (/^(nyitas|zaras)_(kalvin|moricz|blaha|budafok)$/.test(tipus)) {
 				const helyszin = tipus.split("_")[1];
-				const helyszinNevek = { kalvin: "Kálvin", moricz: "Móricz", blaha: "Blaha", budafok: "Budafok" };
 				osztaly += "nap-helyszin-" + helyszin;
-				jel = helyszinNevek[helyszin];
+				jel = tipus.startsWith("nyitas_") ? "🌅 Nyitás" : "🌇 Zárás";
 			} else if (tipus === "nyitas") {
 				osztaly += "nap-nappal";
 				jel = "🌅";
